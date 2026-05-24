@@ -54,9 +54,13 @@ systemic performance problems:
    fetched on every page load. With a production dataset this will cause
    memory exhaustion and multi-second response times.
 
-Expected fastest wins after Phase 7: F-01 (cache settings), F-02/F-03
-(batch aggregation), F-04/F-05/F-09 (pagination). Together these should
-cut dashboard and list-page query counts by 80–95%.
+Expected fastest wins after Phase 7:
+- **F-01** — cache `settings()`: eliminates 3–14 redundant queries per page; F-03 is an automatic free fix.
+- **F-02** — batch dashboard aggregates: 36–48 queries → 3–4 per load.
+- **F-04/F-06/F-07** — paginate list pages: memory becomes O(page size) instead of O(table size).
+- **F-05/F-09** — add eager loads / batch lookups: eliminates N+1 query explosions on planning and inspection views.
+
+Together these should cut dashboard and list-page query counts by 80–95%.
 
 ---
 
@@ -351,6 +355,58 @@ Fill in after running a live profiling session (see
 
 ---
 
+### F-13: `BookingController::importExcel()` — per-row DB queries inside import loop
+
+- **File:** `app/Http/Controllers/BookingController.php:622–809`
+- **Symptom:** TBD — import time grows linearly with row count; likely
+  multi-second for files with hundreds of rows.
+- **Likely cause:** Three query patterns fire inside (or nested inside)
+  the main `foreach` row loop:
+
+  1. **Email-uniqueness while-loop (line 723):** For each new driver, a
+     `User::where('email', $email)->exists()` query runs in a `while`
+     loop until a unique email is found — potentially unbounded queries
+     per driver.
+  2. **`Driver::latest()->first()` per new driver (line 743):** Fetches
+     the highest `driver_id` individually for every new driver row
+     instead of tracking the max in memory.
+  3. **`Vehicle::latest()->first()` per new vehicle (line 757):** Same
+     pattern — re-queries the max `vehicle_id` on every new vehicle.
+
+  Drivers and vehicles already have an in-memory cache (`$driversCache`,
+  `$vehiclesCache` at lines 649–650) for lookups; the `->latest()->first()`
+  calls are the gap in that optimization.
+
+- **Evidence (static):**
+  ```php
+  // BookingController.php:723 — while-in-foreach
+  while (User::where('email', $email)->exists()) { ... }
+
+  // BookingController.php:743 — re-queries max driver_id per new driver
+  $latestDriver = Driver::where('parent_id', $pid)->latest()->first();
+
+  // BookingController.php:757 — re-queries max vehicle_id per new vehicle
+  $latestVehicle = Vehicle::where('parent_id', $pid)->latest()->first();
+  ```
+- **Fix sketch:**
+  - Before the loop, resolve the next available `driver_id` and
+    `vehicle_id` once and increment in memory:
+    ```php
+    $nextDriverId  = (Driver::where('parent_id', $pid)->max('driver_id') ?? 0) + 1;
+    $nextVehicleId = (Vehicle::where('parent_id', $pid)->max('vehicle_id') ?? 0) + 1;
+    ```
+  - For email uniqueness, pre-load existing emails into a `Set` before
+    the loop rather than querying on each iteration.
+- **Estimated effort:** S (≤1 hour)
+- **Estimated impact:** Eliminates 2–3 queries per new driver/vehicle row.
+  For a 500-row import with 100 new drivers/vehicles: saves 200–300
+  queries. Email-uniqueness loop elimination removes unbounded query risk.
+- **Risk:** Low — in-memory counter produces the same IDs as the DB
+  re-query, assuming no concurrent imports (single-user admin tool).
+- **Priority:** P1
+
+---
+
 ## 4. Sanity-check checklist
 
 Run these checks and tick them off. Items already confirmed from code
@@ -364,6 +420,8 @@ review are pre-ticked.
 - [ ] Database indexes on foreign keys (check `SHOW INDEX FROM bookings;` etc.)
 - [ ] Indexes on `bookings.start_date`, `bookings.parent_id`, `bookings.status`
 - [ ] Indexes on `vehicles.parent_id`, `expenses.parent_id`
+- [ ] Indexes on `reminders.parent_id`, `reminders.reminder_date`
+- [ ] Indexes on `inspections.parent_id`
 - [ ] `SESSION_DRIVER` not `file` in production under load
 - [ ] `QUEUE_CONNECTION` not `sync` for PDF generation and mail
 - [x] `TELESCOPE_ENABLED=false` in production (enforced via `.env.example` default)
@@ -381,6 +439,12 @@ Fill in after Phase 7 fixes are applied.
 | F-02    | TBD                 | TBD                  | TBD         | TBD          |
 | F-04    | TBD                 | TBD                  | TBD         | TBD          |
 | F-05    | TBD                 | TBD                  | TBD         | TBD          |
+| F-06    | TBD                 | TBD                  | TBD         | TBD          |
+| F-07    | TBD                 | TBD                  | TBD         | TBD          |
+| F-08    | TBD                 | TBD                  | TBD         | TBD          |
+| F-09    | TBD                 | TBD                  | TBD         | TBD          |
+| F-10    | TBD                 | TBD                  | TBD         | TBD          |
+| F-13    | TBD                 | TBD                  | TBD         | TBD          |
 
 ---
 
