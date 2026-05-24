@@ -127,19 +127,35 @@ NOCAPTCHA_SECRET=
 Ask the team lead for the shared sandbox credentials if you don't have
 them.
 
-### 4. Create the database and run migrations
+### 4. Create the database, migrate, and seed
 
 ```bash
 mysql -u root -e "CREATE DATABASE rentcar;"
 php artisan migrate
-php artisan db:seed     # only if seeders exist for your branch
+php artisan db:seed
 ```
 
-A storage symlink is required for uploads / generated PDFs / signatures:
+**Seeding is required.** It creates the roles, permissions, default subscription
+tier, and the three built-in accounts you need to log in:
+
+| Role        | Email                   | Password |
+| ----------- | ----------------------- | -------- |
+| Super admin | superadmin@gmail.com    | 123456   |
+| Owner       | owner@gmail.com         | 123456   |
+| Manager     | manager@gmail.com       | 123456   |
+
+Change these passwords immediately on any non-local environment.
+
+A storage symlink is required for uploads, generated PDFs, and signatures:
 
 ```bash
 php artisan storage:link
 ```
+
+> **Windows users:** `storage:link` creates a directory junction that requires
+> either Developer Mode enabled (Settings → System → Developer Mode) or an
+> elevated (Administrator) terminal. If the command fails silently, re-run it
+> as Administrator or enable Developer Mode first.
 
 ### 5. Run the app
 
@@ -257,7 +273,7 @@ they don't render.
 
 The repo is mid-modernization. If you're working on the migration:
 
-- Branch off `dev` onto `feat/modernization` (or a sub-branch of it).
+- Branch off `feat/modernization` (or a ticket sub-branch of it — see `CONTRIBUTING.md`).
 - Read `CLAUDE.md` for the rules-of-engagement.
 - Check `docs/migration-plan.md` for the current phase and what's
   blocking the next gate.
