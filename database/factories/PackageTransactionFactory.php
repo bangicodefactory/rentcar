@@ -17,7 +17,7 @@ class PackageTransactionFactory extends Factory
         return [
             'user_id'                       => User::factory(),
             'subscription_id'               => Subscription::factory(),
-            'subscription_transactions_id'  => null,
+            'subscription_transactions_id'  => 'txn_' . Str::random(20),
             'amount'                        => $this->faker->randomFloat(2, 9, 199),
             'transaction_id'                => 'txn_' . Str::random(24),
             'payment_status'                => 'Success',
