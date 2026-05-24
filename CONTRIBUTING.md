@@ -25,17 +25,19 @@ migration history bisectable.
 
 ## Commit message conventions
 
-Prefix every commit with the Linear ticket identifier:
+Use the format `type(BAN-N): <imperative short summary>`:
 
 ```
-BAN-<N>: <imperative short summary>
+type(BAN-<N>): <imperative short summary>
 ```
 
 Examples:
 ```
-BAN-20: add CONTRIBUTING.md with branch flow + test discipline
-BAN-42: port booking/index.blade.php to Inertia + React
-BAN-87: bump phpunit to ^11.0
+test(BAN-23): cover BookingController@store happy + sad paths
+chore(BAN-87): bump phpunit to ^11.0
+refactor(BAN-42): port booking/index.blade.php to Inertia + React
+perf(BAN-55): document N+1 on /dashboard (do not fix yet)
+docs(BAN-20): add CONTRIBUTING.md with branch flow + test discipline
 ```
 
 - Use the imperative mood ("add", "fix", "port", "bump"), not past tense.

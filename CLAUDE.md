@@ -38,11 +38,13 @@ Anything not in this table is either preserved exactly or flagged in
 - **Never commit directly to `dev`** or `main`. If you're on `dev`,
   stop and switch back to `feat/modernization`.
 - Keep commits **small and atomic**, one logical concern each.
+  Use the format `type(BAN-N): <imperative short summary>`.
   Examples of good commit messages:
-  - `test(booking): cover BookingController@store happy + sad paths`
-  - `chore(deps): bump phpunit to ^11.0`
-  - `refactor(views): port booking/index.blade.php to Inertia + React`
-  - `perf(audit): document N+1 on /dashboard (do not fix yet)`
+  - `test(BAN-23): cover BookingController@store happy + sad paths`
+  - `chore(BAN-87): bump phpunit to ^11.0`
+  - `refactor(BAN-42): port booking/index.blade.php to Inertia + React`
+  - `perf(BAN-55): document N+1 on /dashboard (do not fix yet)`
+  - `docs(BAN-20): add CONTRIBUTING.md with branch flow + test discipline`
 - Reference the migration phase in the commit body when relevant
   (e.g. "Phase 1: test backfill").
 - **Do not squash** during the migration — the per-step history is
