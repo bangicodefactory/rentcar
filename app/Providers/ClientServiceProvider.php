@@ -9,8 +9,8 @@ class ClientServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $client  = config('app.client', 'directonderweg');
-        $default = config('clients._default', []);
+        $client   = config('app.client', 'directonderweg');
+        $default  = config('clients._default', []);
         $specific = config("clients.{$client}", []);
 
         // Client keys win over defaults.
@@ -23,6 +23,10 @@ class ClientServiceProvider extends ServiceProvider
         }
 
         // Dynamically register the active client's own ServiceProvider if it exists.
+        // TODO (pre-Phase 2): Str::studly('directonderweg') → 'Directonderweg', not
+        // 'DirectOnderweg', so auto-discovery silently fails for the current client.
+        // Fix before adding real bindings: either rename the slug to 'direct_onderweg'
+        // or add an explicit 'provider_class' key to config/clients/<client>.php.
         $clientProvider = sprintf(
             'App\\Clients\\%s\\Providers\\%sServiceProvider',
             Str::studly($client),

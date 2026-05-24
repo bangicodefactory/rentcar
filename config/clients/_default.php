@@ -21,4 +21,9 @@ return [
      * Core code injects the interface; each client supplies the class.
      */
     'bindings' => [],
+
+    /*
+     * branding_seed is not defined here because it is always client-specific.
+     * Every client config file (config/clients/<client>.php) must define it.
+     */
 ];
