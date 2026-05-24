@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 
 class Signature extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['user_id', 'signature_path'];
 
     public function user()
