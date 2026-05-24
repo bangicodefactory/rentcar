@@ -1,0 +1,8 @@
+# CODEOWNERS - grows naturally as the team grows or new clients onboard.
+# See docs/client-configurability.md section 10.3 for the full strategy.
+
+*                                  @ahmedchioua
+/CLAUDE.md                         @ahmedchioua
+/docs/                             @ahmedchioua
+/app/Clients/DirectOnderweg/       @ahmedchioua
+/config/clients/directonderweg.php @ahmedchioua
