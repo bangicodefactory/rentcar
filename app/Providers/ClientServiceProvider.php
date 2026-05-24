@@ -22,16 +22,16 @@ class ClientServiceProvider extends ServiceProvider
             $this->app->bind($contract, $concrete);
         }
 
-        // Dynamically register the active client's own ServiceProvider if it exists.
-        // TODO (pre-Phase 2): Str::studly('directonderweg') → 'Directonderweg', not
-        // 'DirectOnderweg', so auto-discovery silently fails for the current client.
-        // Fix before adding real bindings: either rename the slug to 'direct_onderweg'
-        // or add an explicit 'provider_class' key to config/clients/<client>.php.
-        $clientProvider = sprintf(
-            'App\\Clients\\%s\\Providers\\%sServiceProvider',
-            Str::studly($client),
-            Str::studly($client)
-        );
+        // Register the active client's own ServiceProvider.
+        // config/clients/<client>.php may supply an explicit 'provider_class' to
+        // avoid Str::studly() producing the wrong casing (e.g. 'directonderweg'
+        // → 'Directonderweg' instead of 'DirectOnderweg').
+        $clientProvider = $specific['provider_class']
+            ?? sprintf(
+                'App\\Clients\\%s\\Providers\\%sServiceProvider',
+                Str::studly($client),
+                Str::studly($client)
+            );
         if (class_exists($clientProvider)) {
             $this->app->register($clientProvider);
         }

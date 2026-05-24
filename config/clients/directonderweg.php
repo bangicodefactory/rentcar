@@ -16,10 +16,21 @@ return [
     ],
 
     /*
-     * Interface → concrete bindings.
-     * Populated once per-client service classes exist (Phase 2+).
+     * Explicit provider class — required because Str::studly('directonderweg')
+     * produces 'Directonderweg', not 'DirectOnderweg'.
      */
-    'bindings' => [],
+    'provider_class' => \App\Clients\DirectOnderweg\Providers\DirectOnderwegServiceProvider::class,
+
+    /*
+     * Interface → concrete bindings resolved by ClientServiceProvider.
+     * Also re-bound inside DirectOnderwegServiceProvider for explicitness.
+     */
+    'bindings' => [
+        \App\Contracts\PricingServiceContract::class
+            => \App\Clients\DirectOnderweg\Services\DirectOnderwegPricingService::class,
+        \App\Contracts\TvaServiceContract::class
+            => \App\Clients\DirectOnderweg\Services\DirectOnderwegTvaService::class,
+    ],
 
     'branding_seed' => [
         'app_name'       => 'Direct Onderweg',
