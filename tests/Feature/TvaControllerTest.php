@@ -91,8 +91,8 @@ class TvaControllerTest extends TestCase
 
         $this->actingAs($this->owner)
             ->get(route('tva.index', ['from_date' => '2025-03-01']))
-            ->assertOk();
-        // Smoke test — response reaches the view without error
+            ->assertOk()
+            ->assertViewHas('tvas', fn($tvas) => $tvas->count() === 1);
     }
 
     // ── TvaController::update ─────────────────────────────────────────────────
@@ -141,6 +141,28 @@ class TvaControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    // NOTE: update has no permission check and no tenant scoping — any authenticated
+    // user can mutate any TVA record regardless of parent_id. These tests document
+    // that gap so a future fix can close it.
+    public function test_update_succeeds_cross_tenant_documents_missing_scope(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id]);
+
+        $this->actingAs($this->owner)
+            ->put(route('tva.update', $tva), [
+                'facture_date'   => '2025-08-15',
+                'montant_ttc'    => 500,
+                'unit_price_ht'  => 416.67,
+                'tva'            => 83.33,
+                'facture_number' => 'CROSS',
+            ])
+            ->assertRedirect(route('tva.index'));
+
+        // Succeeds — no scoping guard exists yet
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'facture_number' => 'CROSS']);
+    }
+
     // ── TvaController::destroy ────────────────────────────────────────────────
 
     public function test_destroy_soft_deletes_tva_record(): void
@@ -160,6 +182,20 @@ class TvaControllerTest extends TestCase
         $this->actingAs($this->owner)
             ->delete(route('tva.destroy', 99999))
             ->assertNotFound();
+    }
+
+    // NOTE: destroy has no permission check and no tenant scoping — documents the gap.
+    public function test_destroy_succeeds_cross_tenant_documents_missing_scope(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id]);
+
+        $this->actingAs($this->owner)
+            ->delete(route('tva.destroy', $tva))
+            ->assertRedirect();
+
+        // Succeeds — no scoping guard exists yet
+        $this->assertSoftDeleted('tvas', ['id' => $tva->id]);
     }
 
     // ── TvaController::report ─────────────────────────────────────────────────
@@ -183,10 +219,16 @@ class TvaControllerTest extends TestCase
             ->assertOk();
     }
 
-    // ── TvaController::bulkDownload (unauthenticated — public route) ──────────
-    // NOTE: bulkDownload is registered OUTSIDE the auth middleware group,
-    // so unauthenticated requests are not redirected to login.
-    // We test that the route rejects requests with missing invoice_ids.
+    // ── TvaController::bulkDownload (public route — outside auth middleware) ────
+    // NOTE: bulkDownload is registered OUTSIDE the auth middleware group.
+    // Unauthenticated requests are NOT redirected to login — this is a security gap.
+
+    public function test_bulk_download_is_publicly_accessible_documents_missing_auth(): void
+    {
+        // No actingAs — unauthenticated request should hit validation, not login redirect
+        $this->post(route('tva.bulk.download'), [])
+            ->assertSessionHasErrors(['invoice_ids']);
+    }
 
     public function test_bulk_download_rejects_missing_invoice_ids(): void
     {

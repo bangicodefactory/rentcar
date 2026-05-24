@@ -8,6 +8,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\WithClient;
 use Tests\TestCase;
 
+// NOTE: This test lives in Unit/ but is database-backed because TvaRenumberService
+// queries Eloquent directly. Pure unit isolation would require mocking the ORM,
+// which adds more noise than value for sequential-numbering logic.
 class TvaRenumberServiceTest extends TestCase
 {
     use RefreshDatabase;
