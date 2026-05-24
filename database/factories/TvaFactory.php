@@ -46,18 +46,19 @@ class TvaFactory extends Factory
     public function withInvoice(): static
     {
         return $this->state(function () {
-            $totalHt    = round($this->faker->randomFloat(2, 100, 2000), 2);
+            $faker      = fake();
+            $totalHt    = round($faker->randomFloat(2, 100, 2000), 2);
             $tvaAmount  = round($totalHt * 0.20, 2);
             $montantTtc = round($totalHt + $tvaAmount, 2);
 
             return [
-                'facture_number'  => $this->faker->unique()->numerify('FACT-####'),
+                'facture_number'  => $faker->unique()->numerify('FACT-####'),
                 'facture_date'    => now()->format('Y-m-d'),
-                'reference'       => $this->faker->bothify('REF-####'),
-                'client_name'     => $this->faker->name(),
-                'client_address'  => $this->faker->address(),
-                'company_name'    => $this->faker->company(),
-                'company_address' => $this->faker->address(),
+                'reference'       => $faker->bothify('REF-####'),
+                'client_name'     => $faker->name(),
+                'client_address'  => $faker->address(),
+                'company_name'    => $faker->company(),
+                'company_address' => $faker->address(),
                 'designation'     => 'Location de véhicule',
                 'quantity'        => 3,
                 'unit_price_ht'   => round($totalHt / 3, 2),

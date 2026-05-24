@@ -18,7 +18,7 @@ class BookingFactory extends Factory
         $end   = now()->addDays(4);
 
         return [
-            'booking_id'        => $this->faker->unique()->numberBetween(1000, 9999),
+            'booking_id'        => $this->faker->unique()->numberBetween(1, 999999),
             'vehicle'           => Vehicle::factory(),
             'driver'            => User::factory(),
             'start_date'        => $start->format('Y-m-d'),
@@ -70,9 +70,10 @@ class BookingFactory extends Factory
     public function withRentalAgreement(): static
     {
         return $this->afterCreating(function (\App\Models\Booking $booking) {
+            $attrs = $booking->getAttributes();
             \App\Models\RentalAgreement::factory()->create([
-                'driver'  => $booking->driver,
-                'vehicle' => $booking->vehicle,
+                'driver'  => $attrs['driver'],
+                'vehicle' => $attrs['vehicle'],
             ]);
         });
     }
