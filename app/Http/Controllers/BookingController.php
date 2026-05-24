@@ -1011,9 +1011,9 @@ class BookingController extends Controller
             $tva->tva = number_format($tvaAmount, 2, '.', '');
             $tva->unit_price_ht = number_format($totalDays > 0 ? round($totalHT / $totalDays, 2) : 0, 2, '.', '');
             $tva->montant_ttc = number_format($numericAmount, 2, '.', '');
-            $tva->ice_number = $setting['ice'];
-            $tva->rc_number = $setting['rc'];
-            $tva->nif_number = $setting['if'];
+            $tva->ice_number = $setting['ice'] ?? null;
+            $tva->rc_number = $setting['rc'] ?? null;
+            $tva->nif_number = $setting['if'] ?? null;
             $tva->parent_id = parentId();
             $tva->booking_id = $booking->id;
             $tva->generated_date = now()->toDateString();
