@@ -496,7 +496,7 @@ Route::post('/tva/bulk-download', [TvaController::class, 'bulkDownload'])->name(
 Route::get('/test-planning', [BookingController::class, 'testPlanning'])->name('test.planning');
 
 // --------------------------------------------------------------------------
-// Sentry smoke-test — local + authenticated admins only.
+// Sentry smoke-test — local env only, any authenticated user.
 // Throws a deliberate exception; verify it arrives in Sentry within ~1 minute.
 // Remove (or keep — it's harmless) once Sentry is confirmed working.
 // --------------------------------------------------------------------------

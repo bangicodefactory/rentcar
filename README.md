@@ -334,7 +334,7 @@ The repo is mid-modernization. If you're working on the migration:
 
 ## Monitoring
 
-Error monitoring runs via [Sentry](https://sentry.io). The project is **rentcar** inside the Anthropic org (ask the project owner for access).
+Error monitoring runs via [Sentry](https://sentry.io). Ask the project owner for access to the **rentcar** Sentry project.
 
 ### How issues are tagged
 
@@ -344,7 +344,7 @@ Every event carries:
 | --- | ------ |
 | `environment` | `SENTRY_ENVIRONMENT` — e.g. `production-directonderweg`, `staging-directonderweg`, `ci` |
 | `release` | `SENTRY_RELEASE` — set to `$GITHUB_SHA` in CI/CD and at deploy time |
-| `client` | `APP_CLIENT` — set as a Sentry tag in `AppServiceProvider::boot()` once instrumented |
+| `client` | `APP_CLIENT` — not yet wired; tracked as a follow-up task |
 | `user` | Authenticated user ID / email, captured automatically by the Laravel SDK |
 
 ### Triage flow
