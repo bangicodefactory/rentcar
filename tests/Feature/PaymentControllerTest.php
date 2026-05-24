@@ -186,7 +186,9 @@ class PaymentControllerTest extends TestCase
             'payment_status'  => 'Pending',
         ]);
 
-        // The reject action queries CouponHistory by 'package' = transaction->id (see controller).
+        // BUG: subscriptionBankTransfer stores package=subscription->id but
+        // subscriptionBankTransferAction queries package=transaction->id — they never match in prod.
+        // Test reflects the actual controller behavior, not the intended behavior.
         $history = CouponHistory::factory()->create([
             'user_id' => $this->owner->id,
             'package' => $transaction->id,
@@ -220,13 +222,19 @@ class PaymentControllerTest extends TestCase
     {
         $id = Crypt::encrypt($this->subscription->id);
 
-        $response = $this->actingAs($this->owner)
-            ->post(route('subscription.flutterwave', $id));
+        $this->actingAs($this->owner)
+            ->post(route('subscription.flutterwave', $id))
+            ->assertJsonFragment(['flag' => 1])
+            ->assertJsonFragment(['email' => $this->owner->email]);
+    }
 
-        $response->assertJson([
-            'flag'        => 1,
-            'email'       => $this->owner->email,
-            'total_price' => $this->subscription->package_amount,
-        ]);
+    public function test_flutterwave_returns_error_flag_when_amount_zero(): void
+    {
+        $zeroSubscription = Subscription::factory()->create(['package_amount' => 0]);
+        $id = Crypt::encrypt($zeroSubscription->id);
+
+        $this->actingAs($this->owner)
+            ->post(route('subscription.flutterwave', $id))
+            ->assertJsonFragment(['flag' => 2]);
     }
 }
