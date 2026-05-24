@@ -20,6 +20,8 @@ class TvaRenumberControllerTest extends TestCase
         parent::setUp();
         $this->asClient('directonderweg');
 
+        // TvaRenumberController has no can() permission check — any authenticated
+        // user may call all three routes. Tests below document that behavior.
         $this->owner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
     }
 
@@ -160,6 +162,14 @@ class TvaRenumberControllerTest extends TestCase
     {
         $this->actingAs($this->owner)
             ->post(route('tva.renumber.apply'), ['year' => 2019])
+            ->assertRedirect()
+            ->assertSessionHasErrors(['year']);
+    }
+
+    public function test_apply_rejects_year_above_current_plus_one(): void
+    {
+        $this->actingAs($this->owner)
+            ->post(route('tva.renumber.apply'), ['year' => now()->year + 2])
             ->assertRedirect()
             ->assertSessionHasErrors(['year']);
     }
