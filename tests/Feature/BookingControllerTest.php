@@ -8,7 +8,6 @@ use App\Models\Place;
 use App\Models\Tva;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Spatie\Permission\Models\Permission;
@@ -127,6 +126,8 @@ class BookingControllerTest extends TestCase
                 'start_date_time'  => '2026-06-05 09:00',
                 'end_date_time'    => '2026-06-01 09:00', // before start → fails after:
                 'driver'           => $this->driver->id,
+                // String literals pass the 'string' validator rule; date validation
+                // fires first so these never reach the DB insert.
                 'pickup_address'   => 'Airport',
                 'drop_off_address' => 'Hotel',
                 'status'           => 'yet_to_start',

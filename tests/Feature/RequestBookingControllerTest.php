@@ -8,7 +8,6 @@ use App\Models\Place;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
 use Spatie\Permission\Models\Permission;
 use Tests\Concerns\WithClient;
 use Tests\TestCase;
@@ -180,7 +179,8 @@ class RequestBookingControllerTest extends TestCase
 
         $this->actingAs($this->owner)
             ->post(route('booking_requests.approve', $req->id))
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
             'email' => 'newcustomer@example.com',
