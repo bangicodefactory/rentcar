@@ -81,6 +81,9 @@ jobs:
       - name: Run database migrations
         run: php artisan migrate --force
 
+      - name: Seed client branding (idempotent)
+        run: php artisan client:install
+
       - name: Run tests with coverage
         # --min=0 until Phase 1 test backfill raises coverage to 80%; restore --min=80 then
         run: php artisan test --coverage --min=0
