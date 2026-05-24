@@ -201,6 +201,54 @@ installs, run:
 | Re-run migrations from scratch        | `php artisan migrate:fresh --seed`           |
 | Build assets for production           | `npm run prod` (Mix) / `npm run build` (Vite) |
 | Export translatable strings           | `php artisan translatable:export <locale>`   |
+| Create Telescope tables (first run)   | `php artisan telescope:migrate`              |
+| Clear Telescope entries               | `php artisan telescope:clear`                |
+
+---
+
+## Dev tools (Telescope + Debugbar)
+
+Two observability tools are available for local development. Both are
+**dev dependencies only** and are disabled in the test suite.
+
+### Laravel Telescope
+
+Telescope records HTTP requests, queries, jobs, mail, and more.
+Access the dashboard at `http://localhost:8000/telescope`.
+
+**First-time setup:**
+
+```bash
+php artisan telescope:migrate
+```
+
+**Toggle via `.env`:**
+
+```dotenv
+TELESCOPE_ENABLED=true   # local dev (default in .env.example)
+TELESCOPE_ENABLED=false  # production / staging — always set this
+```
+
+Telescope is filtered to `local` environment in
+`app/Providers/TelescopeServiceProvider.php`. In non-local environments
+only exceptions, failed requests, failed jobs, and scheduled tasks
+are stored even if `TELESCOPE_ENABLED=true`. The `/telescope` panel
+is additionally gated by the `viewTelescope` gate defined in the same
+provider — add admin emails there to allow production access.
+
+### Laravel Debugbar
+
+Debugbar injects a toolbar into HTML responses showing queries,
+routes, views, and memory usage. It is automatically disabled for
+API/JSON responses and for non-debug environments.
+
+```dotenv
+DEBUGBAR_ENABLED=true   # local dev (default in .env.example)
+DEBUGBAR_ENABLED=false  # set this in production .env
+```
+
+Neither tool runs during `php artisan test` — `phpunit.xml` sets
+`TELESCOPE_ENABLED=false` and `APP_ENV=testing` for the test suite.
 
 ---
 
