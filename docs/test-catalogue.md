@@ -25,17 +25,17 @@
 | Home / Dashboard        | 3         | ✗       |
 | Users                   | 10        | ✗       |
 | Subscriptions           | 9         | ✗       |
-| Coupons                 | 9         | ✗       |
+| Coupons                 | 10        | ✗       |
 | Payments                | 6         | ✗       |
 | Settings                | 22        | ✗       |
 | Permissions             | 5         | ✗       |
-| Roles                   | 6         | ✗       |
+| Roles                   | 7         | ✗       |
 | Drivers                 | 8         | ✗       |
 | Vehicle Types           | 7         | ✗       |
 | Vehicles                | 9         | ✗       |
 | Inspections             | 7         | ✗       |
 | Inspection Types        | 7         | ✗       |
-| Bookings                | 14        | ✗       |
+| Bookings                | 11        | ✗       |
 | Booking Payments        | 3         | ✗       |
 | Request Bookings        | 6         | ✗       |
 | Expenses                | 7         | ✗       |
@@ -43,7 +43,7 @@
 | Options                 | 7         | ✗       |
 | Addons                  | 9         | ✗       |
 | Places                  | 8         | ✗       |
-| Rental Agreements       | 9         | ✗       |
+| Rental Agreements       | 8         | ✗       |
 | Notifications           | 7         | ✗       |
 | Reminders               | 15        | ✗       |
 | Reminder Types          | 7         | ✗       |
@@ -52,7 +52,7 @@
 | Credits                 | 9         | ✗       |
 | Signatures              | 4         | ✗       |
 | API                     | 1         | ✗       |
-| **Total**               | **267**   | **0**   |
+| **Total**               | **246**   | **0**   |
 
 ---
 
@@ -137,6 +137,7 @@
 | ✗ | DELETE | `/coupons/{coupon}` | `coupons.destroy` | `CouponController@destroy` | `delete coupon` | — | deletes Coupon |
 | ✗ | GET | `/coupons/history` | `coupons.history` | `CouponController@history` | `manage coupon history` | — | — |
 | ✗ | DELETE | `/coupons/history/{id}/destroy` | `coupons.history.destroy` | `CouponController@historyDestroy` | `manage coupon history` | — | deletes CouponHistory |
+| ✗ | GET | `/coupons/apply` | `coupons.apply` | `CouponController@apply` | `manage coupon` | — | — |
 
 ---
 
@@ -154,6 +155,12 @@
 ---
 
 ## 7. Settings — `SettingController`
+
+> **Security note:** All write endpoints in this section use `auth`
+> middleware only — there is no per-action permission gate. Any
+> authenticated user can POST to `/settings/general`,
+> `/settings/payment`, `/settings/company`, etc. This should be
+> gated in Phase 1 (write a failing test first).
 
 | ✓/✗ | Verb | Path | Route name | Controller@method | Permission | Key inputs | Side effects |
 | --- | ---- | ---- | ---------- | ----------------- | ---------- | ---------- | ------------ |
@@ -204,6 +211,7 @@
 | ✗ | GET | `/role/{role}` | `role.show` | `RoleController@show` | none | — | — |
 | ✗ | GET | `/role/{role}/edit` | `role.edit` | `RoleController@edit` | none | — | — |
 | ✗ | PUT/PATCH | `/role/{role}` | `role.update` | `RoleController@update` | none | name, display_name, description, permissions[] | updates Role, syncs permissions |
+| ✗ | DELETE | `/role/{role}` | `role.destroy` | `RoleController@destroy` | none | — | deletes Role |
 
 ---
 
@@ -282,6 +290,9 @@
 
 ## 15. Bookings — `BookingController`
 
+> Payment sub-resource endpoints (`booking.payment.*`) are listed in
+> §16. `/test-planning` is a debug endpoint excluded in the Appendix.
+
 | ✓/✗ | Verb | Path | Route name | Controller@method | Permission | Key inputs | Side effects |
 | --- | ---- | ---- | ---------- | ----------------- | ---------- | ---------- | ------------ |
 | ✗ | GET | `/booking` | `booking.index` | `BookingController@index` | `manage booking` | — | — |
@@ -295,7 +306,6 @@
 | ✗ | GET | `/booking/template/download` | `booking.template` | `BookingController@downloadTemplate` | none | — | streams Excel file |
 | ✗ | POST | `/booking/import` | `booking.import` | `BookingController@importExcel` | `create booking` | file (xlsx/xls/csv) | parses spreadsheet; auto-creates Drivers + Vehicles; creates Bookings |
 | ✗ | GET | `/planning` | `planning` | `BookingController@planning` | none | — | — |
-| ✗ | GET | `/test-planning` | `test.planning` | `BookingController@testPlanning` | none (debug) | — | — |
 
 ---
 
@@ -407,7 +417,10 @@
 | ✗ | PUT/PATCH | `/rental-agreement/{rental-agreement}` | `rental-agreement.update` | `RentalAgreementController@update` | `edit rental agreement` | booking_id, customer_name, terms | updates RentalAgreement |
 | ✗ | DELETE | `/rental-agreement/{rental-agreement}` | `rental-agreement.destroy` | `RentalAgreementController@destroy` | `delete rental agreement` | — | deletes RentalAgreement |
 | ✗ | GET | `/drivers/search` | `drivers.search` | `RentalAgreementController@searchDrivers` | none | search query | — |
-| ✗ | GET | _(internal)_ | — | `RentalAgreementController@getUserSignature` | none | user_id | reads signature file from storage |
+
+> **Note:** `RentalAgreementController@getUserSignature` is called
+> internally (no dedicated route) — it is exercised indirectly by
+> `show` and does not need its own test row.
 
 ---
 
@@ -469,6 +482,8 @@
 | ✓/✗ | Verb | Path | Route name | Controller@method | Permission | Key inputs | Side effects |
 | --- | ---- | ---- | ---------- | ----------------- | ---------- | ---------- | ------------ |
 | ✗ | GET | `/tva` | `tva.index` | `TvaController@index` | `manage tva` | — | — |
+| ✗ | GET | `/tva/create` | `tva.create` | `TvaController@create` | none | — | — |
+| ✗ | POST | `/tva` | `tva.store` | `TvaController@store` | none | tva_number, amount, tva_rate, facture_date, payment_date | creates Tva |
 | ✗ | GET | `/tva/{tva}` | `tva.show` | `TvaController@show` | — | — | — |
 | ✗ | GET | `/tva/{tva}/edit` | `tva.edit` | `TvaController@edit` | — | — | — |
 | ✗ | PUT/PATCH | `/tva/{tva}` | `tva.update` | `TvaController@update` | `manage tva` | tva_number, amount, tva_rate, facture_date, payment_date | updates Tva |
@@ -480,6 +495,11 @@
 ---
 
 ## 28. TVA Renumber — `TvaRenumberController`
+
+> **Security note:** All three endpoints have no permission gate —
+> `auth` middleware only. `POST /tva/renumber/apply` is destructive
+> (renumbers existing Tva records in bulk). It should require an
+> explicit permission (e.g. `manage tva`) before going to production.
 
 | ✓/✗ | Verb | Path | Route name | Controller@method | Permission | Key inputs | Side effects |
 | --- | ---- | ---- | ---------- | ----------------- | ---------- | ---------- | ------------ |
