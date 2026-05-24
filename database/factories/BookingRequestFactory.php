@@ -18,9 +18,8 @@ class BookingRequestFactory extends Factory
         $end   = now()->addDays(4);
 
         return [
-            'guest_id'         => Guest::factory(),
             'vehicle'          => Vehicle::factory(),
-            'driver'           => null,
+            'driver'           => Guest::factory(),
             'start_date'       => $start->format('Y-m-d'),
             'start_time'       => '09:00',
             'end_date'         => $end->format('Y-m-d'),

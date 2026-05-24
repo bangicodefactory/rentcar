@@ -30,7 +30,7 @@ class TvaFactory extends Factory
             'reference'      => null,
             'client_name'    => null,
             'client_address' => null,
-            'company_name'   => null,
+            'company_name'   => 'Test Company',
             'company_address'=> null,
             'designation'    => null,
             'quantity'       => null,
