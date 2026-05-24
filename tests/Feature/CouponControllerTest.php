@@ -52,6 +52,12 @@ class CouponControllerTest extends TestCase
         $this->post(route('coupons.store'))->assertRedirect(route('login'));
     }
 
+    public function test_update_requires_auth(): void
+    {
+        $coupon = Coupon::factory()->create();
+        $this->put(route('coupons.update', $coupon), [])->assertRedirect(route('login'));
+    }
+
     public function test_destroy_requires_auth(): void
     {
         $coupon = Coupon::factory()->create();
@@ -232,6 +238,23 @@ class CouponControllerTest extends TestCase
         $coupon = Coupon::factory()->forPackage($this->subscription->id)->create([
             'type'      => 'percentage',
             'rate'      => 10,
+            'use_limit' => 100,
+            'status'    => '1',
+        ]);
+
+        $this->actingAs($this->owner)
+            ->get(route('coupons.apply', [
+                'package' => Crypt::encrypt($this->subscription->id),
+                'coupon'  => $coupon->code,
+            ]))
+            ->assertJsonFragment(['status' => true])
+            ->assertJsonFragment(['msg' => __('Coupon successfully applied.')]);
+    }
+
+    public function test_apply_returns_discounted_price_for_valid_fixed_coupon(): void
+    {
+        $coupon = Coupon::factory()->fixed()->forPackage($this->subscription->id)->create([
+            'rate'      => 20,
             'use_limit' => 100,
             'status'    => '1',
         ]);

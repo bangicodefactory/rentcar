@@ -50,6 +50,12 @@ class CreditControllerTest extends TestCase
         $this->post(route('credit.store'))->assertRedirect(route('login'));
     }
 
+    public function test_update_requires_auth(): void
+    {
+        $credit = $this->makeCredit();
+        $this->put(route('credit.update', $credit), [])->assertRedirect(route('login'));
+    }
+
     public function test_destroy_requires_auth(): void
     {
         $credit = $this->makeCredit();
@@ -170,13 +176,9 @@ class CreditControllerTest extends TestCase
 
     public function test_update_denied_for_cross_tenant_credit(): void
     {
-        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
-        $otherOwner->givePermissionTo('manage driver');
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-
         $credit = $this->makeCredit(); // belongs to $this->owner
 
-        $this->actingAs($otherOwner)
+        $this->actingAs($this->makeOtherOwner())
             ->put(route('credit.update', $credit), $this->validCreditPayload())
             ->assertRedirect(route('credit.index'))
             ->assertSessionHas('error');
@@ -198,13 +200,9 @@ class CreditControllerTest extends TestCase
 
     public function test_destroy_denied_for_cross_tenant_credit(): void
     {
-        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
-        $otherOwner->givePermissionTo('manage driver');
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-
         $credit = $this->makeCredit(); // belongs to $this->owner
 
-        $this->actingAs($otherOwner)
+        $this->actingAs($this->makeOtherOwner())
             ->delete(route('credit.destroy', $credit))
             ->assertRedirect(route('credit.index'))
             ->assertSessionHas('error');
@@ -243,6 +241,14 @@ class CreditControllerTest extends TestCase
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private function makeOtherOwner(): User
+    {
+        $other = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $other->givePermissionTo('manage driver');
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        return $other;
+    }
 
     private function makeCredit(array $overrides = []): Credit
     {
