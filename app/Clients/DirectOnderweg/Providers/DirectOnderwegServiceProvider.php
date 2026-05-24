@@ -12,6 +12,10 @@ class DirectOnderwegServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // ClientServiceProvider already binds these via the config 'bindings' array.
+        // Re-binding here gives this provider a single place for future per-client
+        // boot() logic (cache warm-up, event listeners, etc.). The config bindings
+        // act as a safety net if this provider fails to load.
         $this->app->bind(PricingServiceContract::class, DirectOnderwegPricingService::class);
         $this->app->bind(TvaServiceContract::class, DirectOnderwegTvaService::class);
     }

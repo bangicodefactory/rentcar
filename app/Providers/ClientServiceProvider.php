@@ -26,6 +26,8 @@ class ClientServiceProvider extends ServiceProvider
         // config/clients/<client>.php may supply an explicit 'provider_class' to
         // avoid Str::studly() producing the wrong casing (e.g. 'directonderweg'
         // → 'Directonderweg' instead of 'DirectOnderweg').
+        // Read from $specific (not $resolved) — _default.php must never define
+        // provider_class, and the key is inherently client-specific.
         $clientProvider = $specific['provider_class']
             ?? sprintf(
                 'App\\Clients\\%s\\Providers\\%sServiceProvider',
