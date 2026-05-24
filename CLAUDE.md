@@ -13,22 +13,48 @@ below override anything you might think is "best practice in general".
 
 ## 1. Target stack
 
-| Layer        | From                                  | To                                    |
-| ------------ | ------------------------------------- | ------------------------------------- |
-| PHP          | 8.1                                   | 8.3+                                  |
-| Laravel      | 10.48                                 | 12 (latest stable)                    |
-| Frontend     | Blade + Alpine.js + jQuery            | Inertia.js + React 19 (full SPA)      |
-| Build tool   | Laravel Mix + webpack                 | Vite                                  |
-| CSS          | Tailwind 3                            | Tailwind 4 (or latest stable)         |
-| Test runner  | PHPUnit 10                            | PHPUnit 11 (or Pest, see plan)        |
-| Auth         | Sanctum 3 + Breeze (Blade)            | Sanctum (latest) + Breeze (React/Inertia stack) |
-| PDF          | barryvdh/laravel-dompdf 3.x           | latest compatible                     |
-| Signature    | creagia/laravel-sign-pad 2.x          | latest compatible                     |
-| Permissions  | spatie/laravel-permission 5.x         | latest compatible                     |
-| Payments     | stripe-php 7.x + srmklive/paypal 3.x  | latest compatible (test in sandbox!)  |
+| Layer                  | From                                  | To                                          |
+| ---------------------- | ------------------------------------- | ------------------------------------------- |
+| PHP                    | 8.1                                   | 8.3+                                        |
+| Laravel                | 10.48                                 | 12 (latest stable)                          |
+| Frontend               | Blade + Alpine.js + jQuery            | Inertia.js + React 19 (full SPA)            |
+| Language (frontend)    | JavaScript (no types)                 | **TypeScript — mandatory, strict mode**     |
+| Build tool             | Laravel Mix + webpack                 | Vite                                        |
+| CSS                    | Tailwind 3                            | Tailwind 4 (or latest stable)               |
+| UI components          | —                                     | shadcn/ui (Radix UI primitives + Tailwind)  |
+| Forms / validation     | server-side only (Laravel)            | react-hook-form + zod (client UX layer)     |
+| Test runner (PHP)      | PHPUnit 10                            | PHPUnit 11 (or Pest, see plan)              |
+| Test runner (frontend) | —                                     | Vitest                                      |
+| Auth                   | Sanctum 3 + Breeze (Blade)            | Sanctum (latest) + Breeze (React/Inertia stack) |
+| PDF                    | barryvdh/laravel-dompdf 3.x           | latest compatible                           |
+| Signature              | creagia/laravel-sign-pad 2.x          | latest compatible                           |
+| Permissions            | spatie/laravel-permission 5.x         | latest compatible                           |
+| Payments               | stripe-php 7.x + srmklive/paypal 3.x  | latest compatible (test in sandbox!)        |
 
 Anything not in this table is either preserved exactly or flagged in
 `docs/migration-plan.md` before being changed.
+
+### About shadcn/ui
+
+shadcn/ui is not a traditional component library — it ships components
+as source files that live in this repo under
+`resources/js/components/ui/`. They are owned by the project, not by
+`node_modules`. Add components with `npx shadcn@latest add <component>`.
+Never edit the generated Radix primitive wrappers directly; extend via
+wrapper components or Tailwind variants. The components are built on
+**Radix UI** (accessibility primitives) and styled with Tailwind 4 CVA
+variants — keep that boundary intact.
+
+### About react-hook-form + zod
+
+All SPA forms use `react-hook-form` for state management and `zod` for
+schema-based validation. Client-side validation is **duplicative UX
+only** — the server-side Laravel validation remains the authoritative
+check (see §5, "Server-side validation stays server-side"). Zod schemas
+live in the same file as the form component that owns them; do not share
+schemas across unrelated pages. Inertia surfaces server validation
+errors through `useForm`'s `errors` prop — use that, not a separate
+client error state.
 
 ---
 
