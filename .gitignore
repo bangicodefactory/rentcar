@@ -9,3 +9,4 @@ node_modules
 /storage/framework
 /storage
 /storage_old
+run-tickets.ps1

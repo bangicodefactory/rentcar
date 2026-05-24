@@ -14,7 +14,7 @@
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(rm -rf /:*)",
-      "Bash(gh pr merge:*--admin*)"
+      "Bash(*--admin*)"
     ]
   }
 }
