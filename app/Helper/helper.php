@@ -981,3 +981,24 @@ if (!function_exists('defaultDriverCreate')) {
     }
 }
 }
+
+if (!function_exists('feature')) {
+    /**
+     * Check whether a named feature flag is enabled for the active client.
+     *
+     * Resolution order (highest precedence first):
+     *   1. FEATURE_* env var  (emergency override)
+     *   2. config/clients/<client>.php features array
+     *   3. config/clients/_default.php features array  (falls through to false)
+     */
+    function feature(string $name): bool
+    {
+        // .env override wins if explicitly set (not null).
+        $envOverride = config("features.{$name}");
+        if ($envOverride !== null) {
+            return (bool) $envOverride;
+        }
+
+        return (bool) config("client.features.{$name}", false);
+    }
+}

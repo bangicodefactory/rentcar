@@ -112,6 +112,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Active Client
+    |--------------------------------------------------------------------------
+    |
+    | Selects the active client configuration at deploy time. Defaults to
+    | directonderweg so local dev works without setting APP_CLIENT.
+    | See docs/client-configurability.md for the full multi-client design.
+    |
+    */
+
+    'client' => env('APP_CLIENT', 'directonderweg'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |
@@ -189,6 +202,7 @@ return [
         /*
          * Application Service Providers...
          */
+        App\Providers\ClientServiceProvider::class,  // must be first — binds client interfaces
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
