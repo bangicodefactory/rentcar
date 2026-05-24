@@ -332,6 +332,59 @@ The repo is mid-modernization. If you're working on the migration:
 
 ---
 
+## Monitoring
+
+Error monitoring runs via [Sentry](https://sentry.io). The project is **rentcar** inside the Anthropic org (ask the project owner for access).
+
+### How issues are tagged
+
+Every event carries:
+
+| Tag | Source |
+| --- | ------ |
+| `environment` | `SENTRY_ENVIRONMENT` — e.g. `production-directonderweg`, `staging-directonderweg`, `ci` |
+| `release` | `SENTRY_RELEASE` — set to `$GITHUB_SHA` in CI/CD and at deploy time |
+| `client` | `APP_CLIENT` — set as a Sentry tag in `AppServiceProvider::boot()` once instrumented |
+| `user` | Authenticated user ID / email, captured automatically by the Laravel SDK |
+
+### Triage flow
+
+1. Someone gets paged (Sentry alert or email notification).
+2. Open the issue in Sentry → read the breadcrumbs and stack trace.
+3. Assign yourself to the issue in Sentry.
+4. Fix it in a branch; in the commit message reference the Sentry issue:
+   ```
+   fix(BAN-N): <summary>
+
+   Fixes SENTRY-RENTCAR-42
+   ```
+5. After the fix is deployed, mark the Sentry issue **Resolved**.
+
+### Ignoring noisy errors
+
+Use Sentry's **Inbound Filters** (Project Settings → Inbound Filters) or add entries to `ignore_exceptions` in `config/sentry.php`:
+
+```php
+'ignore_exceptions' => [
+    \Illuminate\Auth\AuthenticationException::class,
+    \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class,
+],
+```
+
+### Silencing Sentry locally
+
+Leave `SENTRY_LARAVEL_DSN` empty (or omit it) in your `.env`. The SDK no-ops when the DSN is blank — no events are sent.
+
+To smoke-test the integration locally once you have a real DSN, hit the local-only route:
+
+```
+GET /sentry-test   (requires auth, local env only)
+```
+
+This throws an intentional exception that should appear in Sentry within a few seconds.
+
+---
+
 ## Troubleshooting
 
 | Symptom                                                | Likely fix                                                   |

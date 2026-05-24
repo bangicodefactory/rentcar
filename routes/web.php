@@ -495,6 +495,17 @@ Route::post('/tva/bulk-download', [TvaController::class, 'bulkDownload'])->name(
 // Test route for calendar without authentication
 Route::get('/test-planning', [BookingController::class, 'testPlanning'])->name('test.planning');
 
+// --------------------------------------------------------------------------
+// Sentry smoke-test — local + authenticated admins only.
+// Throws a deliberate exception; verify it arrives in Sentry within ~1 minute.
+// Remove (or keep — it's harmless) once Sentry is confirmed working.
+// --------------------------------------------------------------------------
+if (app()->environment('local')) {
+    Route::get('/sentry-test', function () {
+        throw new \RuntimeException('Sentry smoke-test — intentional exception from /sentry-test');
+    })->middleware('auth')->name('sentry.test');
+}
+
 // genere tva par mois
 Route::post('/tva/generate', [TvaController::class, 'generateMonthlyTva'])->name('tva.generate');
 

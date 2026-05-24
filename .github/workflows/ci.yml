@@ -41,6 +41,8 @@ jobs:
       DB_DATABASE: testing
       DB_USERNAME: root
       DB_PASSWORD: password
+      SENTRY_RELEASE: ${{ github.sha }}
+      SENTRY_ENVIRONMENT: ci
 
     steps:
       - name: Checkout
