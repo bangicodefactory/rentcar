@@ -68,7 +68,7 @@ git clone git@github.com:bangicodefactory/rentcar.git
 cd rentcar
 
 composer install
-npm install
+npm ci
 cp .env.example .env
 php artisan key:generate
 ```
@@ -119,13 +119,14 @@ PAYPAL_MODE=sandbox
 PAYPAL_SANDBOX_CLIENT_ID=
 PAYPAL_SANDBOX_CLIENT_SECRET=
 
-# Google reCAPTCHA v2
-NOCAPTCHA_SITEKEY=
-NOCAPTCHA_SECRET=
+# Google reCAPTCHA v2 — the always-pass test keys below work for local dev
+NOCAPTCHA_SITEKEY=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI
+NOCAPTCHA_SECRET=6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe
 ```
 
-Ask the team lead for the shared sandbox credentials if you don't have
-them.
+These reCAPTCHA values are Google's public test keys — safe to use locally,
+they always pass. Ask the team lead for Stripe and PayPal sandbox credentials
+if you don't have them.
 
 ### 4. Create the database, migrate, and seed
 
