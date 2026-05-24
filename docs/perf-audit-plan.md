@@ -68,19 +68,23 @@ file, then restart MySQL.
 slow_query_log                  = 1
 long_query_time                 = 0.2
 log_queries_not_using_indexes   = 1
-slow_query_log_file             = /path/to/mysql-slow.log   ; set per-OS below
+slow_query_log_file             = /path/to/mysql-slow.log   # set per-OS below
 ```
 
 #### Config file locations by OS
 
 | Setup                        | Config file path                                          | Default log path                              |
 | ---------------------------- | --------------------------------------------------------- | --------------------------------------------- |
-| macOS — Homebrew MySQL 8     | `/opt/homebrew/etc/my.cnf` (Apple Silicon) or `/usr/local/etc/my.cnf` (Intel) | `/tmp/mysql-slow.log` |
+| macOS — Homebrew MySQL 8     | `/opt/homebrew/etc/my.cnf` (Apple Silicon) or `/usr/local/etc/my.cnf` (Intel) | `/opt/homebrew/var/mysql/<hostname>-slow.log` (Apple Silicon) |
 | Linux — Ubuntu/Debian apt    | `/etc/mysql/mysql.conf.d/mysqld.cnf`                      | `/var/log/mysql/mysql-slow.log`               |
-| Windows — Laragon             | `C:\laragon\bin\mysql\mysql-8.x.x\my.ini`                | `C:\laragon\tmp\mysql-slow.log`               |
+| Windows — Laragon             | `C:\laragon\bin\mysql\mysql-8.x.x\my.ini` (adjust version folder) | `C:\laragon\tmp\mysql-slow.log`    |
 | Windows — XAMPP               | `C:\xampp\mysql\bin\my.ini`                               | `C:\xampp\mysql\data\<hostname>-slow.log`     |
 | WSL2 — Ubuntu                | `/etc/mysql/mysql.conf.d/mysqld.cnf`                      | `/var/log/mysql/mysql-slow.log`               |
-| Docker (official mysql image) | Mount a custom `my.cnf` at `/etc/mysql/conf.d/slow.cnf`  | `/var/lib/mysql/<hostname>-slow.log`          |
+| Docker (official mysql image) | Volume-mount a custom file at `/etc/mysql/conf.d/slow.cnf` (e.g. `-v ./slow.cnf:/etc/mysql/conf.d/slow.cnf`) | `/var/lib/mysql/<hostname>-slow.log` |
+
+> **Tip:** the actual log path may differ from the defaults above.
+> After enabling, run `SHOW VARIABLES LIKE 'slow_query_log_file';` to
+> find the exact path MySQL is writing to on your machine.
 
 After editing, restart MySQL:
 
@@ -114,10 +118,12 @@ You should see a block starting with `# Time:` and `# Query_time:`.
 ### Useful log-analysis commands
 
 ```bash
-# Summarize the slow log (groups queries, shows counts and avg time)
+# Summarize the slow log — macOS/Linux only (requires Perl on PATH;
+# Windows users: use pt-query-digest via WSL2 or stick to Telescope)
 mysqldumpslow -s t /path/to/mysql-slow.log | head -40
 
-# Or with pt-query-digest (more detail — install via percona-toolkit)
+# pt-query-digest: more detail, cross-platform via WSL2
+# Install: sudo apt install percona-toolkit  (or brew install percona-toolkit)
 pt-query-digest /path/to/mysql-slow.log | head -80
 ```
 
