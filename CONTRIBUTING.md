@@ -88,6 +88,9 @@ PRs must be merged with **rebase** (linear history, no merge commits) so that
 gh pr merge --rebase --delete-branch
 ```
 
+Rebase-merge preserves every commit individually — it is not the same as
+squash. All commits land on `feat/modernization` unchanged.
+
 ---
 
 ## Adding a new client
