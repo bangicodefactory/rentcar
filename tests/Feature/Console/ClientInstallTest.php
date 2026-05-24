@@ -61,7 +61,8 @@ class ClientInstallTest extends TestCase
         ]]);
 
         $this->artisan('client:install', ['--client' => 'acme'])
-            ->assertSuccessful();
+            ->assertSuccessful()
+            ->expectsOutputToContain('acme'); // confirms the --client flag was honoured
 
         $this->assertDatabaseHas('settings', ['name' => 'app_name', 'value' => 'Acme Rentals', 'parent_id' => 1]);
     }

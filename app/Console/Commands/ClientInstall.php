@@ -14,6 +14,8 @@ class ClientInstall extends Command
 
     public function handle(): int
     {
+        // Note: --client only affects the branding_seed lookup. It does not
+        // re-run ClientServiceProvider or swap the active client's bindings.
         $client = $this->option('client') ?? config('app.client', 'directonderweg');
         $seed   = config("clients.{$client}.branding_seed", []);
 
@@ -28,6 +30,10 @@ class ClientInstall extends Command
         $skipped = [];
 
         foreach ($seed as $key => $value) {
+            // parent_id = 1 is the super-admin row created on first install.
+            // Settings are scoped by owner; all global/admin settings live under id 1.
+            // 'type' is intentionally null — the settings() helper reads all rows with
+            // matching parent_id regardless of type; branding keys are untyped.
             $setting = Setting::firstOrCreate(
                 ['name' => $key, 'parent_id' => 1],
                 ['value' => $value],
