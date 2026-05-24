@@ -38,11 +38,13 @@ Anything not in this table is either preserved exactly or flagged in
 - **Never commit directly to `dev`** or `main`. If you're on `dev`,
   stop and switch back to `feat/modernization`.
 - Keep commits **small and atomic**, one logical concern each.
+  Prefix every commit with the Linear ticket identifier:
+  `BAN-<N>: <imperative short summary>`
   Examples of good commit messages:
-  - `test(booking): cover BookingController@store happy + sad paths`
-  - `chore(deps): bump phpunit to ^11.0`
-  - `refactor(views): port booking/index.blade.php to Inertia + React`
-  - `perf(audit): document N+1 on /dashboard (do not fix yet)`
+  - `BAN-31: cover BookingController@store happy + sad paths`
+  - `BAN-87: bump phpunit to ^11.0`
+  - `BAN-42: port booking/index.blade.php to Inertia + React`
+  - `BAN-55: document N+1 on /dashboard (do not fix yet)`
 - Reference the migration phase in the commit body when relevant
   (e.g. "Phase 1: test backfill").
 - **Do not squash** during the migration — the per-step history is
