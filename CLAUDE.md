@@ -42,8 +42,8 @@ as source files that live in this repo under
 `node_modules`. Add components with `npx shadcn@latest add <component>`.
 Never edit the generated Radix primitive wrappers directly; extend via
 wrapper components or Tailwind variants. The components are built on
-**Radix UI** (accessibility primitives) and styled with Tailwind 4 CVA
-variants — keep that boundary intact.
+**Radix UI** (accessibility primitives) and styled with Tailwind utility
+classes — keep that boundary intact.
 
 ### About react-hook-form + zod
 
@@ -52,9 +52,10 @@ schema-based validation. Client-side validation is **duplicative UX
 only** — the server-side Laravel validation remains the authoritative
 check (see §5, "Server-side validation stays server-side"). Zod schemas
 live in the same file as the form component that owns them; do not share
-schemas across unrelated pages. Inertia surfaces server validation
-errors through `useForm`'s `errors` prop — use that, not a separate
-client error state.
+schemas across unrelated pages. Inertia's `useForm` surfaces server
+validation errors via its `errors` prop; wire them into react-hook-form
+with `setError` in the submit handler — do not maintain a separate
+client-side error state.
 
 ---
 
