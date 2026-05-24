@@ -1,6 +1,6 @@
 # Performance Audit Plan
 
-Last updated: 2026-05-15
+Last updated: 2026-05-24
 Owner: Ahmed
 
 The client reports the app is slow. Before changing anything, we
@@ -30,6 +30,103 @@ Install all of these as `--dev` dependencies on `feat/modernization`:
 
 Telescope and Debugbar must be **disabled in production** (already the
 default for both — verify `TELESCOPE_ENABLED=false` for prod envs).
+
+---
+
+## MySQL slow-query log setup (local only)
+
+> **Never enable this on production or staging.** It writes every slow
+> query to disk and degrades write throughput under load.
+
+### Option A — Runtime (no config file edit, survives until MySQL restarts)
+
+Connect as root and run:
+
+```sql
+SET GLOBAL slow_query_log        = 1;
+SET GLOBAL long_query_time       = 0.2;   -- log queries taking >200ms
+SET GLOBAL log_queries_not_using_indexes = 1;  -- also log full-scans
+
+-- Optional: set an explicit path (MySQL picks a default if omitted)
+-- SET GLOBAL slow_query_log_file = '/path/to/mysql-slow.log';
+
+-- Verify it took effect
+SHOW VARIABLES LIKE 'slow_query%';
+SHOW VARIABLES LIKE 'long_query_time';
+```
+
+These settings reset when MySQL restarts. Use Option B to make them
+permanent for local dev.
+
+### Option B — Permanent via `my.cnf` / `my.ini`
+
+Add the block below to the `[mysqld]` section of your MySQL config
+file, then restart MySQL.
+
+```ini
+[mysqld]
+slow_query_log                  = 1
+long_query_time                 = 0.2
+log_queries_not_using_indexes   = 1
+slow_query_log_file             = /path/to/mysql-slow.log   ; set per-OS below
+```
+
+#### Config file locations by OS
+
+| Setup                        | Config file path                                          | Default log path                              |
+| ---------------------------- | --------------------------------------------------------- | --------------------------------------------- |
+| macOS — Homebrew MySQL 8     | `/opt/homebrew/etc/my.cnf` (Apple Silicon) or `/usr/local/etc/my.cnf` (Intel) | `/tmp/mysql-slow.log` |
+| Linux — Ubuntu/Debian apt    | `/etc/mysql/mysql.conf.d/mysqld.cnf`                      | `/var/log/mysql/mysql-slow.log`               |
+| Windows — Laragon             | `C:\laragon\bin\mysql\mysql-8.x.x\my.ini`                | `C:\laragon\tmp\mysql-slow.log`               |
+| Windows — XAMPP               | `C:\xampp\mysql\bin\my.ini`                               | `C:\xampp\mysql\data\<hostname>-slow.log`     |
+| WSL2 — Ubuntu                | `/etc/mysql/mysql.conf.d/mysqld.cnf`                      | `/var/log/mysql/mysql-slow.log`               |
+| Docker (official mysql image) | Mount a custom `my.cnf` at `/etc/mysql/conf.d/slow.cnf`  | `/var/lib/mysql/<hostname>-slow.log`          |
+
+After editing, restart MySQL:
+
+```bash
+# macOS Homebrew
+brew services restart mysql
+
+# Linux systemd
+sudo systemctl restart mysql
+
+# Laragon
+# Right-click tray icon → MySQL → Stop / Start
+```
+
+### Verify queries are landing in the log
+
+Run any query you know is slow, or force a full-table scan:
+
+```sql
+SELECT SLEEP(0.3);   -- always lands in the log at long_query_time=0.2
+```
+
+Then check the log file:
+
+```bash
+tail -n 30 /path/to/mysql-slow.log
+```
+
+You should see a block starting with `# Time:` and `# Query_time:`.
+
+### Useful log-analysis commands
+
+```bash
+# Summarize the slow log (groups queries, shows counts and avg time)
+mysqldumpslow -s t /path/to/mysql-slow.log | head -40
+
+# Or with pt-query-digest (more detail — install via percona-toolkit)
+pt-query-digest /path/to/mysql-slow.log | head -80
+```
+
+### Where to record findings
+
+Copy the log path you used into `docs/perf-audit.md` under the
+**Environment** section so other team members know where to look.
+Log paths are machine-specific and **must not be committed** to any
+config or `.env` file.
 
 ---
 
