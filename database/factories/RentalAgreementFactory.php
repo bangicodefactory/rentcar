@@ -17,7 +17,7 @@ class RentalAgreementFactory extends Factory
         $end   = now()->addDays(4);
 
         return [
-            'agreement_id'      => $this->faker->unique()->numerify('AGR-####'),
+            'agreement_id'      => $this->faker->unique()->numberBetween(1, 99999),
             'date'              => now()->format('Y-m-d H:i:s'),
             'rental_start_date' => $start->format('Y-m-d H:i:s'),
             'rental_end_date'   => $end->format('Y-m-d H:i:s'),
