@@ -68,6 +68,13 @@ class SubscriptionControllerTest extends TestCase
         $this->get(route('subscription.transaction'))->assertRedirect(route('login'));
     }
 
+    public function test_stripe_payment_requires_auth(): void
+    {
+        $sub = Subscription::factory()->create();
+        $this->post(route('subscription.stripe.payment', Crypt::encrypt($sub->id)))
+            ->assertRedirect(route('login'));
+    }
+
     // ── permission denied ─────────────────────────────────────────────────────
 
     public function test_index_denied_without_manage_pricing_packages(): void
@@ -166,6 +173,20 @@ class SubscriptionControllerTest extends TestCase
         $this->assertDatabaseHas('subscriptions', [
             'title'                  => 'LogHistory Plan',
             'enabled_logged_history' => 1,
+        ]);
+    }
+
+    public function test_store_stores_zero_for_enabled_logged_history_when_absent(): void
+    {
+        // Controller does isset($request->enabled_logged_history) ? 1 : 0
+        // so omitting the field must save 0.
+        $this->actingAs($this->owner)
+            ->post(route('subscriptions.store'), $this->validPayload(['title' => 'NoLog Plan']))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('subscriptions', [
+            'title'                  => 'NoLog Plan',
+            'enabled_logged_history' => 0,
         ]);
     }
 

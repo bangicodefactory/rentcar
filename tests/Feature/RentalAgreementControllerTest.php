@@ -69,6 +69,13 @@ class RentalAgreementControllerTest extends TestCase
         $this->delete(route('rental-agreement.destroy', $agreement))->assertRedirect(route('login'));
     }
 
+    public function test_show_requires_auth(): void
+    {
+        $agreement = $this->makeAgreement();
+        $this->get(route('rental-agreement.show', Crypt::encrypt($agreement->id)))
+            ->assertRedirect(route('login'));
+    }
+
     // ── permission denied ─────────────────────────────────────────────────────
 
     public function test_index_denied_without_manage_rental_agreement(): void

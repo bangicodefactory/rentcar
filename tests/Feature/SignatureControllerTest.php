@@ -173,10 +173,10 @@ class SignatureControllerTest extends TestCase
             ->assertSessionHas('error');
     }
 
-    public function test_destroy_also_cleans_file_from_disk(): void
+    public function test_destroy_leaves_orphaned_file_on_disk_documents_gap(): void
     {
-        // Store a real file first, then verify destroy removes the DB record.
-        // (The current controller does not delete the file on destroy — documents the gap.)
+        // Store a real file first, then verify destroy removes the DB record
+        // but DOES NOT remove the file — the controller has no file-deletion logic.
         $this->actingAs($this->owner)
             ->post(route('signature.store'), [
                 'user_id'   => $this->owner->id,
