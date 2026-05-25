@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\LoggedHistory;
+use App\Models\Notification;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,7 +52,7 @@ class UserControllerTest extends TestCase
         // store() (non-super-admin path) accesses this record unconditionally before
         // the null-guard, so it must exist for any store test to reach the DB write.
         // Use create() directly — NotificationFactory includes 'enabled_sms' which is not in the table.
-        \App\Models\Notification::create([
+        Notification::create([
             'module'        => 'user_create',
             'name'          => 'New User',
             'subject'       => 'Welcome',
@@ -257,12 +258,29 @@ class UserControllerTest extends TestCase
 
     // ── UserController::loggedHistoryDestroy ──────────────────────────────────
 
+    public function test_logged_history_destroy_requires_auth(): void
+    {
+        $history = LoggedHistory::factory()->create(['parent_id' => $this->owner->id]);
+        $this->delete(route('logged.history.destroy', $history->id))->assertRedirect(route('login'));
+    }
+
+    public function test_logged_history_destroy_denied_without_delete_logged_history(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $history = LoggedHistory::factory()->create(['parent_id' => $this->owner->id]);
+
+        $this->actingAs($noPerms)
+            ->delete(route('logged.history.destroy', $history->id))
+            ->assertSessionHas('error');
+    }
+
     public function test_logged_history_destroy_deletes_record(): void
     {
         $history = LoggedHistory::factory()->create(['parent_id' => $this->owner->id]);
 
         $this->actingAs($this->owner)
             ->delete(route('logged.history.destroy', $history->id))
+            ->assertRedirect()
             ->assertSessionHas('success');
 
         $this->assertDatabaseMissing('logged_histories', ['id' => $history->id]);
