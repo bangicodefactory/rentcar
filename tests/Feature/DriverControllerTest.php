@@ -147,7 +147,7 @@ class DriverControllerTest extends TestCase
             'parent_id' => $this->owner->id,
         ]);
         // DriverFactory uses string driver_id ('DR-####') which violates the integer column constraint.
-        Driver::create(['driver_id' => 1, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
 
         $this->actingAs($this->owner)
             ->put(route('driver.update', $driverUser->id), [
@@ -175,7 +175,7 @@ class DriverControllerTest extends TestCase
     public function test_destroy_deletes_driver(): void
     {
         $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
-        Driver::create(['driver_id' => 2, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
 
         $this->actingAs($this->owner)
             ->delete(route('driver.destroy', $driverUser->id))

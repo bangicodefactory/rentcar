@@ -165,8 +165,7 @@ class NotificationControllerTest extends TestCase
         ], $overrides);
     }
 
-    // Use Notification::create() directly to avoid NotificationFactory's 'enabled_sms' column
-    // which does not exist in the notifications table.
+    // NotificationFactory includes enabled_sms which is not in the DB table.
     private function makeNotification(string $module): Notification
     {
         return Notification::create([
