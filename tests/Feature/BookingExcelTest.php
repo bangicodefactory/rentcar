@@ -82,7 +82,6 @@ class BookingExcelTest extends TestCase
 
     public function test_import_flashes_error_for_empty_spreadsheet(): void
     {
-        // A spreadsheet with only a header row and no data rows.
         $file = $this->makeXlsx([]);
 
         $this->actingAs($this->owner)
@@ -93,8 +92,8 @@ class BookingExcelTest extends TestCase
 
     public function test_import_creates_bookings_from_valid_xlsx(): void
     {
-        $vehicle = Vehicle::factory()->create([
-            'parent_id'    => $this->owner->id,
+        Vehicle::factory()->create([
+            'parent_id'     => $this->owner->id,
             'license_plate' => 'AB-9999-CD',
         ]);
 
@@ -121,7 +120,6 @@ class BookingExcelTest extends TestCase
         ];
         $file = $this->makeXlsx($rows);
 
-        // The controller imports 0 rows but still redirects with a success (or "0 imported") message.
         $this->actingAs($this->owner)
             ->post(route('booking.import'), ['file' => $file])
             ->assertRedirect(route('booking.index'));
@@ -147,7 +145,7 @@ class BookingExcelTest extends TestCase
             }
         }
 
-        $tempPath = tempnam(sys_get_temp_dir(), 'booking_') . '.xlsx';
+        $tempPath = sys_get_temp_dir() . '/booking_' . uniqid() . '.xlsx';
         (new Xlsx($spreadsheet))->save($tempPath);
 
         return new UploadedFile(

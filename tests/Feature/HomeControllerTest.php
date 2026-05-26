@@ -18,15 +18,15 @@ class HomeControllerTest extends TestCase
     {
         parent::setUp();
         $this->asClient('directonderweg');
+
+        Permission::firstOrCreate(['name' => 'manage reminder', 'guard_name' => 'web']);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     // ── HomeController::index — owner ─────────────────────────────────────────
 
     public function test_dashboard_returns_200_for_owner(): void
     {
-        Permission::firstOrCreate(['name' => 'manage reminder', 'guard_name' => 'web']);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-
         $owner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
         $owner->givePermissionTo('manage reminder');
 
