@@ -77,6 +77,12 @@ jobs:
       - name: Copy .env
         run: cp .env.example .env
 
+      - name: Create storage directories
+        run: |
+          mkdir -p storage/framework/{cache/data,sessions,views}
+          mkdir -p storage/logs
+          chmod -R 755 storage
+
       - name: Generate application key
         run: php artisan key:generate
 
