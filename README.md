@@ -22,10 +22,10 @@ management.
 
 ## Tech stack (current, pre-migration)
 
-- PHP **8.1+** (target during migration: **8.3+**)
+- PHP **8.3+** (CI runs **8.4**; 8.4 recommended locally)
 - Laravel **10.48** (target: **12**)
 - MySQL **8.0+** (MariaDB 10.6+ also works)
-- Node **18+** (target during migration: **20+ LTS**)
+- Node **20+ LTS**
 - Frontend: Blade + Alpine.js + jQuery + Tailwind, built with Laravel Mix
   (target: Inertia.js + React 19 + Vite)
 
@@ -43,8 +43,7 @@ Key packages: `spatie/laravel-permission`, `laravel/sanctum`,
 
 Install these first:
 
-- PHP 8.1 (the project still runs on 8.1; 8.3 is required to follow the
-  migration branch)
+- PHP 8.3+ (8.4 recommended; CI tests against 8.4)
 - Composer 2.x
 - Node.js 18+ and npm 9+
 - MySQL 8 or MariaDB 10.6+ running locally
@@ -55,7 +54,7 @@ Install these first:
 If you're on macOS the easiest path is Homebrew:
 
 ```bash
-brew install php@8.1 composer node@20 mysql mailpit
+brew install php@8.3 composer node@20 mysql mailpit
 ```
 
 On Windows, [Laragon](https://laragon.org/) or WSL2 + Ubuntu is the
