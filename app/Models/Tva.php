@@ -130,8 +130,6 @@ class Tva extends Model
         }
         return $this->total_ht ?? 0;
     }
-    protected $dates = ['deleted_at'];
-
     // Relations
     public function booking()
     {
