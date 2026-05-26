@@ -47,14 +47,16 @@
                                 @if(Gate::check('delete coupon history'))
                                     <td class="text-right">
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['coupons.history.destroy', $history->id]]) !!}
+                                            <form action="{{ route('coupons.history.destroy', $history->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
 
                                             @if( Gate::check('delete coupon history'))
                                                 <a class=" text-danger confirm_dialog" data-bs-toggle="tooltip"
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
                                     </td>
                                 @endif

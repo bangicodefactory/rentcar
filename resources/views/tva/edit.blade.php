@@ -13,19 +13,21 @@
 @endsection
 
 @section('content')
-    {{ Form::model($tva, ['route' => ['tva.update', $tva->id], 'method' => 'PUT']) }}
+    <form action="{{ route('tva.update', $tva->id) }}" method="POST">
+    @csrf
+    @method('PUT')
     <div class="row">
         {{-- Booking select --}}
         <div class="form-group col-md-6">
-            {{ Form::label('booking_id', __('Booking'), ['class' => 'form-label']) }}
-            <input type="text" class="form-control" value="{{ $tva->booking_id ?? 'N/A' }}" readonly>
+            <label for="booking_id_display" class="form-label">{{ __('Booking') }}</label>
+            <input type="text" id="booking_id_display" class="form-control" value="{{ $tva->booking_id ?? 'N/A' }}" readonly>
             <input type="hidden" name="booking_id" value="{{ $tva->booking_id }}">
         </div>
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('designation', __('Vehicle'), ['class' => 'form-label']) }}
-            {{ Form::text('designation', null, ['class' => 'form-control','readonly' => true] ) }}
+            <label for="designation" class="form-label">{{ __('Vehicle') }}</label>
+            <input type="text" name="designation" id="designation" class="form-control" value="{{ old('designation', $tva->designation) }}" readonly>
         </div>
-        
+
         {{-- @php
         // $prefix = bookingPrefix();
         // $factureNumber = isset($tva->facture_number)
@@ -36,44 +38,44 @@
         <!-- To avoid #BOK-000#BOK-0002 duplication in case of editing -->
 
         <div class="form-group col-md-6 col-lg-6">
-        {{ Form::label('facture_number', __('Facture Number'), ['class' => 'form-label']) }}
-        {{ Form::text('facture_number', $tva->facture_number, ['class' => 'form-control', 'required' => true]) }}
+        <label for="facture_number" class="form-label">{{ __('Facture Number') }}</label>
+        <input type="text" name="facture_number" id="facture_number" class="form-control" value="{{ old('facture_number', $tva->facture_number) }}" required>
         </div>
 
         {{-- Facture Date --}}
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('facture_date', __('Facture Date'), ['class' => 'form-label']) }}
-            {{ Form::date('facture_date', $tva->facture_date ? \Carbon\Carbon::parse($tva->facture_date)->format('Y-m-d') : null, ['class' => 'form-control', 'required' => true]) }}
+            <label for="facture_date" class="form-label">{{ __('Facture Date') }}</label>
+            <input type="date" name="facture_date" id="facture_date" class="form-control" value="{{ old('facture_date', $tva->facture_date ? \Carbon\Carbon::parse($tva->facture_date)->format('Y-m-d') : '') }}" required>
         </div>
         {{-- Quantity --}}
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('quantity', __('Quantity'), ['class' => 'form-label']) }}
-            {{ Form::number('quantity', null, ['class' => 'form-control', 'step' => '1', 'readonly' => true]) }}
+            <label for="quantity" class="form-label">{{ __('Quantity') }}</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" step="1" value="{{ old('quantity', $tva->quantity) }}" readonly>
         </div>
 
         {{-- Total HT --}}
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('total_ht', __('Total HT'), ['class' => 'form-label']) }}
-            {{ Form::number('total_ht', null, ['class' => 'form-control', 'step' => '0.01', 'readonly' => true]) }}
+            <label for="total_ht" class="form-label">{{ __('Total HT') }}</label>
+            <input type="number" name="total_ht" id="total_ht" class="form-control" step="0.01" value="{{ old('total_ht', $tva->total_ht) }}" readonly>
         </div>
 
         {{-- TVA --}}
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('tva', __('TVA'), ['class' => 'form-label']) }}
-            {{ Form::number('tva', null, ['class' => 'form-control', 'step' => '0.01', 'readonly' => true]) }}
+            <label for="tva" class="form-label">{{ __('TVA') }}</label>
+            <input type="number" name="tva" id="tva" class="form-control" step="0.01" value="{{ old('tva', $tva->tva) }}" readonly>
         </div>
 
         {{-- Unit Price HT --}}
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('unit_price_ht', __('Unit Price HT (P.U.H.T)'), ['class' => 'form-label']) }}
-            {{ Form::number('unit_price_ht', null, ['class' => 'form-control', 'step' => '0.01']) }}
+            <label for="unit_price_ht" class="form-label">{{ __('Unit Price HT (P.U.H.T)') }}</label>
+            <input type="number" name="unit_price_ht" id="unit_price_ht" class="form-control" step="0.01" value="{{ old('unit_price_ht', $tva->unit_price_ht) }}">
         </div>
 
 
         {{-- Montant TTC --}}
         <div class="form-group col-md-6 col-lg-6">
-            {{ Form::label('montant_ttc', __('Montant TTC'), ['class' => 'form-label']) }}
-            {{ Form::number('montant_ttc', null, ['class' => 'form-control', 'step' => '0.01']) }}
+            <label for="montant_ttc" class="form-label">{{ __('Montant TTC') }}</label>
+            <input type="number" name="montant_ttc" id="montant_ttc" class="form-control" step="0.01" value="{{ old('montant_ttc', $tva->montant_ttc) }}">
         </div>
 
        @push('scripts')
@@ -97,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const ht = +(puhtVal * qteVal).toFixed(2);          // HT = PUHT * QTE 
+        const ht = +(puhtVal * qteVal).toFixed(2);          // HT = PUHT * QTE
         const tva = +(ht * tvaRate).toFixed(2);              // TVA = HT * 0.2
         const ttc = +(ht + tva).toFixed(2);                  // TTC = HT + TVA
 
@@ -111,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     </div>
     <div class="mt-4 text-end">
-        {{ Form::submit(__('Update TVA'), ['class' => 'btn btn-primary']) }}
+        <button type="submit" class="btn btn-primary">{{__('Update TVA')}}</button>
     </div>
-    {{ Form::close() }}
+    </form>
 @endsection

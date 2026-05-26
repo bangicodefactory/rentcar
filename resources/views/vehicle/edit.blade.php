@@ -1,88 +1,96 @@
-{{ Form::model($vehicle, array('route' => array('vehicle.update', $vehicle->id), 'enctype' => "multipart/form-data", 'method' => 'PUT')) }}
+<form action="{{ route('vehicle.update', $vehicle->id) }}" method="POST" enctype="multipart/form-data">
+@csrf
+@method('PUT')
 <div class="modal-body">
     <div class="row">
         <div class="form-group col-md-6">
-            {{Form::label('name',__('Vehicle Name'),array('class'=>'form-label')) }}
-            {{Form::text('name',null,array('class'=>'form-control','placeholder'=>__('Enter vehicle name'),'required'=>'required'))}}
+            <label for="name" class="form-label">{{ __('Vehicle Name') }}</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="{{ __('Enter vehicle name') }}" value="{{ old('name', $vehicle->name) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('type', __('Type'),['class'=>'form-label']) }}
-            {!! Form::select('type', $types,null,array('class' => 'form-control hidesearch ','required'=>'required')) !!}
+            <label for="type" class="form-label">{{ __('Type') }}</label>
+            <select name="type" id="type" class="form-control hidesearch " required>
+                @foreach($types as $val => $label)
+                    <option value="{{ $val }}" {{ old('type', $vehicle->type) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('model',__('Model'),array('class'=>'form-label')) }}
-            {{Form::text('model',null,array('class'=>'form-control','placeholder'=>__('Enter model'),'required'=>'required'))}}
+            <label for="model" class="form-label">{{ __('Model') }}</label>
+            <input type="text" name="model" id="model" class="form-control" placeholder="{{ __('Enter model') }}" value="{{ old('model', $vehicle->model) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('engine_type',__('Engine Type'),array('class'=>'form-label')) }}
-            {{Form::text('engine_type',null,array('class'=>'form-control','placeholder'=>__('Enter engine type'),'required'=>'required'))}}
+            <label for="engine_type" class="form-label">{{ __('Engine Type') }}</label>
+            <input type="text" name="engine_type" id="engine_type" class="form-control" placeholder="{{ __('Enter engine type') }}" value="{{ old('engine_type', $vehicle->engine_type) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('engine_no',__('Engine Number'),array('class'=>'form-label')) }}
-            {{Form::text('engine_no',null,array('class'=>'form-control','placeholder'=>__('Enter engine number')))}}
+            <label for="engine_no" class="form-label">{{ __('Engine Number') }}</label>
+            <input type="text" name="engine_no" id="engine_no" class="form-control" placeholder="{{ __('Enter engine number') }}" value="{{ old('engine_no', $vehicle->engine_no) }}">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('license_plate',__('License Plate'),array('class'=>'form-label')) }}
-            {{Form::text('license_plate',null,array('class'=>'form-control','placeholder'=>__('Enter license plate'),'required'=>'required'))}}
+            <label for="license_plate" class="form-label">{{ __('License Plate') }}</label>
+            <input type="text" name="license_plate" id="license_plate" class="form-control" placeholder="{{ __('Enter license plate') }}" value="{{ old('license_plate', $vehicle->license_plate) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('registration_expiry_date',__('Registration Expiry Date'),array('class'=>'form-label')) }}
-            {{Form::date('registration_expiry_date',null,array('class'=>'form-control'))}}
+            <label for="registration_expiry_date" class="form-label">{{ __('Registration Expiry Date') }}</label>
+            <input type="date" name="registration_expiry_date" id="registration_expiry_date" class="form-control" value="{{ old('registration_expiry_date', $vehicle->registration_expiry_date) }}">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('daily_rate',__('Daily Rate'),array('class'=>'form-label')) }}
-            {{Form::number('daily_rate',null,array('class'=>'form-control','placeholder'=>__('Enter daily rate'),'required'=>'required'))}}
+            <label for="daily_rate" class="form-label">{{ __('Daily Rate') }}</label>
+            <input type="number" name="daily_rate" id="daily_rate" class="form-control" placeholder="{{ __('Enter daily rate') }}" value="{{ old('daily_rate', $vehicle->daily_rate) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('year_of_ﬁrst_immatriculation',__('Year of First Immatriculation'),array('class'=>'form-label')) }}
-            {{Form::number('year_of_ﬁrst_immatriculation',null,array('class'=>'form-control','placeholder'=>__('Enter Year of First Immatriculation')))}}
+            <label for="year_of_ﬁrst_immatriculation" class="form-label">{{ __('Year of First Immatriculation') }}</label>
+            <input type="number" name="year_of_ﬁrst_immatriculation" id="year_of_ﬁrst_immatriculation" class="form-control" placeholder="{{ __('Enter Year of First Immatriculation') }}" value="{{ old('year_of_ﬁrst_immatriculation', $vehicle->year_of_ﬁrst_immatriculation) }}">
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('gearbox', __('Gearbox'),['class'=>'form-label']) }}
+            <label for="gearbox" class="form-label">{{ __('Gearbox') }}</label>
             <select name="gearbox" class="form-control hidesearch " id="gearbox" required>
                 @foreach($gearbox as $k=>$val)
-                    <option value="{{$k}}">{{$val}}</option>
+                    <option value="{{$k}}" {{ old('gearbox', $vehicle->gearbox) == $k ? 'selected' : '' }}>{{$val}}</option>
                 @endforeach
             </select>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('fuel_type', __('Fuel Type'),['class'=>'form-label']) }}
+            <label for="fuel_type" class="form-label">{{ __('Fuel Type') }}</label>
             <select name="fuel_type" class="form-control hidesearch " id="fuel_type" required>
                 @foreach($fuelType as $k=>$val)
-                    <option value="{{$k}}">{{$val}}</option>
+                    <option value="{{$k}}" {{ old('fuel_type', $vehicle->fuel_type) == $k ? 'selected' : '' }}>{{$val}}</option>
                 @endforeach
             </select>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('number_of_seats',__('Number of Seats'),array('class'=>'form-label','required'=>'required')) }}
-            {{Form::number('number_of_seats',null,array('class'=>'form-control','required'=>'required'))}}
+            <label for="number_of_seats" class="form-label">{{ __('Number of Seats') }}</label>
+            <input type="number" name="number_of_seats" id="number_of_seats" class="form-control" value="{{ old('number_of_seats', $vehicle->number_of_seats) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('kilometers',__('Kilometer'),array('class'=>'form-label','required'=>'required')) }}
-            {{Form::number('kilometers',null,array('class'=>'form-control','required'=>'required'))}}
+            <label for="kilometers" class="form-label">{{ __('Kilometer') }}</label>
+            <input type="number" name="kilometers" id="kilometers" class="form-control" value="{{ old('kilometers', $vehicle->kilometers) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('option', __('Options'),['class'=>'form-label']) }}
-            {!! Form::select('option[]', $option,null,array('class' => 'form-control hidesearch ','multiple')) !!}
+            <label for="option" class="form-label">{{ __('Options') }}</label>
+            <select name="option[]" id="option" class="form-control hidesearch " multiple>
+                @foreach($option as $val => $label)
+                    <option value="{{ $val }}" {{ in_array($val, old('option', [])) ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('document',__('Document'),array('class'=>'form-label')) }}
-            {{Form::file('document',array('class'=>'form-control'))}}
+            <label for="document" class="form-label">{{ __('Document') }}</label>
+            <input type="file" name="document" id="document" class="form-control">
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('picture', __('Photo de voiture'), ['class' => 'form-label']) }}
-            {{ Form::file('picture', ['class' => 'form-control']) }}
+            <label for="picture" class="form-label">{{ __('Photo de voiture') }}</label>
+            <input type="file" name="picture" id="picture" class="form-control">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('notes',__('Notes'),array('class'=>'form-label')) }}
-            {{Form::textarea('notes',null,array('class'=>'form-control','placeholder'=>__('Enter notes'),'rows'=>1))}}
+            <label for="notes" class="form-label">{{ __('Notes') }}</label>
+            <textarea name="notes" id="notes" class="form-control" placeholder="{{ __('Enter notes') }}" rows="1">{{ old('notes', $vehicle->notes) }}</textarea>
         </div>
     </div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">{{__('Close')}}</button>
-    {{Form::submit(__('Update'),array('class'=>'btn btn-primary ml-10'))}}
+    <button type="submit" class="btn btn-primary ml-10">{{__('Update')}}</button>
 </div>
-{{Form::close()}}
-
-
+</form>

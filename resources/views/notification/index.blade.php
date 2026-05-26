@@ -64,7 +64,9 @@
                                     @if (Gate::check('edit notification') || Gate::check('delete notification'))
                                         <td>
                                             <div class="cart-action">
-                                                {!! Form::open(['method' => 'DELETE', 'route' => ['notification.destroy', $item->id]]) !!}
+                                                <form action="{{ route('notification.destroy', $item->id) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
                                                 @can('edit notification')
                                                     <a class="text-success customModal" data-bs-toggle="tooltip" data-size="lg"
                                                         data-bs-original-title="{{ __('Edit') }}" href="#"
@@ -72,7 +74,7 @@
                                                         data-title="{{ __('Edit Notification') }}"> <i
                                                             data-feather="edit"></i></a>
                                                 @endcan
-                                                {!! Form::close() !!}
+                                                </form>
                                             </div>
 
                                         </td>

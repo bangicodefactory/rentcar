@@ -35,9 +35,11 @@
                                 <td>{{ $data->name }} </td>
                                 <td class="text-right">
                                     <div class="cart-action">
-                                        {!! Form::open(['method' => 'DELETE', 'route' => ['permission.destroy', $data->id]]) !!}
+                                        <form action="{{ route('permission.destroy', $data->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
                                         <a class=" text-danger confirm_dialog" data-bs-toggle="tooltip" data-bs-original-title="{{__('Detete')}}" href="#"> <i data-feather="trash-2"></i></a>
-                                        {!! Form::close() !!}
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

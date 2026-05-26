@@ -20,10 +20,11 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    {{Form::model($settings, array('route' => array('setting.google.recaptcha'), 'method' => 'post')) }}
+                    <form action="{{ route('setting.google.recaptcha') }}" method="POST">
+                    @csrf
                     <div class="row mt-2">
                         <div class="col-auto">
-                            {{Form::label('google_recaptcha',__('Google ReCaptch Enable'),array('class'=>'form-label')) }}
+                            <label for="google_recaptcha" class="form-label">{{ __('Google ReCaptch Enable') }}</label>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -35,22 +36,21 @@
                     </div>
                     <div class="row">
                         <div class="form-group col-md-6">
-                            {{Form::label('recaptcha_key',__('Recaptcha Key'),array('class'=>'form-label')) }}
-                            {{Form::text('recaptcha_key',$settings['recaptcha_key'],['class'=>'form-control','placeholder'=>__('Enter recaptcha key')])}}
+                            <label for="recaptcha_key" class="form-label">{{ __('Recaptcha Key') }}</label>
+                            <input type="text" name="recaptcha_key" id="recaptcha_key" class="form-control" placeholder="{{ __('Enter recaptcha key') }}" value="{{ old('recaptcha_key', $settings['recaptcha_key']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('recaptcha_secret',__('Recaptcha Secret'),array('class'=>'form-label')) }}
-                            {{Form::text('recaptcha_secret',$settings['recaptcha_secret'],['class'=>'form-control ','placeholder'=>__('Enter recaptcha secret')])}}
+                            <label for="recaptcha_secret" class="form-label">{{ __('Recaptcha Secret') }}</label>
+                            <input type="text" name="recaptcha_secret" id="recaptcha_secret" class="form-control" placeholder="{{ __('Enter recaptcha secret') }}" value="{{ old('recaptcha_secret', $settings['recaptcha_secret']) }}">
                         </div>
                     </div>
 
                     <div class="text-right">
-                        {{Form::submit(__('Save'),array('class'=>'btn btn-primary btn-rounded'))}}
+                        <button type="submit" class="btn btn-primary btn-rounded">{{__('Save')}}</button>
                     </div>
-                    {{ Form::close() }}
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-

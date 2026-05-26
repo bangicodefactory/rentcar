@@ -69,7 +69,9 @@
                                 @if(Gate::check('edit coupon') ||  Gate::check('delete coupon'))
                                     <td class="text-right">
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['coupons.destroy', $coupon->id]]) !!}
+                                            <form action="{{ route('coupons.destroy', $coupon->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
 
                                             @if(Gate::check('edit coupon') )
                                                 <a class="text-success customModal" data-bs-toggle="tooltip"
@@ -82,7 +84,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
                                     </td>
                                 @endif

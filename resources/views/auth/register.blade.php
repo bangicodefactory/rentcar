@@ -21,7 +21,8 @@
             </div>
             <h3>{{__('Create your account')}}</h3>
         </div>
-        {{Form::open(array('route'=>'register','method'=>'post','id'=>'loginForm'))}}
+        <form action="{{ route('register') }}" method="POST" id="loginForm">
+        @csrf
         @if (session('error'))
             <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
         @endif
@@ -29,8 +30,8 @@
             <div class="alert alert-success" role="alert">{{ session('success') }}</div>
         @endif
         <div class="form-group ">
-            {{Form::label('name',__('Name'),array('class'=>'form-label'))}}
-            {{Form::text('name',null,array('class'=>'form-control','placeholder'=>__('Enter Name')))}}
+            <label for="name" class="form-label">{{ __('Name') }}</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="{{ __('Enter Name') }}" value="{{ old('name') }}">
             @error('name')
             <span class="invalid-name text-danger" role="alert">
                     <strong>{{ $message }}</strong>
@@ -38,8 +39,8 @@
             @enderror
         </div>
         <div class="form-group ">
-            {{Form::label('email',__('Email'),array('class'=>'form-label'))}}
-            {{Form::text('email',null,array('class'=>'form-control','placeholder'=>__('Enter Email')))}}
+            <label for="email" class="form-label">{{ __('Email') }}</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="{{ __('Enter Email') }}" value="{{ old('email') }}">
             @error('email')
             <span class="invalid-email text-danger" role="alert">
                     <strong>{{ $message }}</strong>
@@ -48,7 +49,7 @@
         </div>
 
         <div class="form-group">
-            {{Form::label('password',__('Password'),array('class'=>'form-label'))}}
+            <label for="password" class="form-label">{{ __('Password') }}</label>
             <div class="input-group group-input">
                 <input class="form-control showhide-password" type="password" name="password" id="Password"
                        placeholder="{{__('Enter Password')}}" required="">
@@ -61,7 +62,7 @@
             @enderror
         </div>
         <div class="form-group">
-            {{Form::label('password_confirmation',__('Password Confirmation'),array('class'=>'form-label'))}}
+            <label for="password_confirmation" class="form-label">{{ __('Password Confirmation') }}</label>
             <div class="input-group group-input">
                 <input class="form-control showhide-password" type="password" name="password_confirmation" id="password_confirmation"
                        placeholder="{{__('Enter Confirm Password')}}" required="">
@@ -74,8 +75,8 @@
             @enderror
         </div>
         <div class="form-group ">
-            {{Form::label('company_name',__('Company Name'),array('class'=>'form-label'))}}
-            {{Form::text('company_name',null,array('class'=>'form-control','placeholder'=>__('Enter Company Name')))}}
+            <label for="company_name" class="form-label">{{ __('Company Name') }}</label>
+            <input type="text" name="company_name" id="company_name" class="form-control" placeholder="{{ __('Enter Company Name') }}" value="{{ old('company_name') }}">
             @error('company_name')
             <span class="invalid-company_name text-danger" role="alert">
                     <strong>{{ $message }}</strong>
@@ -83,8 +84,8 @@
             @enderror
         </div>
         <div class="form-group ">
-            {{Form::label('city',__('City'),array('class'=>'form-label'))}}
-            {{Form::text('city',null,array('class'=>'form-control','placeholder'=>__('Enter City')))}}
+            <label for="city" class="form-label">{{ __('City') }}</label>
+            <input type="text" name="city" id="city" class="form-control" placeholder="{{ __('Enter City') }}" value="{{ old('city') }}">
             @error('city')
             <span class="invalid-city text-danger" role="alert">
                     <strong>{{ $message }}</strong>
@@ -118,7 +119,7 @@
         <div class="form-group">
             <button class="btn btn-primary" type="submit"><i class="fa fa-paper-plane"></i> {{__('Register')}}</button>
         </div>
-        {{Form::close()}}
+        </form>
         <div class="auth-footer">
             <h6 class="text-center">{{__('Already have an account?')}} <a class="text-primary" href="{{ route('login') }}">{{__('Login in here')}}</a></h6>
         </div>

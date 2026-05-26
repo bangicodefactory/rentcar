@@ -330,11 +330,13 @@
                                         @can('delete booking payment')
                                             <td class="text-right action">
                                                 <div class="cart-action">
-                                                    {!! Form::open(['method' => 'DELETE', 'route' => ['booking.payment.destroy', $booking->id, $payment->id]]) !!}
+                                                    <form action="{{ route('booking.payment.destroy', [$booking->id, $payment->id]) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
                                                     <a class=" text-danger confirm_dialog" data-bs-toggle="tooltip"
                                                         data-bs-original-title="{{ __('Detete') }}" href="#"> <i
                                                             data-feather="trash-2"></i></a>
-                                                    {!! Form::close() !!}
+                                                    </form>
                                                 </div>
                                             </td>
                                         @endcan

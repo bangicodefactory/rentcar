@@ -59,7 +59,9 @@
                                 @if(Gate::check('edit vehicle') || Gate::check('delete vehicle') || Gate::check('show vehicle'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['vehicle.destroy', $vehicle->id]]) !!}
+                                            <form action="{{ route('vehicle.destroy', $vehicle->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
                                             @can('show vehicle')
                                                 <a class="text-warning customModal" data-size="lg"
                                                    data-bs-toggle="tooltip"
@@ -78,7 +80,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>

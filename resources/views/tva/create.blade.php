@@ -1,32 +1,40 @@
-{{Form::open(array('url'=>'TVA','method'=>'post', 'enctype' => "multipart/form-data"))}}
+<form action="{{ url('TVA') }}" method="POST" enctype="multipart/form-data">
+@csrf
 <div class="modal-body">
     <div class="row">
         <div class="form-group col-md-6">
-            {{Form::label('name',__('Title'),array('class'=>'form-label')) }}
-            {{Form::text('name',null,array('class'=>'form-control','placeholder'=>__('Enter reminder titel'),'required'=>'required'))}}
+            <label for="name" class="form-label">{{ __('Title') }}</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="{{ __('Enter reminder titel') }}" value="{{ old('name') }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('type', __('Reminder Type'),['class'=>'form-label']) }}
-            {!! Form::select('type', $types,null,array('class' => 'form-control hidesearch ')) !!}
+            <label for="type" class="form-label">{{ __('Reminder Type') }}</label>
+            <select name="type" id="type" class="form-control hidesearch ">
+                @foreach($types as $val => $label)
+                    <option value="{{ $val }}" {{ old('type') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('vehicle', __('Vehicle'),['class'=>'form-label']) }}
-            {!! Form::select('vehicle', $vehicles,null,array('class' => 'form-control hidesearch ')) !!}
+            <label for="vehicle" class="form-label">{{ __('Vehicle') }}</label>
+            <select name="vehicle" id="vehicle" class="form-control hidesearch ">
+                @foreach($vehicles as $val => $label)
+                    <option value="{{ $val }}" {{ old('vehicle') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
 
         <div class="form-group col-md-6">
-            {{Form::label('reminder_date',__('Reminder Date'),array('class'=>'form-label')) }}
-            {{Form::date('reminder_date',null,array('class'=>'form-control','required'=>'required'))}}
+            <label for="reminder_date" class="form-label">{{ __('Reminder Date') }}</label>
+            <input type="date" name="reminder_date" id="reminder_date" class="form-control" value="{{ old('reminder_date') }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('note',__('Notes'),array('class'=>'form-label')) }}
-            {{Form::textarea('note',null,array('class'=>'form-control','placeholder'=>__('Reminder Description'),'rows'=>2))}}
+            <label for="note" class="form-label">{{ __('Notes') }}</label>
+            <textarea name="note" id="note" class="form-control" placeholder="{{ __('Reminder Description') }}" rows="2">{{ old('note') }}</textarea>
         </div>
     </div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">{{__('Close')}}</button>
-    {{Form::submit(__('Create'),array('class'=>'btn btn-primary ml-10'))}}
+    <button type="submit" class="btn btn-primary ml-10">{{__('Create')}}</button>
 </div>
-{{Form::close()}}
-
+</form>

@@ -1,30 +1,35 @@
-{{Form::open(array('route'=>array('booking.payment.store',$booking->id),'method'=>'post','id'=>'payment-create-form'))}}
+<form action="{{ route('booking.payment.store', $booking->id) }}" method="POST" id="payment-create-form">
+@csrf
 <div class="modal-body">
     <div class="row">
         <div id="payment-error" class="alert alert-danger d-none" role="alert" tabindex="-1" style="display:none;"></div>
         <div class="form-group">
-            {{Form::label('date',__('Date'),array('class'=>'form-label')) }}
-            {{Form::date('date',date('Y-m-d'),array('class'=>'form-control','required'=>'required'))}}
+            <label for="date" class="form-label">{{ __('Date') }}</label>
+            <input type="date" name="date" id="date" class="form-control" value="{{ old('date', date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
-            {{Form::label('amount',__('Amount'),array('class'=>'form-label')) }}
-            {{Form::number('amount',$booking->getTotalDueAmount(),array('class'=>'form-control','placeholder'=>__('Enter payment amount'),'required'=>'required'))}}
+            <label for="amount" class="form-label">{{ __('Amount') }}</label>
+            <input type="number" name="amount" id="amount" class="form-control" placeholder="{{ __('Enter payment amount') }}" value="{{ old('amount', $booking->getTotalDueAmount()) }}" required>
         </div>
         <div class="form-group">
-            {{ Form::label('payment_method', __('Method'),['class'=>'form-label']) }}
-            {!! Form::select('payment_method', $paymentMethod,null,array('class' => 'form-control hidesearch ')) !!}
+            <label for="payment_method" class="form-label">{{ __('Method') }}</label>
+            <select name="payment_method" id="payment_method" class="form-control hidesearch ">
+                @foreach($paymentMethod as $val => $label)
+                    <option value="{{ $val }}" {{ old('payment_method') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group">
-            {{Form::label('notes',__('Notes'),array('class'=>'form-label')) }}
-            {{Form::textarea('notes',null,array('class'=>'form-control','placeholder'=>__('Enter notes'),'rows'=>1))}}
+            <label for="notes" class="form-label">{{ __('Notes') }}</label>
+            <textarea name="notes" id="notes" class="form-control" placeholder="{{ __('Enter notes') }}" rows="1">{{ old('notes') }}</textarea>
         </div>
     </div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">{{__('Close')}}</button>
-    {{Form::submit(__('Create'),array('class'=>'btn btn-primary ml-10'))}}
+    <button type="submit" class="btn btn-primary ml-10">{{__('Create')}}</button>
 </div>
-{{Form::close()}}
+</form>
 
 @push('script-page')
 <script>
@@ -55,7 +60,7 @@
         var amount = parseFloat(amountInput.value || '0');
         var selectedOption = methodSelect.options[methodSelect.selectedIndex];
         function normalize(str){
-            return (str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+            return (str||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
         }
     var methodText = normalize(selectedOption ? selectedOption.text : '');
     var methodValue = normalize(methodSelect.value||'');
@@ -102,4 +107,3 @@
 })();
 </script>
 @endpush
-

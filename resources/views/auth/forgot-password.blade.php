@@ -28,10 +28,11 @@
                 {{ session('status') }}
             </div>
         @endif
-        {{Form::open(array('route'=>'password.email','method'=>'post','id'=>'loginForm'))}}
+        <form action="{{ route('password.email') }}" method="POST" id="loginForm">
+        @csrf
         <div class="form-group mb-0">
-            {{Form::label('email',__('Email'),['class'=>'form-label'])}}
-            {{Form::text('email',null,array('class'=>'form-control','placeholder'=>__('Enter your email')))}}
+            <label for="email" class="form-label">{{ __('Email') }}</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="{{ __('Enter your email') }}" value="{{ old('email') }}">
             @error('email')
             <span class="invalid-email text-danger" role="alert">
                 <strong>{{ $message }}</strong>
@@ -60,7 +61,7 @@
         <div class="auth-footer">
             <h6 class="text-center">{{__('Back to')}} <a class="text-primary" href="{{ route('login') }}">{{__('Log In')}}</a></h6>
         </div>
-        {{Form::close()}}
+        </form>
     </div>
 @endsection
 

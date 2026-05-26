@@ -20,15 +20,16 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    {{Form::model($settings, array('route' => array('setting.payment'), 'method' => 'post')) }}
+                    <form action="{{ route('setting.payment') }}" method="POST">
+                    @csrf
                     <div class="row">
                         <div class="form-group col-md-6">
-                            {{Form::label('CURRENCY_SYMBOL',__('Currency Icon'),array('class'=>'form-label')) }}
-                            {{Form::text('CURRENCY_SYMBOL',$settings['CURRENCY_SYMBOL'],array('class'=>'form-control','placeholder'=>__('Enter currency icon'),'required'))}}
+                            <label for="CURRENCY_SYMBOL" class="form-label">{{ __('Currency Icon') }}</label>
+                            <input type="text" name="CURRENCY_SYMBOL" id="CURRENCY_SYMBOL" class="form-control" placeholder="{{ __('Enter currency icon') }}" value="{{ old('CURRENCY_SYMBOL', $settings['CURRENCY_SYMBOL']) }}" required>
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('CURRENCY',__('Currency Code'),array('class'=>'form-label')) }}
-                            {{Form::text('CURRENCY',$settings['CURRENCY'],array('class'=>'form-control font-style','placeholder'=>__('Enter currency code'),'required'))}}
+                            <label for="CURRENCY" class="form-label">{{ __('Currency Code') }}</label>
+                            <input type="text" name="CURRENCY" id="CURRENCY" class="form-control font-style" placeholder="{{ __('Enter currency code') }}" value="{{ old('CURRENCY', $settings['CURRENCY']) }}" required>
                         </div>
                     </div>
                     <hr>
@@ -36,7 +37,7 @@
                     {{--------------------------Stripe Payment settings---------------------------------}}
                     <div class="row mt-2">
                         <div class="col-auto">
-                            {{Form::label('stripe_payment',__('Stripe Payment'),array('class'=>'form-label')) }}
+                            <label for="stripe_payment" class="form-label">{{ __('Stripe Payment') }}</label>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -48,19 +49,19 @@
                     </div>
                     <div class="row">
                         <div class="form-group col-md-6">
-                            {{Form::label('stripe_key',__('Account Key'),array('class'=>'form-label')) }}
-                            {{Form::text('stripe_key',$settings['STRIPE_KEY'],['class'=>'form-control','placeholder'=>__('Enter stripe key')])}}
+                            <label for="stripe_key" class="form-label">{{ __('Account Key') }}</label>
+                            <input type="text" name="stripe_key" id="stripe_key" class="form-control" placeholder="{{ __('Enter stripe key') }}" value="{{ old('stripe_key', $settings['STRIPE_KEY']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('stripe_secret',__('Account Secret Key'),array('class'=>'form-label')) }}
-                            {{Form::text('stripe_secret',$settings['STRIPE_SECRET'],['class'=>'form-control ','placeholder'=>__('Enter stripe secret')])}}
+                            <label for="stripe_secret" class="form-label">{{ __('Account Secret Key') }}</label>
+                            <input type="text" name="stripe_secret" id="stripe_secret" class="form-control" placeholder="{{ __('Enter stripe secret') }}" value="{{ old('stripe_secret', $settings['STRIPE_SECRET']) }}">
                         </div>
                     </div>
                     <hr>
                     {{--------------------------Paypal Payment settings---------------------------------}}
                     <div class="row mt-2">
                         <div class="col-auto">
-                            {{Form::label('paypal_payment',__('Paypal Payment'),array('class'=>'form-label')) }}
+                            <label for="paypal_payment" class="form-label">{{ __('Paypal Payment') }}</label>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -73,7 +74,7 @@
                     </div>
                     <div class="row">
                         <div class="form-group col-md-12">
-                            {{Form::label('paypal_mode',__('Account Mode'),array('class'=>'form-label me-2')) }}
+                            <label for="paypal_mode" class="form-label me-2">{{ __('Account Mode') }}</label>
                             <div class="form-check custom-chek form-check-inline">
                                 <input class="form-check-input" type="radio" value="sandbox" id="sandbox" name="paypal_mode" {{ $settings['paypal_mode'] == 'sandbox' ? 'checked' : '' }}>
                                 <label class="form-check-label" for="sandbox">{{__('Sandbox')}} </label>
@@ -85,19 +86,19 @@
                             </div>
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('paypal_client_id',__('Account Client ID'),array('class'=>'form-label')) }}
-                            {{Form::text('paypal_client_id',$settings['paypal_client_id'],['class'=>'form-control','placeholder'=>__('Enter client id')])}}
+                            <label for="paypal_client_id" class="form-label">{{ __('Account Client ID') }}</label>
+                            <input type="text" name="paypal_client_id" id="paypal_client_id" class="form-control" placeholder="{{ __('Enter client id') }}" value="{{ old('paypal_client_id', $settings['paypal_client_id']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('paypal_secret_key',__('Account Secret Key'),array('class'=>'form-label')) }}
-                            {{Form::text('paypal_secret_key',$settings['paypal_secret_key'],['class'=>'form-control ','placeholder'=>__('Enter secret key')])}}
+                            <label for="paypal_secret_key" class="form-label">{{ __('Account Secret Key') }}</label>
+                            <input type="text" name="paypal_secret_key" id="paypal_secret_key" class="form-control" placeholder="{{ __('Enter secret key') }}" value="{{ old('paypal_secret_key', $settings['paypal_secret_key']) }}">
                         </div>
                     </div>
                     <hr>
                     {{--------------------------Bank Transfer settings---------------------------------}}
                     <div class="row mt-2">
                         <div class="col-auto">
-                            {{Form::label('bank_transfer_payment',__('Bank Transfer Payment'),array('class'=>'form-label')) }}
+                            <label for="bank_transfer_payment" class="form-label">{{ __('Bank Transfer Payment') }}</label>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -109,24 +110,24 @@
                     </div>
                     <div class="row">
                         <div class="form-group col-md-6">
-                            {{Form::label('bank_name',__('Bank Name'),array('class'=>'form-label')) }}
-                            {{Form::text('bank_name',$settings['bank_name'],['class'=>'form-control','placeholder'=>__('Enter bank name')])}}
+                            <label for="bank_name" class="form-label">{{ __('Bank Name') }}</label>
+                            <input type="text" name="bank_name" id="bank_name" class="form-control" placeholder="{{ __('Enter bank name') }}" value="{{ old('bank_name', $settings['bank_name']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('bank_holder_name',__('Bank Holder Name'),array('class'=>'form-label')) }}
-                            {{Form::text('bank_holder_name',$settings['bank_holder_name'],['class'=>'form-control','placeholder'=>__('Enter bank holder name')])}}
+                            <label for="bank_holder_name" class="form-label">{{ __('Bank Holder Name') }}</label>
+                            <input type="text" name="bank_holder_name" id="bank_holder_name" class="form-control" placeholder="{{ __('Enter bank holder name') }}" value="{{ old('bank_holder_name', $settings['bank_holder_name']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('bank_account_number',__('Bank Account Number'),array('class'=>'form-label')) }}
-                            {{Form::text('bank_account_number',$settings['bank_account_number'],['class'=>'form-control','placeholder'=>__('Enter bank account number')])}}
+                            <label for="bank_account_number" class="form-label">{{ __('Bank Account Number') }}</label>
+                            <input type="text" name="bank_account_number" id="bank_account_number" class="form-control" placeholder="{{ __('Enter bank account number') }}" value="{{ old('bank_account_number', $settings['bank_account_number']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('bank_ifsc_code',__('Bank IFSC'),array('class'=>'form-label')) }}
-                            {{Form::text('bank_ifsc_code',$settings['bank_ifsc_code'],['class'=>'form-control','placeholder'=>__('Enter bank ifsc code')])}}
+                            <label for="bank_ifsc_code" class="form-label">{{ __('Bank IFSC') }}</label>
+                            <input type="text" name="bank_ifsc_code" id="bank_ifsc_code" class="form-control" placeholder="{{ __('Enter bank ifsc code') }}" value="{{ old('bank_ifsc_code', $settings['bank_ifsc_code']) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            {{Form::label('bank_other_details',__('Other Details'),array('class'=>'form-label')) }}
-                            {{Form::textarea('bank_other_details',$settings['bank_other_details'],['class'=>'form-control','rows'=>1,'placeholder'=>__('Enter bank other details')])}}
+                            <label for="bank_other_details" class="form-label">{{ __('Other Details') }}</label>
+                            <textarea name="bank_other_details" id="bank_other_details" class="form-control" rows="1" placeholder="{{ __('Enter bank other details') }}">{{ old('bank_other_details', $settings['bank_other_details']) }}</textarea>
                         </div>
                     </div>
 
@@ -134,7 +135,7 @@
                     {{--------------------------Flutterwave Payment settings---------------------------------}}
                     <div class="row mt-2">
                         <div class="col-auto">
-                            {{Form::label('flutterwave_payment',__('Flutterwave Payment'),array('class'=>'form-label')) }}
+                            <label for="flutterwave_payment" class="form-label">{{ __('Flutterwave Payment') }}</label>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -145,23 +146,22 @@
                         </div>
                         <div class="row">
                             <div class="form-group col-md-6">
-                                {{Form::label('flutterwave_public_key',__('Flutterwave Public Key'),array('class'=>'form-label')) }}
-                                {{Form::text('flutterwave_public_key',$settings['flutterwave_public_key'],['class'=>'form-control','placeholder'=>__('Enter flutterwave public key')])}}
+                                <label for="flutterwave_public_key" class="form-label">{{ __('Flutterwave Public Key') }}</label>
+                                <input type="text" name="flutterwave_public_key" id="flutterwave_public_key" class="form-control" placeholder="{{ __('Enter flutterwave public key') }}" value="{{ old('flutterwave_public_key', $settings['flutterwave_public_key']) }}">
                             </div>
                             <div class="form-group col-md-6">
-                                {{Form::label('flutterwave_secret_key',__('Flutterwave Secret Key'),array('class'=>'form-label')) }}
-                                {{Form::text('flutterwave_secret_key',$settings['flutterwave_secret_key'],['class'=>'form-control ','placeholder'=>__('Enter flutterwave secret key')])}}
+                                <label for="flutterwave_secret_key" class="form-label">{{ __('Flutterwave Secret Key') }}</label>
+                                <input type="text" name="flutterwave_secret_key" id="flutterwave_secret_key" class="form-control" placeholder="{{ __('Enter flutterwave secret key') }}" value="{{ old('flutterwave_secret_key', $settings['flutterwave_secret_key']) }}">
                             </div>
                         </div>
                     </div>
 
                     <div class="text-right">
-                        {{Form::submit(__('Save'),array('class'=>'btn btn-primary btn-rounded'))}}
+                        <button type="submit" class="btn btn-primary btn-rounded">{{__('Save')}}</button>
                     </div>
-                    {{ Form::close() }}
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-

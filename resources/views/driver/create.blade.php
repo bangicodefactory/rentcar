@@ -1,85 +1,89 @@
-{{Form::open(array('url'=>'driver','method'=>'post', 'enctype' => "multipart/form-data"))}}
+<form action="{{ url('driver') }}" method="POST" enctype="multipart/form-data">
+@csrf
 <div class="modal-body">
     <div class="row">
         <div class="form-group col-md-6">
-            {{Form::label('first_name',__('First Name'),array('class'=>'form-label')) }}
-            {{Form::text('first_name',null,array('class'=>'form-control','placeholder'=>__('Enter First Name'),'required'=>'required'))}}
+            <label for="first_name" class="form-label">{{ __('First Name') }}</label>
+            <input type="text" name="first_name" id="first_name" class="form-control" placeholder="{{ __('Enter First Name') }}" value="{{ old('first_name') }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('last_name',__('Last Name'),array('class'=>'form-label')) }}
-            {{Form::text('last_name',null,array('class'=>'form-control','placeholder'=>__('Enter First Name'),'required'=>'required'))}}
+            <label for="last_name" class="form-label">{{ __('Last Name') }}</label>
+            <input type="text" name="last_name" id="last_name" class="form-control" placeholder="{{ __('Enter First Name') }}" value="{{ old('last_name') }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('email',__('Email'),array('class'=>'form-label'))}}
-            {{Form::text('email',null,array('class'=>'form-control','placeholder'=>__('Enter Email')))}}
+            <label for="email" class="form-label">{{ __('Email') }}</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="{{ __('Enter Email') }}" value="{{ old('email') }}">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('phone_number',__('Phone Number'),array('class'=>'form-label')) }}
-            {{Form::text('phone_number',null,array('class'=>'form-control','placeholder'=>__('Enter Phone Number'),'required'=>'required'))}}
+            <label for="phone_number" class="form-label">{{ __('Phone Number') }}</label>
+            <input type="text" name="phone_number" id="phone_number" class="form-control" placeholder="{{ __('Enter Phone Number') }}" value="{{ old('phone_number') }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('gender', __('Gender'),['class'=>'form-label']) }}
-            {!! Form::select('gender', $gender,null,array('class' => 'form-control hidesearch ','required'=>'required')) !!}
+            <label for="gender" class="form-label">{{ __('Gender') }}</label>
+            <select name="gender" id="gender" class="form-control hidesearch " required>
+                @foreach($gender as $val => $label)
+                    <option value="{{ $val }}" {{ old('gender') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('Age',__('age'),array('class'=>'form-label')) }}
-            {{Form::number('age',null,array('class'=>'form-control','placeholder'=>__('Enter age')))}}
+            <label for="age" class="form-label">{{ __('age') }}</label>
+            <input type="number" name="age" id="age" class="form-control" placeholder="{{ __('Enter age') }}" value="{{ old('age') }}">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('birth_date',__('Birth date'),array('class'=>'form-label')) }}
-            {{Form::date('birth_date',null,array('class'=>'form-control','required'=>'required'))}}
+            <label for="birth_date" class="form-label">{{ __('Birth date') }}</label>
+            <input type="date" name="birth_date" id="birth_date" class="form-control" value="{{ old('birth_date') }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('address',__('Address'),array('class'=>'form-label')) }}
-            {{Form::textarea('address',null,array('class'=>'form-control','placeholder'=>__('Enter address'),'required'=>'required','rows'=>1))}}
+            <label for="address" class="form-label">{{ __('Address') }}</label>
+            <textarea name="address" id="address" class="form-control" placeholder="{{ __('Enter address') }}" rows="1" required>{{ old('address') }}</textarea>
         </div>
 
         <div class="form-group col-md-12">
-            {{Form::label('license_number',__('License Number'),array('class'=>'form-label')) }}
-            {{Form::text('license_number',null,array('class'=>'form-control','placeholder'=>__('Enter license number'),'required'=>'required'))}}
+            <label for="license_number" class="form-label">{{ __('License Number') }}</label>
+            <input type="text" name="license_number" id="license_number" class="form-control" placeholder="{{ __('Enter license number') }}" value="{{ old('license_number') }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('issue_date',__('Issue Date'),array('class'=>'form-label')) }}
-            {{Form::date('issue_date',null,array('class'=>'form-control','required'=>'required'))}}
+            <label for="issue_date" class="form-label">{{ __('Issue Date') }}</label>
+            <input type="date" name="issue_date" id="issue_date" class="form-control" value="{{ old('issue_date') }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('expiration_date',__('Expiration Date'),array('class'=>'form-label')) }}
-            {{Form::date('expiration_date',null,array('class'=>'form-control','required'=>'required'))}}
+            <label for="expiration_date" class="form-label">{{ __('Expiration Date') }}</label>
+            <input type="date" name="expiration_date" id="expiration_date" class="form-control" value="{{ old('expiration_date') }}" required>
         </div>
-        
+
         <div class="form-group col-md-6">
-            {{Form::label('license',__('License 1:'),array('class'=>'form-label')) }}
-            {{Form::file('license',array('class'=>'form-control'))}}
+            <label for="license" class="form-label">{{ __('License 1:') }}</label>
+            <input type="file" name="license" id="license" class="form-control">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('license1',__('License 2:'),array('class'=>'form-label')) }}
-            {{Form::file('license1',array('class'=>'form-control'))}}
+            <label for="license1" class="form-label">{{ __('License 2:') }}</label>
+            <input type="file" name="license1" id="license1" class="form-control">
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('reference',__('Reference'),array('class'=>'form-label')) }}
-            {{Form::text('reference',null,array('class'=>'form-control','placeholder'=>__('Enter reference')))}}
+            <label for="reference" class="form-label">{{ __('Reference') }}</label>
+            <input type="text" name="reference" id="reference" class="form-control" placeholder="{{ __('Enter reference') }}" value="{{ old('reference') }}">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('document',__('ID file 1:'),array('class'=>'form-label')) }}
-            {{Form::file('document',array('class'=>'form-control'))}}
+            <label for="document" class="form-label">{{ __('ID file 1:') }}</label>
+            <input type="file" name="document" id="document" class="form-control">
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('document1',__('ID file 2:'),array('class'=>'form-label')) }}
-            {{Form::file('document1',array('class'=>'form-control'))}}
+            <label for="document1" class="form-label">{{ __('ID file 2:') }}</label>
+            <input type="file" name="document1" id="document1" class="form-control">
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('notes',__('Notes'),array('class'=>'form-label')) }}
-            {{Form::textarea('notes',null,array('class'=>'form-control','placeholder'=>__('Enter notes'),'rows'=>1))}}
+            <label for="notes" class="form-label">{{ __('Notes') }}</label>
+            <textarea name="notes" id="notes" class="form-control" placeholder="{{ __('Enter notes') }}" rows="1">{{ old('notes') }}</textarea>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('ICE_company',__('ICE_company'),array('class'=>'form-label')) }}
-            {{Form::text('ICE_company',null,array('class'=>'form-control','placeholder'=>__('Enter ICE if client company')))}}
+            <label for="ICE_company" class="form-label">{{ __('ICE_company') }}</label>
+            <input type="text" name="ICE_company" id="ICE_company" class="form-control" placeholder="{{ __('Enter ICE if client company') }}" value="{{ old('ICE_company') }}">
         </div>
     </div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">{{__('Close')}}</button>
-    {{Form::submit(__('Create'),array('class'=>'btn btn-primary ml-10'))}}
+    <button type="submit" class="btn btn-primary ml-10">{{__('Create')}}</button>
 </div>
-{{Form::close()}}
-
+</form>

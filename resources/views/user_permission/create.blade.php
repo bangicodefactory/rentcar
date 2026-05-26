@@ -1,19 +1,22 @@
-{{ Form::open(array('url' => 'permission')) }}
+<form action="{{ url('permission') }}" method="POST">
+@csrf
 <div class="modal-body">
     <div class="row">
         <div class="form-group ">
-            {{Form::label('title',__('Permission Title'),['class'=>'form-label '])}}
-            {{Form::text('title',null,array('class'=>'form-control'))}}
+            <label for="title" class="form-label ">{{ __('Permission Title') }}</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ old('title') }}">
         </div>
         <div class="form-group">
-            {{ Form::label('user_roles', __('User Roles'),['class'=>'form-label']) }}
-            {!! Form::select('user_roles[]', $userRoles, null,array('class' => 'form-control hidesearch','multiple','required'=>'required')) !!}
+            <label for="user_roles" class="form-label">{{ __('User Roles') }}</label>
+            <select name="user_roles[]" id="user_roles" class="form-control hidesearch" multiple required>
+                @foreach($userRoles as $val => $label)
+                    <option value="{{ $val }}" {{ in_array($val, old('user_roles', [])) ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="col-md-12">
-            {{Form::submit(__('Create'),array('class'=>'btn btn-primary btn-rounded'))}}
+            <button type="submit" class="btn btn-primary btn-rounded">{{__('Create')}}</button>
         </div>
     </div>
 </div>
-{{ Form::close() }}
-
-
+</form>

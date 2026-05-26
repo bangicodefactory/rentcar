@@ -78,7 +78,6 @@
                                     @if (Gate::check('edit booking') || Gate::check('delete booking') || Gate::check('show booking'))
                                         <td>
                                             <div class="cart-action">
-                                                {{-- {!! Form::open(['method' => 'DELETE', 'route' => ['booking.destroy', $booking->id]]) !!} --}}
                                                 @can('show booking')
                                                     <a class="text-warning" data-bs-toggle="tooltip"
                                                         data-bs-original-title="{{ __('Details') }}"
@@ -107,7 +106,6 @@
 
 
 
-                                                {!! Form::close() !!}
                                             </div>
                                         </td>
                                     @endif

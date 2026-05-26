@@ -45,7 +45,9 @@
                                 @if(Gate::check('edit inspection type') || Gate::check('delete inspection type'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['inspection-type.destroy', $type->id]]) !!}
+                                            <form action="{{ route('inspection-type.destroy', $type->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
                                             @can('edit inspection type')
                                                 <a class="text-success customModal" data-bs-toggle="tooltip"
                                                    data-bs-original-title="{{__('Edit')}}" href="#" data-size="md"
@@ -57,7 +59,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>

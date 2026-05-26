@@ -26,10 +26,11 @@
                     <h4>{{__('Create Role And Permissions')}}</h4>
                 </div>
                 <div class="card-body">
-                    {{ Form::open(array('url' => 'role')) }}
+                    <form action="{{ url('role') }}" method="POST">
+                    @csrf
                     <div class="form-group">
-                        {{Form::label('title',__('Role Title'),['class'=>'form-label'])}}
-                        {{Form::text('title',null,array('class'=>'form-control','placeholder'=>__('Enter role title')))}}
+                        <label for="title" class="form-label">{{ __('Role Title') }}</label>
+                        <input type="text" name="title" id="title" class="form-control" placeholder="{{ __('Enter role title') }}" value="{{ old('title') }}">
                     </div>
 
                     <div class="card-body">
@@ -40,8 +41,8 @@
                                         @foreach($permissionList as $permission)
                                             @if (str_contains(strtolower($permission->name), strtolower($module)))
                                                 <div class="form-check custom-chek form-check-inline col-md-2">
-                                                    {{ Form::checkbox('user_permission[]', $permission->id, null, ['class'=>'form-check-input', 'id' => $module.'_permission'.$permission->id]) }}
-                                                    {{ Form::label($module.'_permission'.$permission->id, ucfirst($permission->name), ['class'=>'form-check-label']) }}
+                                                    <input type="checkbox" name="user_permission[]" id="{{ $module.'_permission'.$permission->id }}" class="form-check-input" value="{{ $permission->id }}">
+                                                    <label for="{{ $module.'_permission'.$permission->id }}" class="form-check-label">{{ ucfirst($permission->name) }}</label>
                                                 </div>
                                             @endif
                                         @endforeach
@@ -53,12 +54,11 @@
                         </div>
                     </div>
                     <div class="form-group mt-20 text-end">
-                        {{Form::submit(__('Create'),array('class'=>'btn btn-primary btn-rounded'))}}
+                        <button type="submit" class="btn btn-primary btn-rounded">{{__('Create')}}</button>
                     </div>
-                    {{ Form::close() }}
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-

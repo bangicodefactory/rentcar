@@ -1,26 +1,28 @@
-{{ Form::open(['url' => 'notification', 'method' => 'post']) }}
+<form action="{{ url('notification') }}" method="POST">
+@csrf
 <div class="modal-body">
     <div class="row">
         <div class="form-group col-md-6">
-            {{ Form::label('module', __('Module'), ['class' => 'form-label']) }}
-            {!! Form::select('module', $notification_option, null, [
-                'class' => 'form-control hidesearch module',
-                'required' => 'required',
-            ]) !!}
+            <label for="module" class="form-label">{{ __('Module') }}</label>
+            <select name="module" id="module" class="form-control hidesearch module" required>
+                @foreach($notification_option as $val => $label)
+                    <option value="{{ $val }}" {{ old('module') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
 
         <div class="form-group col-md-6">
-            {{ Form::label('subject', __('Subject'), ['class' => 'form-label']) }}
-            {{ Form::text('subject', null, ['class' => 'form-control subject', 'placeholder' => __('Enter Subject'), 'required' => 'required']) }}
+            <label for="subject" class="form-label">{{ __('Subject') }}</label>
+            <input type="text" name="subject" id="subject" class="form-control subject" placeholder="{{ __('Enter Subject') }}" value="{{ old('subject') }}" required>
         </div>
 
         <div class="form-group col-md-12">
-            {{ Form::label('message', __('User Message'), ['class' => 'form-label']) }}
-            {{ Form::textarea('message', null, ['class' => 'form-control', 'rows' => 5, 'id' => 'message']) }}
+            <label for="message" class="form-label">{{ __('User Message') }}</label>
+            <textarea name="message" id="message" class="form-control" rows="5">{{ old('message') }}</textarea>
         </div>
 
         <div class="form-group col-md-12">
-            {{ Form::label('enabled_email', __('Enabled Email Notification'), ['class' => 'form-label']) }}
+            <label for="enabled_email" class="form-label">{{ __('Enabled Email Notification') }}</label>
             <input class="form-check-input" type="hidden" name="enabled_email" value="0">
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked"
@@ -55,14 +57,14 @@
     </div>
 </div>
 <div class="modal-footer">
-    {{ Form::submit(__('Create'), ['class' => 'btn btn-primary ml-10']) }}
+    <button type="submit" class="btn btn-primary ml-10">{{__('Create')}}</button>
 </div>
-{{ Form::close() }}
+</form>
 
 <script>
     $(document).ready(function() {
         $('.module').trigger('change');
-        
+
     });
 
 

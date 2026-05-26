@@ -15,11 +15,12 @@
                 {{ session('status') }}
             </div>
         @endif
-        {{Form::open(array('route'=>'password.update','method'=>'post','id'=>'loginForm'))}}
+        <form action="{{ route('password.update') }}" method="POST" id="loginForm">
+        @csrf
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
         <div class="form-group">
-            {{Form::label('email',__('Email Address'),array('class'=>'form-label'))}}
-            {{Form::text('email',$request->get('email'),array('class'=>'form-control','placeholder'=>__('Enter Your Email')))}}
+            <label for="email" class="form-label">{{ __('Email Address') }}</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="{{ __('Enter Your Email') }}" value="{{ old('email', $request->get('email')) }}">
             @error('email')
             <span class="invalid-email text-danger" role="alert">
                     <strong>{{ $message }}</strong>
@@ -55,7 +56,7 @@
         <div class="form-group mb-0">
             <button class="btn btn-primary" type="submit">{{__('Update Password')}}</button>
         </div>
-        {{Form::close()}}
+        </form>
     </div>
 @endsection
 

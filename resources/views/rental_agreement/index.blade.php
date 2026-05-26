@@ -71,7 +71,9 @@
                                 @if(Gate::check('edit rental agreement') || Gate::check('delete rental agreement') || Gate::check('show rental agreement'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['rental-agreement.destroy', $agreement->id]]) !!}
+                                            <form action="{{ route('rental-agreement.destroy', $agreement->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
                                             @can('show rental agreement')
                                                 <a class="text-warning"
                                                    data-bs-toggle="tooltip"
@@ -89,7 +91,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>

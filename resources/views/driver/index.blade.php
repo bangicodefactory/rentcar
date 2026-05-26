@@ -68,7 +68,9 @@
                                 @if(Gate::check('edit driver') || Gate::check('delete driver') || Gate::check('show driver'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['driver.destroy', $driver->id]]) !!}
+                                            <form action="{{ route('driver.destroy', $driver->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
                                             @can('show driver')
                                                 <a class="text-warning customModal" data-size="lg"
                                                    data-bs-toggle="tooltip"
@@ -87,7 +89,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>

@@ -66,7 +66,9 @@
                                 @endif
                                 <td>
                                     <div class="cart-action">
-                                        {!! Form::open(['method' => 'DELETE', 'route' => ['users.destroy', $user->id]]) !!}
+                                        <form action="{{ route('users.destroy', $user->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
                                         @can('edit user')
                                             <a class="text-success customModal" data-bs-toggle="tooltip" data-size="lg"
                                                data-bs-original-title="{{__('Edit')}}" href="#"
@@ -78,7 +80,7 @@
                                                data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                     data-feather="trash-2"></i></a>
                                         @endcan
-                                        {!! Form::close() !!}
+                                        </form>
                                     </div>
 
                                 </td>

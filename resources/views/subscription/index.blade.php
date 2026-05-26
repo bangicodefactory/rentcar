@@ -68,7 +68,9 @@
 
                                 <td>
                                     <div class="cart-action">
-                                        {!! Form::open(['method' => 'DELETE', 'route' => ['subscriptions.destroy', $subscription->id]]) !!}
+                                        <form action="{{ route('subscriptions.destroy', $subscription->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
                                         @if(\Auth::user()->type=='owner' && \Auth::user()->subscription != $subscription->id)
                                             <a class="text-warning" data-bs-toggle="tooltip"
                                                data-bs-original-title="{{__('Detail')}}"
@@ -89,7 +91,7 @@
                                                         data-feather="trash-2"></i></a>
                                             @endcan
                                         @endif
-                                        {!! Form::close() !!}
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

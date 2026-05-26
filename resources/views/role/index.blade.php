@@ -40,7 +40,9 @@
                                 <td>{{$role->permissions()->count()}}</td>
                                 <td class="text-right">
                                     <div class="cart-action">
-                                        {!! Form::open(['method' => 'DELETE', 'route' => ['role.destroy', $role->id]]) !!}
+                                        <form action="{{ route('role.destroy', $role->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
                                         @can('edit role')
                                             <a class="text-success" data-size="xl" data-bs-toggle="tooltip"
                                                data-bs-original-title="{{__('Edit')}}"
@@ -52,7 +54,7 @@
                                                 <a class=" text-danger confirm_dialog" data-bs-toggle="tooltip"
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
-                                                {!! Form::close() !!}
+                                                </form>
                                             @endcan
                                         @endif
                                     </div>

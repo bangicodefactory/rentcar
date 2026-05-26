@@ -72,7 +72,9 @@
                                 @if(Gate::check('edit inspection') || Gate::check('delete inspection') || Gate::check('show inspection'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['inspection.destroy', $inspection->id]]) !!}
+                                            <form action="{{ route('inspection.destroy', $inspection->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
                                             @can('show inspection')
                                                 <a class="text-warning"
                                                    data-bs-toggle="tooltip"
@@ -88,7 +90,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>

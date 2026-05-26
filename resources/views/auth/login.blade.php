@@ -27,7 +27,8 @@
             <h3>{{__('Welcome to')}} Bangi Car</h3>
 
         </div>
-        {{Form::open(array('route'=>'login','method'=>'post','id'=>'loginForm','class'=> 'login-form' ))}}
+        <form action="{{ route('login') }}" method="POST" id="loginForm" class="login-form">
+        @csrf
         @if (session('error'))
             <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
         @endif
@@ -35,8 +36,8 @@
             <div class="alert alert-success" role="alert">{{ session('success') }}</div>
         @endif
         <div class="form-group">
-            {{Form::label('email',__('Email'),array('class'=>'form-label'))}}
-            {{Form::text('email',null,array('class'=>'form-control','placeholder'=>__('Enter Your Email')))}}
+            <label for="email" class="form-label">{{ __('Email') }}</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="{{ __('Enter Your Email') }}" value="{{ old('email') }}">
             @error('email')
             <span class="invalid-email text-danger" role="alert">
                         <strong>{{ $message }}</strong>
@@ -89,7 +90,7 @@
         <div class="form-group">
             <button class="btn btn-primary" type="submit"><i class="fa fa-sign-in"></i> {{__('Login')}}</button>
         </div>
-        {{Form::close()}}
+        </form>
         <div class="auth-footer">
             @if($registerPage=='on')
                 <h6 class="text-center">{{__("Don't Have An Account?")}} <a class="text-primary"

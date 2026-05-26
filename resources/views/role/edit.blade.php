@@ -26,10 +26,12 @@
                     <h4>{{__('Edit Role And Permissions')}}</h4>
                 </div>
                 <div class="card-body">
-                    {{Form::model($role,array('route' => array('role.update', $role->id), 'method' => 'PUT')) }}
+                    <form action="{{ route('role.update', $role->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
                     <div class="form-group">
-                        {{Form::label('title',__('Role Title'),['class'=>'form-label'])}}
-                        {{Form::text('title',$role->name,array('class'=>'form-control','placeholder'=>__('Enter role title'),in_array($role->name,['client','driver'])?'readonly':''))}}
+                        <label for="title" class="form-label">{{ __('Role Title') }}</label>
+                        <input type="text" name="title" id="title" class="form-control" placeholder="{{ __('Enter role title') }}" value="{{ old('title', $role->name) }}" {{ in_array($role->name, ['client', 'driver']) ? 'readonly' : '' }}>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -39,8 +41,8 @@
                                         @foreach($permissionList as $permission)
                                             @if (str_contains(strtolower($permission->name), strtolower($module)))
                                                 <div class="form-check custom-chek form-check-inline col-md-2">
-                                                    {{ Form::checkbox('user_permission[]', $permission->id, null, ['class'=>'form-check-input', 'id' => $module.'_permission'.$permission->id,in_array($permission->id,$assignPermission)?'checked':'']) }}
-                                                    {{ Form::label($module.'_permission'.$permission->id, ucfirst($permission->name), ['class'=>'form-check-label']) }}
+                                                    <input type="checkbox" name="user_permission[]" id="{{ $module.'_permission'.$permission->id }}" class="form-check-input" value="{{ $permission->id }}" {{ in_array($permission->id, $assignPermission) ? 'checked' : '' }}>
+                                                    <label for="{{ $module.'_permission'.$permission->id }}" class="form-check-label">{{ ucfirst($permission->name) }}</label>
                                                 </div>
                                             @endif
                                         @endforeach
@@ -51,12 +53,11 @@
                         </div>
                     </div>
                     <div class="form-group mt-20 text-end">
-                        {{Form::submit(__('Update'),array('class'=>'btn btn-primary btn-rounded'))}}
+                        <button type="submit" class="btn btn-primary btn-rounded">{{__('Update')}}</button>
                     </div>
-                    {{ Form::close() }}
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-

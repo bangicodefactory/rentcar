@@ -1,36 +1,36 @@
-{{ Form::model($place, array('route' => array('place.update', $place->id), 'method' => 'PUT')) }}
+<form action="{{ route('place.update', $place->id) }}" method="POST">
+@csrf
+@method('PUT')
 <div class="modal-body">
     <div class="row">
         <div class="form-group col-md-12">
-            {{Form::label('name',__('Name'),array('class'=>'form-label')) }}
-            {{Form::text('name',null,array('class'=>'form-control','placeholder'=>__('Enter place name'),'required'=>'required'))}}
+            <label for="name" class="form-label">{{ __('Name') }}</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="{{ __('Enter place name') }}" value="{{ old('name', $place->name) }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('city',__('City'),array('class'=>'form-label')) }}
-            {{Form::text('city',null,array('class'=>'form-control','placeholder'=>__('Enter city'),'required'=>'required'))}}
+            <label for="city" class="form-label">{{ __('City') }}</label>
+            <input type="text" name="city" id="city" class="form-control" placeholder="{{ __('Enter city') }}" value="{{ old('city', $place->city) }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('island',__('Island'),array('class'=>'form-label')) }}
-            {{Form::text('island',null,array('class'=>'form-control','placeholder'=>__('Enter island'),'required'=>'required'))}}
+            <label for="island" class="form-label">{{ __('Island') }}</label>
+            <input type="text" name="island" id="island" class="form-control" placeholder="{{ __('Enter island') }}" value="{{ old('island', $place->island) }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('price',__('Price'),array('class'=>'form-label')) }}
-            {{Form::number('price',null,array('class'=>'form-control','placeholder'=>__('Enter price'),'required'=>'required'))}}
+            <label for="price" class="form-label">{{ __('Price') }}</label>
+            <input type="number" name="price" id="price" class="form-control" placeholder="{{ __('Enter price') }}" value="{{ old('price', $place->price) }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('depo_name',__('Depo name'),array('class'=>'form-label')) }}
-            {{Form::text('depo_name',null,array('class'=>'form-control','placeholder'=>__('Enter depo name')))}}
+            <label for="depo_name" class="form-label">{{ __('Depo name') }}</label>
+            <input type="text" name="depo_name" id="depo_name" class="form-control" placeholder="{{ __('Enter depo name') }}" value="{{ old('depo_name', $place->depo_name) }}">
         </div>
         <div class="form-group col-md-12">
-            {{Form::label('depo_address',__('Depo address'),array('class'=>'form-label')) }}
-            {{Form::text('depo_address',null,array('class'=>'form-control','placeholder'=>__('Enter depo address')))}}
+            <label for="depo_address" class="form-label">{{ __('Depo address') }}</label>
+            <input type="text" name="depo_address" id="depo_address" class="form-control" placeholder="{{ __('Enter depo address') }}" value="{{ old('depo_address', $place->depo_address) }}">
         </div>
     </div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">{{__('Close')}}</button>
-    {{Form::submit(__('Update'),array('class'=>'btn btn-primary ml-10'))}}
+    <button type="submit" class="btn btn-primary ml-10">{{__('Update')}}</button>
 </div>
-{{Form::close()}}
-
-
+</form>

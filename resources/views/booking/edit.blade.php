@@ -24,7 +24,9 @@
 @section('card-action-btn')
 @endsection
 @section('content')
-    {{ Form::model($booking, ['route' => ['booking.update', $booking->id], 'method' => 'PUT']) }}
+    <form action="{{ route('booking.update', $booking->id) }}" method="POST">
+    @csrf
+    @method('PUT')
     <div class="row">
         <div class="col-md-12 col-lg-12">
             <div class="card">
@@ -33,15 +35,15 @@
                         <input type="hidden" name="booking_id" id="booking_id" value="{{ $booking->id }}">
                         <input type="hidden" name="details" id="details" value="{{ $booking->details }}">
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('start_date_time', __('Start Date Time'), ['class' => 'form-label']) }}
-                            {{ Form::text('start_date_time', null, ['class' => 'form-control start_date_time', 'placeholder' => __('Select Start Date & Time')]) }}
+                            <label for="start_date_time" class="form-label">{{ __('Start Date Time') }}</label>
+                            <input type="text" name="start_date_time" id="start_date_time" class="form-control start_date_time" placeholder="{{ __('Select Start Date & Time') }}" value="{{ old('start_date_time', $booking->start_date_time) }}">
                         </div>
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('end_date_time', __('End Date Time'), ['class' => 'form-label']) }}
-                            {{ Form::text('end_date_time', null, ['class' => 'form-control end_date_time', 'placeholder' => __('Select End Date & Time')]) }}
+                            <label for="end_date_time" class="form-label">{{ __('End Date Time') }}</label>
+                            <input type="text" name="end_date_time" id="end_date_time" class="form-control end_date_time" placeholder="{{ __('Select End Date & Time') }}" value="{{ old('end_date_time', $booking->end_date_time) }}">
                         </div>
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('vehicle', __('Vehicle'), ['class' => 'form-label']) }}
+                            <label for="vehicle" class="form-label">{{ __('Vehicle') }}</label>
 
                             <select name="vehicle" id="vehicle" class="form-control basic-select" required>
                                 <option value="">{{ __('Select Vehicle') }}</option>
@@ -51,18 +53,21 @@
                                         {{ $vehicle->name . ' - ' . $vehicle->license_plate }}</option>
                                 @endforeach
                             </select>
-                            {{-- {{ Form::text('vehicle_name', $vehicle_name, ['class' => 'form-control', 'placeholder' => __('Vehicle Name'), 'readonly']) }} --}}
 
                         </div>
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('driver', __('Driver'), ['class' => 'form-label']) }}
-                            {!! Form::select('driver', $drivers, null, ['class' => 'form-control  basic-select']) !!}
+                            <label for="driver" class="form-label">{{ __('Driver') }}</label>
+                            <select name="driver" id="driver" class="form-control  basic-select">
+                                @foreach($drivers as $val => $label)
+                                    <option value="{{ $val }}" {{ old('driver', $booking->driver) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                             <span class="float-end"> <a class=" customModal" href="#" data-size="lg"
                                     data-url="{{ route('driver.new.create') }}"
                                     data-title="{{ __('Create Driver') }}">{{ __('Create New Driver') }}</a></span>
                         </div>
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('pickup_address', __('Pickup Address'), ['class' => 'form-label']) }}
+                            <label for="pickup_address" class="form-label">{{ __('Pickup Address') }}</label>
                             <select name="pickup_address" id="pickup_address" class="form-control basic-select" required>
                                 <option value="">{{ __('Select Pickup Address') }}</option>
                                 @foreach ($places as $place)
@@ -73,7 +78,7 @@
                             </select>
                         </div>
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('drop_off_address', __('Drop Off Address'), ['class' => 'form-label']) }}
+                            <label for="drop_off_address" class="form-label">{{ __('Drop Off Address') }}</label>
                             <select name="drop_off_address" id="drop_off_address" class="form-control basic-select"
                                 required>
                                 <option value="">{{ __('Select Drop Off Address') }}</option>
@@ -86,43 +91,31 @@
                             </select>
                         </div>
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('addon', __('Addon'), ['class' => 'form-label']) }}
-                            {!! Form::select('addon[]', $addon, !empty($booking->addon) ? explode(',', $booking->addon) : null, [
-                                'class' => 'form-control hidesearch addon',
-                                'multiple',
-                            ]) !!}
+                            <label for="addon" class="form-label">{{ __('Addon') }}</label>
+                            <select name="addon[]" id="addon" class="form-control hidesearch addon" multiple>
+                                @foreach($addon as $val => $label)
+                                    <option value="{{ $val }}" {{ in_array($val, old('addon', !empty($booking->addon) ? explode(',', $booking->addon) : [])) ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        {{-- add discount input  --}}
-
-                        {{-- <div class="form-group col-md-4 col-lg-4">
-    {{ Form::label('discount', __('Discount'), ['class' => 'form-label']) }}
-    {{ Form::number('discount', null, [
-        'class' => 'form-control',
-        'id' => 'discount',
-        'step' => 'any',
-        'min' => '0',
-        'placeholder' => __('Enter discount'),
-    ]) }}
-</div> --}}
                         {{-- Final pric  --}}
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('daily_price', __('Price a day'), ['class' => 'form-label']) }}
-                            {{ Form::number('daily_price', !empty($booking->daily_price_final) ? $booking->daily_price_final : optional($booking->vehicleDetails())->daily_rate, [
-                                'class' => 'form-control',
-                                'id' => 'daily_price',
-                                'step' => 'any',
-                                'min' => '0',
-                            ]) }}
+                            <label for="daily_price" class="form-label">{{ __('Price a day') }}</label>
+                            <input type="number" name="daily_price" id="daily_price" class="form-control" step="any" min="0" value="{{ old('daily_price', !empty($booking->daily_price_final) ? $booking->daily_price_final : optional($booking->vehicleDetails())->daily_rate) }}">
                         </div>
 
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('status', __('Status'), ['class' => 'form-label']) }}
-                            {!! Form::select('status', $status, null, ['class' => 'form-control hidesearch ']) !!}
+                            <label for="status" class="form-label">{{ __('Status') }}</label>
+                            <select name="status" id="status" class="form-control hidesearch ">
+                                @foreach($status as $val => $label)
+                                    <option value="{{ $val }}" {{ old('status', $booking->status) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <input type="hidden" name="amount" id="amount" value="{{ $booking->amount }}">
                         <div class="form-group col-md-4 col-lg-4">
-                            {{ Form::label('notes', __('Notes'), ['class' => 'form-label']) }}
-                            {{ Form::textarea('notes', null, ['class' => 'form-control', 'placeholder' => __('Enter notes'), 'rows' => 2]) }}
+                            <label for="notes" class="form-label">{{ __('Notes') }}</label>
+                            <textarea name="notes" id="notes" class="form-control" placeholder="{{ __('Enter notes') }}" rows="2">{{ old('notes', $booking->notes) }}</textarea>
                         </div>
                         @php
                             $details = !empty($booking->details) ? json_decode($booking->details) : null;
@@ -189,10 +182,10 @@
 
     <div class="row text-end">
         <div class="col-md-12 col-lg-12">
-            {{ Form::submit(__('Update'), ['class' => 'btn btn-primary ml-10']) }}
+            <button type="submit" class="btn btn-primary ml-10">{{ __('Update') }}</button>
         </div>
     </div>
-    {{ Form::close() }}
+    </form>
 @endsection
 @push('script-page')
     <script>

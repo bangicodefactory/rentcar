@@ -1,28 +1,34 @@
-{{ Form::model($subscription, array('route' => array('subscriptions.update', $subscription->id), 'method' => 'PUT')) }}
+<form action="{{ route('subscriptions.update', $subscription->id) }}" method="POST">
+@csrf
+@method('PUT')
 <div class="modal-body">
     <div class="row">
         <div class="form-group">
-            {{Form::label('title',__('Title'),array('class'=>'form-label'))}}
-            {{Form::text('title',null,array('class'=>'form-control','placeholder'=>__('Enter subscription title'),'required'=>'required'))}}
+            <label for="title" class="form-label">{{ __('Title') }}</label>
+            <input type="text" name="title" id="title" class="form-control" placeholder="{{ __('Enter subscription title') }}" value="{{ old('title', $subscription->title) }}" required>
         </div>
         <div class="form-group">
-            {{ Form::label('interval', __('Interval'),array('class'=>'form-label')) }}
-            {!! Form::select('interval', $intervals, null,array('class' => 'form-control hidesearch','required'=>'required')) !!}
+            <label for="interval" class="form-label">{{ __('Interval') }}</label>
+            <select name="interval" id="interval" class="form-control hidesearch" required>
+                @foreach($intervals as $val => $label)
+                    <option value="{{ $val }}" {{ old('interval', $subscription->interval) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group">
-            {{Form::label('package_amount',__('Package Amount'),array('class'=>'form-label'))}}
-            {{Form::number('package_amount',null,array('class'=>'form-control','placeholder'=>__('Enter package amount'),'step'=>'0.01'))}}
+            <label for="package_amount" class="form-label">{{ __('Package Amount') }}</label>
+            <input type="number" name="package_amount" id="package_amount" class="form-control" placeholder="{{ __('Enter package amount') }}" value="{{ old('package_amount', $subscription->package_amount) }}" step="0.01">
         </div>
         <div class="form-group">
-            {{Form::label('user_limit',__('User Limit'),array('class'=>'form-label'))}}
-            {{Form::number('user_limit',null,array('class'=>'form-control','placeholder'=>__('Enter user limit'),'required'=>'required'))}}
+            <label for="user_limit" class="form-label">{{ __('User Limit') }}</label>
+            <input type="number" name="user_limit" id="user_limit" class="form-control" placeholder="{{ __('Enter user limit') }}" value="{{ old('user_limit', $subscription->user_limit) }}" required>
         </div>
         <div class="form-group">
-            {{Form::label('driver_limit',__('Driver Limit'),array('class'=>'form-label'))}}
-            {{Form::number('driver_limit',null,array('class'=>'form-control','placeholder'=>__('Enter driver limit'),'required'=>'required'))}}
+            <label for="driver_limit" class="form-label">{{ __('Driver Limit') }}</label>
+            <input type="number" name="driver_limit" id="driver_limit" class="form-control" placeholder="{{ __('Enter driver limit') }}" value="{{ old('driver_limit', $subscription->driver_limit) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{Form::label('enabled_logged_history',__('Show User Logged History'),array('class'=>'form-label'))}}
+            <label for="enabled_logged_history" class="form-label">{{ __('Show User Logged History') }}</label>
             <div>
                 <label class="switch with-icon switch-primary">
                     <input type="checkbox" name="enabled_logged_history" id="enabled_logged_history" {{$subscription->enabled_logged_history==1?'checked':''}}><span class="switch-btn"></span>
@@ -32,9 +38,6 @@
     </div>
 </div>
 <div class="modal-footer">
-
-    {{Form::submit(__('Update'),array('class'=>'btn btn-primary btn-rounded'))}}
+    <button type="submit" class="btn btn-primary btn-rounded">{{__('Update')}}</button>
 </div>
-{{ Form::close() }}
-
-
+</form>

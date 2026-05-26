@@ -45,7 +45,9 @@
                                 @if(Gate::check('edit expense type') || Gate::check('delete expense type'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['expense-type.destroy', $type->id]]) !!}
+                                            <form action="{{ route('expense-type.destroy', $type->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
                                             @can('edit expense type')
                                                 <a class="text-success customModal" data-bs-toggle="tooltip"
                                                    data-bs-original-title="{{__('Edit')}}" href="#" data-size="md"
@@ -57,7 +59,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>

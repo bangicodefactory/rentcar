@@ -18,35 +18,35 @@
             <div class="card">
                 <div class="card-body">
                     <div class="info-group">
-                        {{Form::model($loginUser, array('route' => array('setting.password'), 'method' => 'post')) }}
+                        <form action="{{ route('setting.password') }}" method="POST">
+                        @csrf
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    {{Form::label('current_password',__('Current Password'),array('class'=>'form-label'))}}
-                                    {{Form::password('current_password',array('class'=>'form-control','placeholder'=>__('Enter your current password'),'required'=>'required'))}}
+                                    <label for="current_password" class="form-label">{{ __('Current Password') }}</label>
+                                    <input type="password" name="current_password" id="current_password" class="form-control" placeholder="{{ __('Enter your current password') }}" required>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    {{Form::label('new_password',__('New Password'),array('class'=>'form-label'))}}
-                                    {{Form::password('new_password',array('class'=>'form-control','placeholder'=>__('Enter your new password'),'required'=>'required'))}}
+                                    <label for="new_password" class="form-label">{{ __('New Password') }}</label>
+                                    <input type="password" name="new_password" id="new_password" class="form-control" placeholder="{{ __('Enter your new password') }}" required>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    {{Form::label('confirm_password',__('Confirm New Password'),array('class'=>'form-label'))}}
-                                    {{Form::password('confirm_password',array('class'=>'form-control','placeholder'=>__('Enter your confirm new password'),'required'=>'required'))}}
+                                    <label for="confirm_password" class="form-label">{{ __('Confirm New Password') }}</label>
+                                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="{{ __('Enter your confirm new password') }}" required>
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            {{Form::submit(__('Save'),array('class'=>'btn btn-primary btn-rounded'))}}
+                            <button type="submit" class="btn btn-primary btn-rounded">{{__('Save')}}</button>
                         </div>
-                        {{ Form::close() }}
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-

@@ -64,11 +64,13 @@
                                                     class="btn btn-sm btn-info" target="_blank">View Full Size</a>
                                             @endif
                                             @if (Gate::check('delete driver'))
-                                                {!! Form::open(['method' => 'DELETE', 'route' => ['signature.destroy', $signature->id]]) !!}
+                                                <form action="{{ route('signature.destroy', $signature->id) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
                                                 <a class=" text-danger confirm_dialog" data-bs-toggle="tooltip"
                                                     data-bs-original-title="{{ __('Detete') }}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
-                                                {!! Form::close() !!}
+                                                </form>
                                             @endif
                                             
 

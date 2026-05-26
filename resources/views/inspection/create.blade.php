@@ -22,7 +22,8 @@
 @section('card-action-btn')
 @endsection
 @section('content')
-    {{Form::open(array('url'=>'inspection','method'=>'post','enctype' => "multipart/form-data"))}}
+    <form action="{{ url('inspection') }}" method="POST" enctype="multipart/form-data">
+    @csrf
     <div class="row">
         <div class="col-md-6 col-lg-6">
             <div class="card">
@@ -32,28 +33,40 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="form-group col-md-6 col-lg-6">
-                            {{ Form::label('vehicle', __('Vehicle'),['class'=>'form-label']) }}
-                            {!! Form::select('vehicle', $vehicles,null,array('class' => 'form-control hidesearch ','required'=>'required')) !!}
+                            <label for="vehicle" class="form-label">{{ __('Vehicle') }}</label>
+                            <select name="vehicle" id="vehicle" class="form-control hidesearch " required>
+                                @foreach($vehicles as $val => $label)
+                                    <option value="{{ $val }}" {{ old('vehicle') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group col-md-6 col-lg-6">
-                            {{ Form::label('inspector ', __('Inspection By'),['class'=>'form-label']) }}
-                            {{Form::text('inspector',null,array('class'=>'form-control','required'=>'required'))}}
+                            <label for="inspector" class="form-label">{{ __('Inspection By') }}</label>
+                            <input type="text" name="inspector" id="inspector" class="form-control" value="{{ old('inspector') }}" required>
                         </div>
                         <div class="form-group col-md-6 col-lg-6">
-                            {{Form::label('inspection_date',__('Inspection Date'),array('class'=>'form-label')) }}
-                            {{Form::date('inspection_date',null,array('class'=>'form-control','required'=>'required'))}}
+                            <label for="inspection_date" class="form-label">{{ __('Inspection Date') }}</label>
+                            <input type="date" name="inspection_date" id="inspection_date" class="form-control" value="{{ old('inspection_date') }}" required>
                         </div>
                         <div class="form-group col-md-6 col-lg-6">
-                            {{ Form::label('status', __('Inspection Status'),['class'=>'form-label']) }}
-                            {!! Form::select('status', $status,null,array('class' => 'form-control hidesearch ','required'=>'required')) !!}
+                            <label for="status" class="form-label">{{ __('Inspection Status') }}</label>
+                            <select name="status" id="status" class="form-control hidesearch " required>
+                                @foreach($status as $val => $label)
+                                    <option value="{{ $val }}" {{ old('status') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group col-md-6 col-lg-6">
-                            {{ Form::label('repair_status', __('Repair Status'),['class'=>'form-label']) }}
-                            {!! Form::select('repair_status', $repairStatus,null,array('class' => 'form-control hidesearch ','required'=>'required')) !!}
+                            <label for="repair_status" class="form-label">{{ __('Repair Status') }}</label>
+                            <select name="repair_status" id="repair_status" class="form-control hidesearch " required>
+                                @foreach($repairStatus as $val => $label)
+                                    <option value="{{ $val }}" {{ old('repair_status') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group col-md-6 col-lg-6">
-                            {{Form::label('notes',__('Notes'),array('class'=>'form-label')) }}
-                            {{Form::textarea('notes',null,array('class'=>'form-control','placeholder'=>__('Enter notes'),'rows'=>2,'required'=>'required'))}}
+                            <label for="notes" class="form-label">{{ __('Notes') }}</label>
+                            <textarea name="notes" id="notes" class="form-control" placeholder="{{ __('Enter notes') }}" rows="2" required>{{ old('notes') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -67,12 +80,12 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="form-group col-md-6 col-lg-6">
-                                    {{ Form::label('amount', __('Amount'),['class'=>'form-label']) }}
-                                    {{Form::number('amount',null,array('class'=>'form-control','placeholder'=>__('Enter amount'),'required'=>'required'))}}
+                                    <label for="amount" class="form-label">{{ __('Amount') }}</label>
+                                    <input type="number" name="amount" id="amount" class="form-control" placeholder="{{ __('Enter amount') }}" value="{{ old('amount') }}" required>
                                 </div>
                                 <div class="form-group col-md-6 col-lg-6">
-                                    {{Form::label('receipt',__('Receipt'),array('class'=>'form-label')) }}
-                                    {{Form::file('receipt',array('class'=>'form-control'))}}
+                                    <label for="receipt" class="form-label">{{ __('Receipt') }}</label>
+                                    <input type="file" name="receipt" id="receipt" class="form-control">
                                 </div>
                             </div>
                         </div>
@@ -86,13 +99,13 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="form-group col-md-6 col-lg-6">
-                                    {{Form::label('incoming_date',__('Date'),array('class'=>'form-label')) }}
-                                    {{Form::date('incoming_date',null,array('class'=>'form-control'))}}
+                                    <label for="incoming_date" class="form-label">{{ __('Date') }}</label>
+                                    <input type="date" name="incoming_date" id="incoming_date" class="form-control" value="{{ old('incoming_date') }}">
                                 </div>
 
                                 <div class="form-group col-md-6 col-lg-6">
-                                    {{Form::label('meter_reading_incoming',__('Meter Reading (km)'),array('class'=>'form-label')) }}
-                                    {{Form::number('meter_reading_incoming',null,array('class'=>'form-control','placeholder'=>__('Enter meter reading incoming (km)')))}}
+                                    <label for="meter_reading_incoming" class="form-label">{{ __('Meter Reading (km)') }}</label>
+                                    <input type="number" name="meter_reading_incoming" id="meter_reading_incoming" class="form-control" placeholder="{{ __('Enter meter reading incoming (km)') }}" value="{{ old('meter_reading_incoming') }}">
                                 </div>
 
                             </div>
@@ -136,8 +149,8 @@
     </div>
     <div class="row text-end">
         <div class="col-md-12 col-lg-12">
-            {{Form::submit(__('Create'),array('class'=>'btn btn-primary ml-10'))}}
+            <button type="submit" class="btn btn-primary ml-10">{{__('Create')}}</button>
         </div>
     </div>
-    {{ Form::close() }}
+    </form>
 @endsection

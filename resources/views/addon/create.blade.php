@@ -1,16 +1,17 @@
-{{ Form::open(['url' => 'addon', 'method' => 'post']) }}
+<form action="{{ url('addon') }}" method="POST">
+@csrf
 <div class="modal-body">
     <div class="row">
         <div class="form-group col-md-12">
-            {{ Form::label('name', __('Addon'), ['class' => 'form-label']) }}
-            {{ Form::text('name', null, ['class' => 'form-control', 'placeholder' => __('Enter addon name'), 'required' => 'required']) }}
+            <label for="name" class="form-label">{{ __('Addon') }}</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="{{ __('Enter addon name') }}" value="{{ old('name') }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{ Form::label('price', __('Price'), ['class' => 'form-label']) }}
-            {{ Form::number('price', null, ['class' => 'form-control', 'placeholder' => __('Enter price'), 'required' => 'required']) }}
+            <label for="price" class="form-label">{{ __('Price') }}</label>
+            <input type="number" name="price" id="price" class="form-control" placeholder="{{ __('Enter price') }}" value="{{ old('price') }}" required>
         </div>
         <div class="form-group col-md-12">
-            {{ Form::label('billing_type', __('Billing Type'), ['class' => 'form-label']) }}
+            <label for="billing_type" class="form-label">{{ __('Billing Type') }}</label>
             <select name="billing_type" class="form-control hidesearch " id="billing_type">
                 @foreach ($billingType as $k => $val)
                     <option value="{{ $k }}">{{ $val }}</option>
@@ -21,6 +22,6 @@
 </div>
 <div class="modal-footer">
     <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">{{ __('Close') }}</button>
-    {{ Form::submit(__('Create'), ['class' => 'btn btn-primary ml-10']) }}
+    <button type="submit" class="btn btn-primary ml-10">{{ __('Create') }}</button>
 </div>
-{{ Form::close() }}
+</form>

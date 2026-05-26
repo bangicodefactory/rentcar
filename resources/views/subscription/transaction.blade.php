@@ -57,7 +57,9 @@
                                            data-bs-original-title="{{__('Receipt')}}" href="{{$transaction->receipt}}">
                                             <i data-feather="file"></i></a>
                                     @elseif($transaction->payment_type=='Bank Transfer')
-                                        {!! Form::open(['method' => 'DELETE', 'route' => ['subscription.bank.transfer.action', [$transaction->id,'accept']]]) !!}
+                                        <form action="{{ route('subscription.bank.transfer.action', [$transaction->id,'accept']) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
 
                                         <a class="text-primary" data-bs-toggle="tooltip" target="_blank"
                                            data-bs-original-title="{{__('Receipt')}}"
@@ -75,6 +77,7 @@
                                                href="{{route('subscription.bank.transfer.action', [$transaction->id,'reject'])}}">
                                                 <i data-feather="user-x"></i></a>
                                         @endif
+                                        </form>
                                     @endif
                                 </td>
                             </tr>

@@ -13,10 +13,11 @@
                 {{ session('status') }}
             </div>
         @endif
-        {{Form::open(array('route'=>'password.confirm','method'=>'post'))}}
+        <form action="{{ route('password.confirm') }}" method="POST">
+            @csrf
         <div class="form-group mb-0">
-            {{Form::label('password',__('Password'),['class'=>'form-label'])}}
-            {{Form::password('password',array('class'=>'form-control','placeholder'=>__('Enter your password')))}}
+            <label for="password" class="form-label">{{ __('Password') }}</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="{{ __('Enter your password') }}">
             @error('password')
             <span class="invalid-feedback text-danger" role="alert">
                 <strong>{{ $message }}</strong>
@@ -29,6 +30,6 @@
         <div class="auth-footer">
             <h6 class="text-center">{{__('Back to')}} <a class="text-primary" href="{{ route('login') }}">{{__('Log In')}}</a></h6>
         </div>
-        {{Form::close()}}
+        </form>
     </div>
 @endsection

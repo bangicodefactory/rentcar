@@ -20,53 +20,54 @@
         <div class="col-xl-12 col-lg-12">
             <div class="card">
                 <div class="card-body">
-                    {{Form::model($settings, array('route' => array('setting.general'), 'method' => 'post', 'enctype' => "multipart/form-data")) }}
+                    <form action="{{ route('setting.general') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                {{Form::label('application_name',__('Application Name'),array('class'=>'form-label'))}}
-                                {{Form::text('application_name',!empty($settings['app_name'])?$settings['app_name']:env('APP_NAME'),array('class'=>'form-control','placeholder'=>__('Enter your application name'),'required'=>'required'))}}
+                                <label for="application_name" class="form-label">{{ __('Application Name') }}</label>
+                                <input type="text" name="application_name" id="application_name" class="form-control" placeholder="{{ __('Enter your application name') }}" value="{{ old('application_name', !empty($settings['app_name']) ? $settings['app_name'] : env('APP_NAME')) }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{Form::label('logo',__('Logo'),array('class'=>'form-label'))}}
-                                {{Form::file('logo',array('class'=>'form-control'))}}
+                                <label for="logo" class="form-label">{{ __('Logo') }}</label>
+                                <input type="file" name="logo" id="logo" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{Form::label('favicon',__('Favicon'),array('class'=>'form-label'))}}
-                                {{Form::file('favicon',array('class'=>'form-control'))}}
+                                <label for="favicon" class="form-label">{{ __('Favicon') }}</label>
+                                <input type="file" name="favicon" id="favicon" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{Form::label('image_home_1',__('Première image de page d acceuil'),array('class'=>'form-label'))}}
-                                {{Form::file('image_home_1',array('class'=>'form-control'))}}
+                                <label for="image_home_1" class="form-label">{{ __('Première image de page d acceuil') }}</label>
+                                <input type="file" name="image_home_1" id="image_home_1" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                {{Form::label('image_home_2',__('Deuxième image de page d acceuil'),array('class'=>'form-label'))}}
-                                {{Form::file('image_home_2',array('class'=>'form-control'))}}
+                                <label for="image_home_2" class="form-label">{{ __('Deuxième image de page d acceuil') }}</label>
+                                <input type="file" name="image_home_2" id="image_home_2" class="form-control">
                             </div>
                         </div>
 
                         @if(\Auth::user()->type=='super admin')
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    {{Form::label('landing_logo',__('Landing Page Logo'),array('class'=>'form-label'))}}
-                                    {{Form::file('landing_logo',array('class'=>'form-control'))}}
+                                    <label for="landing_logo" class="form-label">{{ __('Landing Page Logo') }}</label>
+                                    <input type="file" name="landing_logo" id="landing_logo" class="form-control">
                                 </div>
                             </div>
                         @endif
 
                     </div>
                     <div class="text-right">
-                        {{Form::submit(__('Save'), ['class' => 'btn btn-primary btn-rounded'])}}
+                        <button type="submit" class="btn btn-primary btn-rounded">{{__('Save')}}</button>
                     </div>
-                    {{ Form::close() }}
+                    </form>
                 </div>
             </div>
         </div>
@@ -81,8 +82,8 @@
                     @if(!empty($settings['admin_signature']))
                         <div class="mb-4">
                             <p>{{ __('Current Signature:') }}</p>
-                            <img src="{{ asset('storage/' . $settings['admin_signature']) }}" 
-                                 alt="Signature" 
+                            <img src="{{ asset('storage/' . $settings['admin_signature']) }}"
+                                 alt="Signature"
                                  style="max-height: 100px;"
                                  onerror="this.onerror=null; this.src=''; this.alt='Signature not found - Path: {{ $settings['admin_signature'] }}'; this.style.border='1px dashed red'; this.style.padding='10px';">
                             <small class="text-muted d-block mt-1">Path: {{ $settings['admin_signature'] }}</small>

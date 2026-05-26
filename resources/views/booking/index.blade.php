@@ -95,7 +95,9 @@
                                 @if(Gate::check('edit booking') || Gate::check('delete booking') || Gate::check('show booking'))
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['booking.destroy', $booking->id]]) !!}
+                                            <form action="{{ route('booking.destroy', $booking->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
                                             @can('show booking')
                                                 <a class="text-warning"
                                                    data-bs-toggle="tooltip"
@@ -115,7 +117,7 @@
                                                     <i data-feather="trash-2"></i>
                                                 </a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
                                     </td>
                                 @endif
@@ -145,7 +147,8 @@
                 <h5 class="modal-title" id="importBookingModalLabel">{{ __('Import Bookings from Excel') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
             </div>
-            {!! Form::open(['route' => 'booking.import', 'method' => 'POST', 'enctype' => 'multipart/form-data']) !!}
+            <form action="{{ route('booking.import') }}" method="POST" enctype="multipart/form-data">
+            @csrf
             <div class="modal-body">
 
                 {{-- Error table shown when rows were skipped --}}
@@ -210,7 +213,7 @@
                     <i class="ti-upload mr-5"></i>{{ __('Import') }}
                 </button>
             </div>
-            {!! Form::close() !!}
+            </form>
         </div>
     </div>
 </div>

@@ -1,32 +1,35 @@
-{{ Form::model($user, ['route' => ['users.update', $user->id], 'method' => 'PUT']) }}
+<form action="{{ route('users.update', $user->id) }}" method="POST">
+@csrf
+@method('PUT')
 <div class="modal-body">
     <div class="row">
         @if (\Auth::user()->type != 'super admin')
             <div class="form-group col-md-6">
-                {{ Form::label('role', __('Assign Role'), ['class' => 'form-label']) }}
-                {!! Form::select('role', $userRoles, !empty($user->roles) ? $user->roles[0]->id : null, [
-                    'class' => 'form-control hidesearch ',
-                    'required' => 'required',
-                ]) !!}
+                <label for="role" class="form-label">{{ __('Assign Role') }}</label>
+                <select name="role" id="role" class="form-control hidesearch " required>
+                    @foreach($userRoles as $val => $label)
+                        <option value="{{ $val }}" {{ old('role', !empty($user->roles) ? $user->roles[0]->id : null) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
             </div>
         @endif
         <div class="form-group col-md-6">
-            {{ Form::label('name', __('Name'), ['class' => 'form-label']) }}
-            {{ Form::text('name', null, ['class' => 'form-control', 'placeholder' => __('Enter Name'), 'required' => 'required']) }}
+            <label for="name" class="form-label">{{ __('Name') }}</label>
+            <input type="text" name="name" id="name" class="form-control" placeholder="{{ __('Enter Name') }}" value="{{ old('name', $user->name) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('email', __('User Email'), ['class' => 'form-label']) }}
-            {{ Form::text('email', null, ['class' => 'form-control', 'placeholder' => __('Enter User Email'), 'required' => 'required']) }}
+            <label for="email" class="form-label">{{ __('User Email') }}</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="{{ __('Enter User Email') }}" value="{{ old('email', $user->email) }}" required>
         </div>
         <div class="form-group col-md-6">
-            {{ Form::label('phone_number', __('User Phone Number'), ['class' => 'form-label']) }}
-            {{ Form::text('phone_number', null, ['class' => 'form-control', 'placeholder' => __('Enter Phone Number')]) }}
+            <label for="phone_number" class="form-label">{{ __('User Phone Number') }}</label>
+            <input type="text" name="phone_number" id="phone_number" class="form-control" placeholder="{{ __('Enter Phone Number') }}" value="{{ old('phone_number', $user->phone_number) }}">
         </div>
 
 
     </div>
 </div>
 <div class="modal-footer">
-    {{ Form::submit(__('Update'), ['class' => 'btn btn-primary btn-rounded']) }}
+    <button type="submit" class="btn btn-primary btn-rounded">{{__('Update')}}</button>
 </div>
-{{ Form::close() }}
+</form>

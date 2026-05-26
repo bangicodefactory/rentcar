@@ -57,7 +57,9 @@
                                 @if(Gate::check('edit expense') || Gate::check('delete expense') )
                                     <td>
                                         <div class="cart-action">
-                                            {!! Form::open(['method' => 'DELETE', 'route' => ['expense.destroy', $expense->id]]) !!}
+                                            <form action="{{ route('expense.destroy', $expense->id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
                                             @if(!empty($expense->receipt))
                                                 <a  class="text-primary"  href="{{asset('/storage/upload/expense/'.$expense->receipt)}} "
                                                    target="_blank" data-bs-toggle="tooltip"
@@ -75,7 +77,7 @@
                                                    data-bs-original-title="{{__('Detete')}}" href="#"> <i
                                                         data-feather="trash-2"></i></a>
                                             @endcan
-                                            {!! Form::close() !!}
+                                            </form>
                                         </div>
 
                                     </td>
