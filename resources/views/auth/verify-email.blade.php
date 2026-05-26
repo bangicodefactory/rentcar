@@ -15,7 +15,7 @@
             <p>{{ __('Before proceeding, please check your email for a verification link.') }}</p>
         </div>
         <div class="auth-footer">
-            <h6 class="text-center"> {{ __('If you did not receive the email') }}, <a href="{{ route('verification.resend') }}">{{ __('click here to request another') }}</a>.</h6>
+            <h6 class="text-center"> {{ __('If you did not receive the email') }}, <a href="{{ route('verification.send') }}">{{ __('click here to request another') }}</a>.</h6>
         </div>
     </div>
 @endsection

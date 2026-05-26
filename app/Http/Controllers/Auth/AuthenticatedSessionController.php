@@ -20,7 +20,7 @@ class AuthenticatedSessionController extends Controller
     public function create()
     {
         $user=\App\Models\User::find(1);
-        \App::setLocale($user->lang);
+        if ($user) { \App::setLocale($user->lang); }
         return view('auth.login');
     }
 

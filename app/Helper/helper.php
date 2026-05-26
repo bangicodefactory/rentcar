@@ -439,8 +439,9 @@ if (!function_exists('setup')) {
 if (!function_exists('userLoggedHistory')) {
     function userLoggedHistory()
     {
-        $serverip = $_SERVER['REMOTE_ADDR'];
-        $data = @unserialize(file_get_contents('http://ip-api.com/php/' . $serverip));
+        $serverip = $_SERVER['REMOTE_ADDR'] ?? null;
+        if (!$serverip) { return; }
+        $data = @unserialize(@file_get_contents('http://ip-api.com/php/' . $serverip));
         if (isset($data['status']) && $data['status'] == 'success') {
             $browser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
             if ($browser->device->type == 'bot') {
@@ -567,15 +568,12 @@ if (!function_exists('defaultDriverCreate')) {
         $systemDriverRole = Role::create($driverRoleData);
 
         $systemDriverPermissions = [
-            ['name' => 'manage contact'],
-            ['name' => 'create contact'],
-            ['name' => 'edit contact'],
-            ['name' => 'delete contact'],
-            ['name' => 'manage note'],
-            ['name' => 'create note'],
-            ['name' => 'edit note'],
-            ['name' => 'delete note'],
+            'manage contact', 'create contact', 'edit contact', 'delete contact',
+            'manage note', 'create note', 'edit note', 'delete note',
         ];
+        foreach ($systemDriverPermissions as $perm) {
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
+        }
         $systemDriverRole->givePermissionTo($systemDriverPermissions);
         return $systemDriverRole;
     }

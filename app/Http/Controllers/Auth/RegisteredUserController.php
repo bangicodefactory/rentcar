@@ -22,7 +22,7 @@ class RegisteredUserController extends Controller
     public function create()
     {
         $user=\App\Models\User::find(1);
-        \App::setLocale($user->lang);
+        if ($user) { \App::setLocale($user->lang); }
         $registerPage=getSettingsValByName('register_page');
 
         if($registerPage =='on'){
