@@ -11,6 +11,7 @@
         "creagia/laravel-sign-pad": "^2.1",
         "doctrine/dbal": "^3.0",
         "guzzlehttp/guzzle": "^7.2",
+        "inertiajs/inertia-laravel": "^3.1",
         "kkomelin/laravel-translatable-string-exporter": "^1.21",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
@@ -23,6 +24,7 @@
         "spatie/laravel-permission": "^6.0",
         "srmklive/paypal": "~3.0.0",
         "stripe/stripe-php": "^16.0",
+        "tightenco/ziggy": "^2.6",
         "whichbrowser/parser": "^2.1"
     },
     "require-dev": {
