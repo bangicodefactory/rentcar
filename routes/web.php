@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SubscriptionController;
@@ -537,4 +538,7 @@ Route::prefix('ui-test')->name('ui.test.')->group(function () {
     Route::get('/car/{id}', [RequestBookingController::class, 'showSimilarCars'])->name('client.details');
     Route::post('/booking_request', [RequestBookingController::class, 'storeBooking'])->name('booking.store_request');
     Route::resource('booking_requests', RequestBookingController::class);
+
+// BAN-51 smoke-test — remove after Hello.tsx is verified
+Route::get('/hello', fn () => Inertia::render('Hello'))->name('inertia.hello');
 
