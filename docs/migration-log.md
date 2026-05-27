@@ -100,9 +100,26 @@ Phase 3 changes shipped: Laravel `^12.0` + PHPUnit `^11.0` + all compatible deps
 
 ---
 
-## Phase 4 — Dependency and PHP upgrade
+## Phase 4 — Laravel Mix → Vite
 
-*(To be filled after Phase 4 work completes.)*
+### BAN-50: Visual smoke test — 10 top pages on Vite build
+
+Build: `npm run build` → `public/build/assets/app-NHXksaQF.css` (19.35 kB), `app-CvF1sPo4.js` (88.02 kB)
+
+| Date | Commit | Tester | Page | URL | Outcome | Notes |
+|------|--------|--------|------|-----|---------|-------|
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Login | `/login` | Pass | Auth layout, form fields, split panel all render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Register | `/register` | Pass | Registration form, split panel render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Dashboard | `/home` | Pass | Sidebar, stat cards, chart, notifications all render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Vehicle list | `/vehicle` | Pass | DataTable, header, Create button render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Booking list | `/booking` | Pass | DataTable with action buttons render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Booking create | `/booking/create` | Pass | Form fields, dropdowns, date pickers, Create button render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Rental agreement | `/rental-agreement` | Pass | DataTable, Create Agreement button render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Settings | `/settings/general` | Pass | Settings form, file inputs, Save button render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Customer landing | `/landing` | Pass | Hero section, navigation, header render correctly |
+| 2026-05-27 | 4a9b6733 | Ahmed CHIOUA | Inspection | `/inspection` | Pass | DataTable with export buttons (Print/Excel/PDF/CSV/Copy) render correctly |
+
+**No visible regressions on any of the 10 pages.** CSS output identical to pre-migration baseline (19.35 kB gzip: 4.57 kB). Phase 4 exit gate: **PASSED**.
 
 ---
 
