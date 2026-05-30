@@ -183,6 +183,7 @@ function SidebarContent({ collapsed = false }) {
 function UserMenu() {
     const { auth } = usePage().props;
     const user = auth.user;
+    const canManageSettings = auth.permissions.includes('manage setting');
     const profileSrc = user?.profile
         ? `/storage/upload/profile/${user.profile}`
         : null;
@@ -212,9 +213,11 @@ function UserMenu() {
                 <DropdownMenuItem asChild>
                     <Link href={route('setting.account')}>Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link href={route('setting.general')}>Settings</Link>
-                </DropdownMenuItem>
+                {canManageSettings && (
+                    <DropdownMenuItem asChild>
+                        <Link href={route('setting.general')}>Settings</Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
