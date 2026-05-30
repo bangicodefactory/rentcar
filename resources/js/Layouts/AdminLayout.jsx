@@ -213,7 +213,7 @@ function UserMenu() {
                     <Link href={route('setting.account')}>Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link href={route('settings.index')}>Settings</Link>
+                    <Link href={route('setting.general')}>Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
