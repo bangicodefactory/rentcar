@@ -14,6 +14,7 @@ use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Signature;
+use Inertia\Inertia;
 
 
 class SignatureController extends Controller
@@ -42,7 +43,9 @@ class SignatureController extends Controller
                    ->get();
         $gender = User::$gender;
 
-        return view('signature.create', compact( 'users', 'gender' , 'drivers'));
+        return Inertia::render('Signature/Create', [
+            'drivers' => $drivers->map(fn($d) => ['id' => $d->id, 'name' => $d->name]),
+        ]);
     }
     public function store(Request $request)
     {

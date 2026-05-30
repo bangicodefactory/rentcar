@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
 class BookingController extends Controller
@@ -32,7 +33,24 @@ class BookingController extends Controller
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
-        return view('booking.index', compact('bookings'));
+
+        return Inertia::render('Booking/Index', [
+            'bookings' => $bookings->map(fn($b) => [
+                'id'             => $b->id,
+                'encrypted_id'   => Crypt::encrypt($b->id),
+                'booking_id'     => bookingPrefix() . $b->booking_id,
+                'driver_name'    => $b->drivers?->name ?? '-',
+                'vehicle_label'  => optional($b->vehicleDetails())->name . ' - ' . optional($b->vehicleDetails())->license_plate,
+                'start_date'     => $b->start_date,
+                'start_time'     => $b->start_time,
+                'end_date'       => $b->end_date,
+                'end_time'       => $b->end_time,
+                'status'         => $b->status,
+                'payment_status' => $b->payment_status,
+            ]),
+            'statuses'       => collect(Booking::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+            'paymentStatuses' => collect(Booking::$paymentStatus)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+        ]);
     }
 
 
@@ -45,7 +63,7 @@ class BookingController extends Controller
                 ->where('type', 'driver')
                 ->orderBy('created_at', 'desc')
                 ->get();
-            $driversDropdown = ['' => __('Select Driver')] + $drivers->pluck('name', 'id')->toArray();
+            $driversDropdown = $drivers->pluck('name', 'id')->toArray();
 
 
             $status = Booking::$status;
@@ -54,7 +72,13 @@ class BookingController extends Controller
             $places = Place::where('parent_id', parentId())->get();
             $addon = Addon::where('parent_id', parentId())->get()->pluck('name', 'id');
 
-            return view('booking.create', compact('vehicles', 'driversDropdown', 'status', 'paymentStatus', 'places', 'addon'));
+            return Inertia::render('Booking/Create', [
+                'vehicles' => $vehicles->map(fn($v) => ['id' => $v->id, 'label' => $v->name . ' - ' . $v->license_plate]),
+                'drivers'  => collect($driversDropdown)->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values(),
+                'statuses' => collect(Booking::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+                'places'   => $places->map(fn($p) => ['id' => $p->id, 'name' => $p->name]),
+                'addons'   => $addon->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -317,7 +341,58 @@ class BookingController extends Controller
             }
 
             $settings = settings();
-            return view('booking.show', compact('booking', 'settings'));
+
+            $details = $booking->details;
+            $detailsObj = is_string($details) ? json_decode($details) : $details;
+            $parts = [];
+            if (!empty($detailsObj->totalDays))  $parts[] = $detailsObj->totalDays . ' Days';
+            if (!empty($detailsObj->totalHours)) $parts[] = $detailsObj->totalHours . ' Hours';
+
+            $startDate = Carbon::parse($booking->start_date);
+            $endDate   = Carbon::parse($booking->end_date);
+            $totalDays = max(1, $startDate->diffInDays($endDate));
+            $dueAmount = $booking->getTotalDueAmount();
+            $totalDaysAmount = $booking->amount > 0 ? ($dueAmount * $totalDays) / $booking->amount : 1;
+            $defaultQuantity = max(1, round($totalDaysAmount));
+
+            $driver = $booking->drivers;
+            $driverProfile = $driver ? Driver::where('user_id', $driver->id)->first() : null;
+
+            return Inertia::render('Booking/Show', [
+                'booking' => [
+                    'id'                   => $booking->id,
+                    'encrypted_id'         => Crypt::encrypt($booking->id),
+                    'booking_id'           => bookingPrefix() . $booking->booking_id,
+                    'status'               => $booking->status,
+                    'status_label'         => Booking::$status[$booking->status] ?? $booking->status,
+                    'payment_status'       => $booking->payment_status,
+                    'payment_status_label' => Booking::$paymentStatus[$booking->payment_status] ?? $booking->payment_status,
+                    'start_date'           => $booking->start_date,
+                    'start_time'           => $booking->start_time,
+                    'end_date'             => $booking->end_date,
+                    'end_time'             => $booking->end_time,
+                    'created_at'           => $booking->created_at?->format('Y-m-d'),
+                    'notes'                => $booking->notes,
+                    'driver_name'          => $driver?->name ?? '',
+                    'driver_phone'         => $driver?->phone_number ?? '',
+                    'driver_email'         => $driver?->email ?? '',
+                    'driver_ice'           => $driverProfile?->ICE_company ?? '',
+                    'vehicle_name'         => optional($booking->vehicleDetails())->name ?? '-',
+                    'duration'             => implode(', ', $parts),
+                    'addons'               => $booking->addons()->map(fn($a) => ['id' => $a->id, 'name' => $a->name, 'price' => $a->price]),
+                    'pickup_address'       => $booking->pickupAddress ? ['name' => $booking->pickupAddress->name, 'price' => $booking->pickupAddress->price ?? null] : null,
+                    'drop_off_address'     => $booking->dropOffAddress ? ['name' => $booking->dropOffAddress->name, 'price' => $booking->dropOffAddress->price ?? null] : null,
+                    'payments'             => $booking->payments->map(fn($p) => ['id' => $p->id, 'date' => $p->date, 'payment_method' => $p->payment_method, 'notes' => $p->notes, 'amount' => $p->amount]),
+                    'total_amount'         => number_format($booking->getTotalAmount(), 2),
+                    'total_ht'             => number_format($booking->getTotalAmount() * 0.8, 2),
+                    'tva_amount'           => number_format($booking->getTotalAmount() * 0.2, 2),
+                    'paid_amount'          => number_format($booking->getTotalAmount() - $booking->getTotalDueAmount(), 2),
+                    'due_amount'           => $booking->getTotalDueAmount(),
+                ],
+                'settings'        => $settings,
+                'paymentMethods'  => collect(BookingPayment::$paymentMethod)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+                'defaultQuantity' => $defaultQuantity,
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -332,7 +407,6 @@ class BookingController extends Controller
             $booking->end_date_time = date('Y/m/d H:i', strtotime($booking->end_date . ' ' . $booking->end_time));
 
             $drivers = User::where('parent_id', parentId())->where('type', 'driver')->get()->pluck('name', 'id');
-            $drivers->prepend(__('Select Driver'), '');
 
             $status = Booking::$status;
             $paymentStatus = Booking::$paymentStatus;
@@ -359,7 +433,29 @@ class BookingController extends Controller
 
             $vehicles = Vehicle::where('parent_id', parentId())->whereNotIn('id', $booked)->get();
 
-            return view('booking.edit', compact('vehicles', 'drivers', 'status', 'booking', 'paymentStatus', 'places', 'addon'));
+            return Inertia::render('Booking/Edit', [
+                'booking'  => [
+                    'id'              => $booking->id,
+                    'vehicle'         => $booking->vehicle,
+                    'driver'          => $booking->driver,
+                    'start_date_time' => $booking->start_date_time,
+                    'end_date_time'   => $booking->end_date_time,
+                    'pickup_address'  => $booking->pickup_address,
+                    'drop_off_address' => $booking->drop_off_address,
+                    'addon'           => $booking->addon,
+                    'discount'        => $booking->discount,
+                    'status'          => $booking->status,
+                    'notes'           => $booking->notes,
+                    'daily_price_final' => $booking->daily_price_final,
+                    'amount'          => $booking->amount,
+                    'details'         => $booking->details,
+                ],
+                'vehicles' => $vehicles->map(fn($v) => ['id' => $v->id, 'label' => $v->name . ' - ' . $v->license_plate]),
+                'drivers'  => $drivers->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values(),
+                'statuses' => collect(Booking::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+                'places'   => $places->map(fn($p) => ['id' => $p->id, 'name' => $p->name]),
+                'addons'   => $addon->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -1139,7 +1235,10 @@ class BookingController extends Controller
             $bookingData[] = $booked;
         }
 
-        return view('booking.planning', compact('bookingData', 'vehicleData'));
+        return Inertia::render('Booking/Planning', [
+            'bookingData' => $bookingData,
+            'vehicleData' => $vehicleData,
+        ]);
         // } else {
         //     return redirect()->back()->with('error', __('Permission Denied.'));
         // }

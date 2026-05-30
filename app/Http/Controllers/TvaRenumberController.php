@@ -6,6 +6,7 @@ use App\Models\Tva;
 use App\Services\TvaRenumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class TvaRenumberController extends Controller
 {
@@ -30,7 +31,11 @@ class TvaRenumberController extends Controller
             ->orderByDesc('y')
             ->pluck('y');
 
-        return view('tva.renumber', compact('preview', 'selectedYear', 'years'));
+        return Inertia::render('Tva/Renumber', [
+            'preview'      => $preview,
+            'selectedYear' => $selectedYear,
+            'years'        => $years->values(),
+        ]);
     }
 
     public function apply(Request $request)

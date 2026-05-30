@@ -147,7 +147,7 @@ class RentalAgreementControllerTest extends TestCase
         $this->actingAs($this->owner)
             ->post(route('rental-agreement.store'), $this->validPayload(['vehicle' => '']))
             ->assertRedirect()
-            ->assertSessionHas('error');
+            ->assertSessionHasErrors('vehicle');
     }
 
     public function test_store_flashes_error_on_missing_driver(): void
@@ -155,7 +155,7 @@ class RentalAgreementControllerTest extends TestCase
         $this->actingAs($this->owner)
             ->post(route('rental-agreement.store'), $this->validPayload(['driver' => '']))
             ->assertRedirect()
-            ->assertSessionHas('error');
+            ->assertSessionHasErrors('driver');
     }
 
     public function test_store_creates_booking_when_flag_is_1(): void
@@ -242,7 +242,7 @@ class RentalAgreementControllerTest extends TestCase
         $this->actingAs($this->owner)
             ->put(route('rental-agreement.update', $agreement), [])
             ->assertRedirect()
-            ->assertSessionHas('error');
+            ->assertSessionHasErrors(['vehicle', 'driver']);
     }
 
     // ── RentalAgreementController::destroy ────────────────────────────────────

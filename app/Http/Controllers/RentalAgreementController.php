@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Signature;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class RentalAgreementController extends Controller
 {
@@ -21,7 +22,21 @@ class RentalAgreementController extends Controller
     {
         if (\Auth::user()->can('manage rental agreement')) {
             $agreements = RentalAgreement::where('parent_id', parentId())->orderBy('created_at', 'desc')->get();
-            return view('rental_agreement.index', compact('agreements'));
+            return Inertia::render('RentalAgreement/Index', [
+                'agreements' => $agreements->map(fn($a) => [
+                    'id'                => $a->id,
+                    'encrypted_id'      => Crypt::encrypt($a->id),
+                    'agreement_id'      => rentalAgreementPrefix() . $a->agreement_id,
+                    'driver_name'       => $a->drivers?->name ?? '-',
+                    'vehicle_label'     => $a->vehicles ? $a->vehicles->name . ' - ' . $a->vehicles->license_plate : '-',
+                    'date'              => $a->date,
+                    'rental_start_date' => $a->rental_start_date,
+                    'rental_end_date'   => $a->rental_end_date,
+                    'rental_duration'   => $a->rental_duration,
+                    'status'            => $a->status,
+                ]),
+                'statuses' => collect(RentalAgreement::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -34,14 +49,17 @@ class RentalAgreementController extends Controller
             $vehicles = Vehicle::where('parent_id', parentId())->orderBy('created_at', 'desc')->get();
 
             $drivers = User::where('parent_id', parentId())
-            ->where('type', 'driver')
-            ->orderBy('created_at', 'desc')
-            ->get();            
-             $driversDropdown = ['' => __('Select Driver')] + $drivers->pluck('name', 'id')->toArray();
+                ->where('type', 'driver')
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-
-            $status = RentalAgreement::$status;
-            return view('rental_agreement.create', compact('vehicles', 'driversDropdown', 'status'));
+            $defaultTerms = str_replace('\n', "\n", config('default_terms.rental_agreement'));
+            return Inertia::render('RentalAgreement/Create', [
+                'vehicles'     => $vehicles->map(fn($v) => ['id' => $v->id, 'label' => $v->name . ' - ' . $v->license_plate]),
+                'drivers'      => $drivers->map(fn($u) => ['id' => $u->id, 'name' => $u->name])->values(),
+                'statuses'     => collect(RentalAgreement::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+                'defaultTerms' => $defaultTerms,
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -66,8 +84,7 @@ class RentalAgreementController extends Controller
                 ]
             );
             if ($validator->fails()) {
-                $messages = $validator->getMessageBag();
-                return redirect()->back()->with('error', $messages->first());
+                return back()->withErrors($validator);
             }
 
                     // Combine date and time
@@ -197,7 +214,43 @@ class RentalAgreementController extends Controller
             $driver2Signature = $this->getUserSignature($rentalAgreement->driver2);
 
 
-            return view('rental_agreement.show', compact('rentalAgreement', 'settings', 'driver_2', 'user_2', 'user_1' , 'terms','driver1Signature','driver2Signature'));
+            $driver1Profile = $user_1 ? Driver::where('user_id', $user_1->id)->first() : null;
+
+            return Inertia::render('RentalAgreement/Show', [
+                'agreement' => [
+                    'id'                => $rentalAgreement->id,
+                    'agreement_id'      => rentalAgreementPrefix() . $rentalAgreement->agreement_id,
+                    'date'              => $rentalAgreement->date,
+                    'rental_start_date' => $rentalAgreement->rental_start_date,
+                    'rental_end_date'   => $rentalAgreement->rental_end_date,
+                    'rental_duration'   => $rentalAgreement->rental_duration,
+                    'status'            => $rentalAgreement->status,
+                    'status_label'      => RentalAgreement::$status[$rentalAgreement->status] ?? $rentalAgreement->status,
+                    'driver1' => [
+                        'name'           => $user_1?->name,
+                        'phone_number'   => $user_1?->phone_number,
+                        'license_number' => $driver1Profile?->license_number,
+                        'address'        => $driver1Profile?->address,
+                        'birth_date'     => $driver1Profile?->birth_date,
+                        'reference'      => $driver1Profile?->reference,
+                    ],
+                    'driver2' => $driver_2 && $user_2 ? [
+                        'name'           => $user_2->name,
+                        'phone_number'   => $user_2->phone_number,
+                        'license_number' => $driver_2->license_number,
+                        'address'        => $driver_2->address,
+                        'birth_date'     => $driver_2->birth_date,
+                        'reference'      => $driver_2->reference,
+                    ] : null,
+                    'vehicle_name'        => $rentalAgreement->vehicles?->name,
+                    'vehicle_model'       => $rentalAgreement->vehicles?->model,
+                    'vehicle_plate'       => $rentalAgreement->vehicles?->license_plate,
+                    'driver1_signature'   => $driver1Signature,
+                    'driver2_signature'   => $driver2Signature,
+                ],
+                'settings' => $settings,
+                'terms'    => $terms,
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -209,14 +262,27 @@ class RentalAgreementController extends Controller
         if (\Auth::user()->can('edit rental agreement')) {
             $vehicles = Vehicle::where('parent_id', parentId())->get();
 
-            $drivers = User::where('parent_id', parentId())->where('type', 'driver')->get()->pluck('name', 'id');
-            $drivers->prepend(__('Select Driver'), '');
+            $drivers = User::where('parent_id', parentId())->where('type', 'driver')->get();
 
             $status = RentalAgreement::$status;
 
-            $driver2 = $rentalAgreement->driver2;
-
-            return view('rental_agreement.edit', compact('vehicles', 'drivers', 'rentalAgreement', 'status', 'driver2'));
+            return Inertia::render('RentalAgreement/Edit', [
+                'agreement' => [
+                    'id'                => $rentalAgreement->id,
+                    'vehicle'           => $rentalAgreement->vehicle,
+                    'driver'            => $rentalAgreement->driver,
+                    'driver2'           => $rentalAgreement->driver2,
+                    'rental_start_date' => $rentalAgreement->rental_start_date,
+                    'rental_end_date'   => $rentalAgreement->rental_end_date,
+                    'rental_duration'   => $rentalAgreement->rental_duration,
+                    'status'            => $rentalAgreement->status,
+                    'terms_condition'   => $rentalAgreement->terms_condition,
+                    'description'       => $rentalAgreement->description,
+                ],
+                'vehicles' => $vehicles->map(fn($v) => ['id' => $v->id, 'label' => $v->name . ' - ' . $v->license_plate]),
+                'drivers'  => $drivers->map(fn($u) => ['id' => $u->id, 'name' => $u->name])->values(),
+                'statuses' => collect(RentalAgreement::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
+            ]);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -239,8 +305,7 @@ class RentalAgreementController extends Controller
                 ]
             );
             if ($validator->fails()) {
-                $messages = $validator->getMessageBag();
-                return redirect()->back()->with('error', $messages->first());
+                return back()->withErrors($validator);
             }
 
                     // Combine date and time

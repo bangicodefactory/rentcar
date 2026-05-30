@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import {
     LayoutDashboard, Users, Car, CalendarCheck, ReceiptText,
     BellRing, FileText, Settings, ChevronLeft, Menu, LogOut,
-    UserCircle, Shield, CreditCard, Wrench,
+    UserCircle, Shield, CreditCard, Wrench, Receipt,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,6 +62,7 @@ const NAV_OWNER = [
     ]},
     { section: 'Finance', items: [
         { label: 'Credits',  route: 'credit.index',  icon: CreditCard, permission: 'manage driver' },
+        { label: 'TVA',      route: 'tva.index',     icon: Receipt,    permission: 'manage tva' },
     ]},
     { section: 'System', items: [
         { label: 'Settings', route: 'setting.general', icon: Settings, permission: 'manage setting' },

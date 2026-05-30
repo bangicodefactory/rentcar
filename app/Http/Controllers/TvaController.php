@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Driver;
 use App\Models\BookingPayment;
+use Inertia\Inertia;
 
 class TvaController extends Controller
 {
@@ -62,7 +63,20 @@ class TvaController extends Controller
         // Retrieve all (let DataTables handle client-side paging). If dataset grows large, switch to server-side.
         $tvas = $query->with(['booking', 'booking.drivers'])->orderByDesc('facture_date')->get();
 
-        return view('tva.index', compact('tvas'));
+        return Inertia::render('Tva/Index', [
+            'tvas' => $tvas->map(fn($t) => [
+                'id'                => $t->id,
+                'facture_number'    => $t->facture_number,
+                'booking_id_display'=> $t->booking && isset($t->booking->booking_id)
+                                        ? bookingPrefix() . $t->booking->booking_id
+                                        : null,
+                'driver_name'       => $t->client_name ?? optional(optional($t->booking)->drivers)->name,
+                'designation'       => $t->designation,
+                'facture_date'      => $t->facture_date?->format('Y-m-d'),
+                'montant_ttc'       => $t->montant_ttc,
+            ]),
+            'filters' => $request->only(['from_date', 'to_date', 'driver_name', 'filter_day', 'filter_month', 'filter_year']),
+        ]);
     }
     public function create()
     {
