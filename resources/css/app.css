@@ -51,6 +51,20 @@
         --chart-3: 26 90.5% 37.1%;           /* #b45309 — tertiary amber */
         --chart-4: 222 52% 30%;              /* deep navy */
         --chart-5: 0 65% 52%;                /* warm red */
+
+        /* ── Sidebar (Professional Blue) ────────────────────────────────────
+         * Dark navy rail with light text + a blue active accent, sitting next
+         * to the light content area. Its own token group so the sidebar can be
+         * dark while cards/content stay light. Mirrors the Stitch
+         * "Reservations Professional Blue" screen. */
+        --sidebar: 212 44% 17%;              /* #182a3e — navy rail */
+        --sidebar-foreground: 214 31% 85%;   /* #cbd5e6 — light slate text */
+        --sidebar-primary: 217.2 91.2% 59.8%;/* #3b82f6 — blue active accent */
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 213 33% 24%;       /* #29384d — hover/active surface */
+        --sidebar-accent-foreground: 0 0% 100%;
+        --sidebar-border: 213 28% 27%;       /* #313f52 — divider on navy */
+        --sidebar-ring: 217.2 91.2% 59.8%;
     }
 
     /* ── Aether Mobility — dark mode (native) ───────────────────────────────
@@ -98,6 +112,16 @@
         --chart-3: 24.3 100% 76.3%;         /* #ffb786 — tertiary */
         --chart-4: 221.7 100% 83.9%;        /* #adc6ff — light blue */
         --chart-5: 6.4 100% 83.5%;          /* #ffb4ab — error red */
+
+        /* ── Sidebar — dark mode (stays navy, a touch deeper than content) ── */
+        --sidebar: 222 45% 8%;               /* #0a0f1c — deep navy rail */
+        --sidebar-foreground: 226 25% 78%;   /* #bcc3d6 */
+        --sidebar-primary: 217.2 91.2% 65%;  /* brighter blue accent on dark */
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 222 30% 18%;       /* #20283b — hover/active surface */
+        --sidebar-accent-foreground: 0 0% 100%;
+        --sidebar-border: 223 15% 22%;       /* #2f3543 — divider */
+        --sidebar-ring: 217.2 91.2% 65%;
     }
 }
 

@@ -152,8 +152,8 @@ function NavLeaf({ item, collapsed }) {
             href={route(item.route)}
             className={cn(
                 'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
-                'hover:bg-accent hover:text-accent-foreground',
-                isActive && 'bg-accent text-accent-foreground font-medium',
+                'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
                 collapsed && 'justify-center px-2',
             )}
         >
@@ -187,8 +187,8 @@ function NavCollapsible({ item, collapsed }) {
                     <span
                         className={cn(
                             'flex cursor-pointer items-center justify-center rounded-md px-2 py-2 text-sm transition-colors',
-                            'hover:bg-accent hover:text-accent-foreground',
-                            isAnyChildActive && 'bg-accent text-accent-foreground font-medium',
+                            'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                            isAnyChildActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
                         )}
                     >
                         <Icon className="h-4 w-4 shrink-0" />
@@ -213,8 +213,8 @@ function NavCollapsible({ item, collapsed }) {
                 onClick={() => setOpen((o) => !o)}
                 className={cn(
                     'w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    isAnyChildActive && 'text-accent-foreground font-medium',
+                    'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                    isAnyChildActive && 'text-sidebar-accent-foreground font-medium',
                 )}
             >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -222,7 +222,7 @@ function NavCollapsible({ item, collapsed }) {
                 <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', open && 'rotate-180')} />
             </button>
             {open && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l pl-3">
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3">
                     {item.children.map((child) => {
                         const isActive = url.startsWith(route(child.route));
                         return (
@@ -231,8 +231,8 @@ function NavCollapsible({ item, collapsed }) {
                                 href={route(child.route)}
                                 className={cn(
                                     'block rounded-md px-3 py-1.5 text-sm transition-colors',
-                                    'hover:bg-accent hover:text-accent-foreground',
-                                    isActive && 'bg-accent text-accent-foreground font-medium',
+                                    'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                                    isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
                                 )}
                             >
                                 {t(child.label)}
@@ -262,7 +262,7 @@ function SidebarContent({ collapsed = false }) {
     return (
         <div className="flex h-full flex-col">
             {/* Logo */}
-            <div className={cn('flex h-14 items-center border-b px-4', collapsed && 'justify-center px-2')}>
+            <div className={cn('flex h-14 items-center border-b border-sidebar-border px-4', collapsed && 'justify-center px-2')}>
                 <Link href={route('dashboard')} className="flex items-center gap-2">
                     <img
                         src={branding?.logoUrl}
@@ -282,7 +282,7 @@ function SidebarContent({ collapsed = false }) {
                 {sections.map((section) => (
                     <div key={section.section}>
                         {!collapsed && (
-                            <p className="mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <p className="mb-1 px-3 text-xs font-semibold text-sidebar-foreground/55 uppercase tracking-wider">
                                 {t(section.section)}
                             </p>
                         )}
@@ -291,7 +291,7 @@ function SidebarContent({ collapsed = false }) {
                                 <NavItem key={item.route ?? item.label} item={item} collapsed={collapsed} />
                             ))}
                         </div>
-                        {!collapsed && <Separator className="mt-3" />}
+                        {!collapsed && <Separator className="mt-3 bg-sidebar-border" />}
                     </div>
                 ))}
             </nav>
@@ -461,19 +461,20 @@ export default function AdminLayout({ children, breadcrumbs }) {
                 {/* ── Desktop sidebar ── */}
                 <aside
                     className={cn(
-                        'hidden lg:flex flex-col border-r bg-card transition-[width] duration-300 ease-out',
+                        'hidden lg:flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-out',
                         collapsed ? 'w-16' : 'w-60',
                     )}
                 >
                     <SidebarContent collapsed={collapsed} />
 
                     {/* Collapse toggle */}
-                    <div className="border-t p-2 flex justify-end">
+                    <div className="border-t border-sidebar-border p-2 flex justify-end">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setCollapsed((c) => !c)}
                             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         >
                             <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
                         </Button>
@@ -493,7 +494,7 @@ export default function AdminLayout({ children, breadcrumbs }) {
                                     <Menu className="h-5 w-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="w-60 p-0">
+                            <SheetContent side="left" className="w-60 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
                                 <SidebarContent />
                             </SheetContent>
                         </Sheet>
