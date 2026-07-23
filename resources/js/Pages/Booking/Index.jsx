@@ -195,7 +195,7 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
     // Column count drives the empty-state colSpan; both the leading checkbox and
     // the trailing action column are permission-gated, so it can't be hardcoded.
     const hasActions = can('edit booking') || can('delete booking') || can('show booking');
-    const colCount = 6 + (can('delete booking') ? 1 : 0) + (hasActions ? 1 : 0);
+    const colCount = 7 + (can('delete booking') ? 1 : 0) + (hasActions ? 1 : 0);
 
     return (
         <div className="space-y-6 p-6">
@@ -456,6 +456,7 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
                                 <TableHead>{t('Duration')}</TableHead>
                                 <TableHead>{t('Status')}</TableHead>
                                 <TableHead>{t('Payment')}</TableHead>
+                                <TableHead>{t('Method')}</TableHead>
                                 {(can('edit booking') || can('delete booking') || can('show booking')) && (
                                     <TableHead className="text-right">{t('Action')}</TableHead>
                                 )}
@@ -513,6 +514,9 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
                                         <Badge variant={PAYMENT_VARIANT[b.payment_status] ?? 'secondary'} className="capitalize">
                                             {t(payLabel(b.payment_status))}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                        {b.payment_method || '—'}
                                     </TableCell>
                                     {(can('edit booking') || can('delete booking') || can('show booking')) && (
                                         <TableCell className="text-right space-x-1">

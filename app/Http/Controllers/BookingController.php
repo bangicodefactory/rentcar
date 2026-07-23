@@ -105,6 +105,7 @@ class BookingController extends Controller
                 'end_time'       => $b->end_time,
                 'status'         => $b->status,
                 'payment_status' => $b->payment_status,
+                'payment_method' => $b->payment_method,
             ]),
             'statuses'       => collect(Booking::$status)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),
             'paymentStatuses' => collect(Booking::$paymentStatus)->map(fn($l, $v) => ['value' => $v, 'label' => $l])->values(),

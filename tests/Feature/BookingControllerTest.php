@@ -107,6 +107,20 @@ class BookingControllerTest extends TestCase
             );
     }
 
+    public function test_index_exposes_booking_payment_method(): void
+    {
+        // The reservations table shows each booking's payment method.
+        $this->makeBooking(['payment_method' => 'Chèque']);
+
+        $this->actingAs($this->owner)
+            ->get(route('booking.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Booking/Index')
+                ->where('bookings.data.0.payment_method', 'Chèque')
+            );
+    }
+
     public function test_index_ignores_invalid_month(): void
     {
         $this->makeBooking(['start_date' => '2026-05-10']);
