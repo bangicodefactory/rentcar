@@ -61,7 +61,6 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
     // before recording a payment + facture per selected booking.
     const [markPaidOpen, setMarkPaidOpen] = useState(false);
     const [payMethod, setPayMethod] = useState(paymentMethods?.[0]?.value ?? '');
-    const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10));
     const isFirst = useRef(true);
     // Tracks the in-flight "select all matching" request so a filter change can
     // cancel it — otherwise a late response would repopulate the selection with
@@ -159,7 +158,6 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
         router.post(route('booking.bulk-mark-paid'), {
             ids: selected,
             payment_method: payMethod,
-            date: payDate,
         }, {
             onSuccess: () => { setSelected([]); setMarkPaidOpen(false); },
         });
@@ -383,10 +381,9 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
                                     <Dialog
                                         open={markPaidOpen}
                                         onOpenChange={(o) => {
-                                            // Reset to a fresh date + default method each time the
-                                            // dialog opens, so a prior unsubmitted choice can't carry over.
+                                            // Reset to the default method each time the dialog opens,
+                                            // so a prior unsubmitted choice can't carry over.
                                             if (o) {
-                                                setPayDate(new Date().toISOString().slice(0, 10));
                                                 setPayMethod(paymentMethods?.[0]?.value ?? '');
                                             }
                                             setMarkPaidOpen(o);
@@ -404,12 +401,8 @@ function BookingIndex({ bookings, statuses, paymentStatuses, paymentMethods = []
                                             </DialogHeader>
                                             <form onSubmit={submitMarkPaid} className="space-y-4">
                                                 <p className="text-sm text-muted-foreground">
-                                                    {selected.length} {t('booking(s) selected')}. {t('Each unpaid booking will be recorded as paid for its remaining balance with the method below.')}
+                                                    {selected.length} {t('booking(s) selected')}. {t('Each unpaid booking will be recorded as paid for its remaining balance with the method below, dated to the reservation start date.')}
                                                 </p>
-                                                <div className="space-y-1">
-                                                    <Label htmlFor="mp-date">{t('Date')}</Label>
-                                                    <Input id="mp-date" type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} required />
-                                                </div>
                                                 <div className="space-y-1">
                                                     <Label>{t('Method')}</Label>
                                                     <Select value={payMethod} onValueChange={setPayMethod}>

@@ -728,10 +728,8 @@ class BookingController extends Controller
             'ids'            => 'required|array|min:1',
             'ids.*'          => 'integer',
             'payment_method' => 'required|string',
-            'date'           => 'nullable|date',
         ]);
 
-        $date     = $validated['date'] ?? now()->toDateString();
         $method   = $validated['payment_method'];
         $isCash   = strtolower($method) === 'espece';
         $cashMax  = (float) config('client.cash_payment_max', 5000);
@@ -741,7 +739,7 @@ class BookingController extends Controller
         $skippedAlreadyPaid = 0;
         $skippedCash = 0;
 
-        DB::transaction(function () use ($validated, $date, $method, $isCash, $cashMax, $splitCash, &$paid, &$skippedAlreadyPaid, &$skippedCash) {
+        DB::transaction(function () use ($validated, $method, $isCash, $cashMax, $splitCash, &$paid, &$skippedAlreadyPaid, &$skippedCash) {
             // Tenant-scoped: only the caller's own bookings can be touched.
             $bookings = Booking::whereIn('id', $validated['ids'])
                 ->where('parent_id', parentId())
@@ -755,6 +753,12 @@ class BookingController extends Controller
                     $skippedAlreadyPaid++;
                     continue;
                 }
+
+                // The payment (and its facture) is dated to the reservation's
+                // own start date, not a single user-chosen date.
+                $date = $booking->start_date
+                    ? Carbon::parse($booking->start_date)->toDateString()
+                    : now()->toDateString();
 
                 // Same rule as the single-payment flow: cash over the ceiling is
                 // either split into compliant receipts (cash_split on) or refused.

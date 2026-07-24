@@ -541,6 +541,33 @@ class BookingControllerTest extends TestCase
         }
     }
 
+    public function test_bulk_mark_paid_dates_payment_to_reservation_start(): void
+    {
+        foreach (['company_name' => 'Co', 'company_address' => 'Addr', 'ice' => 'I', 'rc' => 'R', 'if' => 'F'] as $n => $v) {
+            \App\Models\Setting::create(['name' => $n, 'value' => $v, 'parent_id' => $this->owner->id]);
+        }
+        // Start date deliberately in the past so it can't coincide with "today".
+        $booking = $this->makeBooking([
+            'amount' => 500, 'payment_status' => 'impaye',
+            'start_date' => '2026-06-05', 'end_date' => '2026-06-08',
+        ]);
+
+        $this->actingAs($this->owner)
+            ->post(route('booking.bulk-mark-paid'), [
+                'ids' => [$booking->id], 'payment_method' => 'Carte',
+            ])
+            ->assertRedirect()->assertSessionHas('success');
+
+        // The payment — and its facture — is dated to the reservation start date,
+        // not the day the bulk action was run (no date is sent from the client).
+        $this->assertDatabaseHas('booking_payments', [
+            'booking_id' => $booking->id, 'amount' => 500, 'date' => '2026-06-05',
+        ]);
+        $this->assertDatabaseHas('tvas', [
+            'booking_id' => $booking->id, 'facture_date' => '2026-06-05',
+        ]);
+    }
+
     public function test_bulk_mark_paid_skips_fully_paid_bookings(): void
     {
         foreach (['company_name' => 'Co', 'company_address' => 'Addr', 'ice' => 'I', 'rc' => 'R', 'if' => 'F'] as $n => $v) {
