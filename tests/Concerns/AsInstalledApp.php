@@ -13,7 +13,7 @@ namespace Tests\Concerns;
  *
  * This is a genuine "passes on my machine" trap: a developer box that has been
  * installed once keeps the marker forever, so the tests go green locally and
- * fail only on CI. It was documented inline in DemoGatewayTest; extracted here
+ * fail only on CI. It was documented inline in the first installed-app suite; extracted here
  * once the third and fourth class needed it.
  *
  * The marker is removed in tearDown only if this trait created it, so a dev box

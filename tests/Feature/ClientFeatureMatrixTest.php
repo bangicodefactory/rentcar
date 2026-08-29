@@ -68,18 +68,6 @@ class ClientFeatureMatrixTest extends TestCase
         $this->assertFalse(feature('traffic_violations'));
     }
 
-    public function test_drivedesk_keeps_its_full_demo_surface(): void
-    {
-        $this->asClient('drivedesk');
-
-        $this->assertTrue(feature('cash_split'));
-        $this->assertTrue(feature('invoice_on_full_payment'));
-        $this->assertTrue(feature('demo_gateway'));
-        $this->assertTrue(feature('traffic_violations'));
-        // The B2C storefront stays off — DriveDesk sells the platform (BAN-261).
-        $this->assertFalse(feature('public_storefront'));
-    }
-
     /**
      * End to end under the client's *own* resolved config — no config() forcing.
      *

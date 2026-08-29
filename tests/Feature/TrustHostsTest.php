@@ -55,10 +55,10 @@ class TrustHostsTest extends TestCase
 
     public function test_the_trusted_pattern_is_derived_from_the_app_url(): void
     {
-        config(['app.url' => 'https://drivedesk.ma']);
+        config(['app.url' => 'https://example.ma']);
 
         $this->assertSame(
-            ['^(.+\.)?drivedesk\.ma$'],
+            ['^(.+\.)?example\.ma$'],
             (new TrustHosts($this->app))->hosts()
         );
     }
@@ -66,15 +66,15 @@ class TrustHostsTest extends TestCase
     public static function hostCases(): array
     {
         return [
-            'apex'            => ['drivedesk.ma', true],
-            'www subdomain'   => ['www.drivedesk.ma', true],
-            'deeper subdomain' => ['staging.drivedesk.ma', true],
+            'apex'            => ['example.ma', true],
+            'www subdomain'   => ['www.example.ma', true],
+            'deeper subdomain' => ['staging.example.ma', true],
             'foreign host'    => ['evil.example.com', false],
             // The dot in the pattern is quoted, so this must not match.
-            'dot is literal'  => ['drivedeskXma', false],
+            'dot is literal'  => ['exampleXma', false],
             // Suffix attack: the pattern is anchored at both ends.
-            'suffix attack'   => ['drivedesk.ma.evil.com', false],
-            'prefix attack'   => ['evil-drivedesk.ma', false],
+            'suffix attack'   => ['example.ma.evil.com', false],
+            'prefix attack'   => ['evil-example.ma', false],
         ];
     }
 
@@ -83,7 +83,7 @@ class TrustHostsTest extends TestCase
      */
     public function test_the_pattern_matches_only_this_deploys_hosts(string $host, bool $expected): void
     {
-        config(['app.url' => 'https://drivedesk.ma']);
+        config(['app.url' => 'https://example.ma']);
 
         $pattern = (new TrustHosts($this->app))->hosts()[0];
 
@@ -94,7 +94,7 @@ class TrustHostsTest extends TestCase
 
     public function test_a_foreign_host_is_rejected_on_a_real_deploy(): void
     {
-        $this->asDeployedApp('https://drivedesk.ma');
+        $this->asDeployedApp('https://example.ma');
 
         // Absolute URL, not a Host header: Laravel's test client builds the
         // request from its own base URL, so a header alone never reaches
@@ -105,26 +105,26 @@ class TrustHostsTest extends TestCase
 
     public function test_the_configured_host_still_serves_on_a_real_deploy(): void
     {
-        $this->asDeployedApp('https://drivedesk.ma');
+        $this->asDeployedApp('https://example.ma');
 
-        $this->get('https://drivedesk.ma/login')->assertOk();
+        $this->get('https://example.ma/login')->assertOk();
     }
 
     public function test_a_www_subdomain_still_serves(): void
     {
         // Both clients' vhosts and TLS certs cover www., so rejecting it would
         // take down a real entry point.
-        $this->asDeployedApp('https://drivedesk.ma');
+        $this->asDeployedApp('https://example.ma');
 
-        $this->get('https://www.drivedesk.ma/login')->assertOk();
+        $this->get('https://www.example.ma/login')->assertOk();
     }
 
-    public function test_the_other_clients_domain_is_trusted_under_its_own_app_url(): void
+    public function test_another_domain_is_trusted_only_under_its_own_app_url(): void
     {
         $this->asDeployedApp('https://directonderweg.com');
 
         $this->get('https://directonderweg.com/login')->assertOk();
-        $this->get('https://drivedesk.ma/login')->assertStatus(400);
+        $this->get('https://example.ma/login')->assertStatus(400);
     }
 
     // ── The bypass itself ────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ class TrustHostsTest extends TestCase
         // The whole reason enabling this is safe for local dev and CI. If the
         // framework ever drops the bypass, every absolute-URL test in the suite
         // starts failing — this says why.
-        config(['app.url' => 'https://drivedesk.ma']);
+        config(['app.url' => 'https://example.ma']);
 
         $this->get('https://anything.example.com/login')->assertOk();
     }
