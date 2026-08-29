@@ -118,7 +118,7 @@ GitHub repo → **Settings → Environments → `production-directonderweg`**
 | `APP_KEY` | **Copied from the OLD host's `.env`** — never generate a new one (encrypted data + signatures break otherwise) |
 | `DB_HOST` | `localhost` |
 | `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The Step 4 values |
-| `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Your SMTP (Namecheap Private Email or Gmail etc.) — **real credentials, never `null`**; for clients with `demo_gateway` on (DriveDesk) the public "Book a demo" form 500s without working SMTP (it sends inline, not queued — see runbook §2.2) |
+| `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Your SMTP (Namecheap Private Email or Gmail etc.) — **real credentials, never `null`** |
 | `NOCAPTCHA_SITEKEY` / `NOCAPTCHA_SECRET` | reCAPTCHA keys — **add `directonderweg.com` to the key's allowed domains** in the Google reCAPTCHA console first |
 
 **Variables** (Environment variables, plain):

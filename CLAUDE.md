@@ -403,6 +403,5 @@ structure — e.g. Phase 5 surfaces `features` as Inertia shared props.
 - `docs/client-configurability.md` — multi-client architecture deep-dive
 - `docs/deploy-directonderweg-com.md` — new-host deploy runbook (source of truth)
 - `docs/deploy-namecheap-cpanel.md` — simplified cPanel/Namecheap companion guide
-- `docs/deploy-drivedesk-ma.md` — adding the DriveDesk demo client (`drivedesk.ma`) as a second isolated app on the directonderweg cPanel host
 
 Last updated: 2026-07-21.
