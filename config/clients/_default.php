@@ -16,9 +16,6 @@ return [
         'multi_branch'    => false,
         'tva_renumber'    => true,
         'signatures'      => true,
-        // Public marketing landing + "Book a demo" gateway at /. Off for normal
-        // tenants (the app is internal-only); on for demo/showcase clients.
-        'demo_gateway'    => false,
         // Split a cash payment over `cash_payment_max` into several receipts
         // each within the cap (Moroccan CGI art. 193 per-day cash ceiling),
         // instead of rejecting it. Off = today's behavior (reject).

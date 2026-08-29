@@ -15,17 +15,14 @@ use Tests\TestCase;
  * on directonderweg prod on 2026-07-06 (490 rows cleaned up by hand).
  * The guard must throw before the seeder touches any table.
  *
- * Demo clients (feature 'demo_gateway') are exempt — their production
- * deployment exists to hold this data; that path is pinned end-to-end in
- * DemoSeedCommandTest::test_demo_seed_works_in_production_on_a_demo_client.
  */
 class DevDataSeederGuardTest extends TestCase
 {
     use WithClient;
 
-    public function test_seeder_refuses_to_run_in_production_on_a_non_demo_client(): void
+    public function test_seeder_refuses_to_run_in_production(): void
     {
-        $this->asClient('directonderweg'); // demo_gateway off
+        $this->asClient('directonderweg');
         $this->app['env'] = 'production';
 
         $this->expectException(\RuntimeException::class);

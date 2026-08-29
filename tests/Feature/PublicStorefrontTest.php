@@ -12,12 +12,10 @@ use Tests\TestCase;
  * The public B2C rental storefront (BAN-261).
  *
  * `/landing` and the pages its layout partials link to serve renters: a fleet
- * list, a booking widget, contact and search. DriveDesk sells the platform *to*
- * rental agencies, so on that client the storefront targeted the opposite
- * audience — and shipped seeded demo vehicles plus invented testimonials on a
- * live commercial domain. It is gated off there and 404s.
+ * list, a booking widget, contact and search. A client whose public face is
+ * not a rental storefront turns it off and the whole family 404s.
  *
- * Every other client keeps it, which is today's behavior (CLAUDE.md §10.2 rule 2).
+ * directonderweg keeps it, which is today's behavior (CLAUDE.md §10.2 rule 2).
  */
 class PublicStorefrontTest extends TestCase
 {
@@ -49,9 +47,10 @@ class PublicStorefrontTest extends TestCase
     }
 
     #[DataProvider('storefrontRoutes')]
-    public function test_storefront_is_404_for_drivedesk(string $method, string $uri): void
+    public function test_storefront_is_404_when_the_flag_is_off(string $method, string $uri): void
     {
-        $this->asClient('drivedesk');
+        $this->asClient('directonderweg');
+        config(['features.public_storefront' => false]);
 
         $this->{$method}($uri)->assertNotFound();
     }
@@ -68,7 +67,7 @@ class PublicStorefrontTest extends TestCase
     {
         // Guards against the gate being wired to APP_CLIENT rather than the
         // feature — an inline client check is exactly what §10.2 rule 1 forbids.
-        $this->asClient('drivedesk');
+        $this->asClient('directonderweg');
         config(['features.public_storefront' => true]);
 
         $this->get('/landing')->assertOk();
@@ -78,17 +77,10 @@ class PublicStorefrontTest extends TestCase
         $this->get('/landing')->assertNotFound();
     }
 
-    public function test_removing_the_storefront_leaves_the_demo_gateway_intact(): void
-    {
-        // DriveDesk's public face is the B2B gateway at /, which must survive.
-        $this->asClient('drivedesk');
-
-        $this->get('/')->assertOk();
-    }
-
     public function test_removing_the_storefront_leaves_login_reachable(): void
     {
-        $this->asClient('drivedesk');
+        $this->asClient('directonderweg');
+        config(['features.public_storefront' => false]);
 
         $this->get('/login')->assertOk();
     }

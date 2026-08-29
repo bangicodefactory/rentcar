@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client: [directonderweg, drivedesk]   # extend as clients onboard
+        client: [directonderweg]   # extend as clients onboard
         php: ['8.4']
         # Prod hosts run MariaDB (whose default engine is MyISAM — hence the
         # engine=InnoDB pin in config/database.php); CI historically only tested

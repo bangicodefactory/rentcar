@@ -210,13 +210,6 @@ jobs:
             echo "==> Seeding client branding (idempotent)"
             php artisan client:install
 
-            echo "==> Seeding/refreshing demo data (demo clients only; no-op elsewhere)"
-            # --if-demo makes this a clean no-op on real clients. Demo data is
-            # best-effort: a failure here must never abort a deploy or trigger a
-            # rollback, so swallow non-zero (the branding/migrate steps above are
-            # the ones that gate the release).
-            php artisan demo:seed --if-demo || echo "WARNING: demo:seed failed — continuing (demo data is non-critical)"
-
             echo "==> Caching config + routes + views"
             php artisan config:cache
             php artisan route:cache

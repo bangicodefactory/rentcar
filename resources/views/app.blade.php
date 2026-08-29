@@ -1,5 +1,4 @@
 @php($seo = \App\Support\Seo::forRequest(request()))
-@php($jsonLd = \App\Support\Seo::jsonLd(request()))
 <!DOCTYPE html>
 <html lang="{{ $seo['htmlLang'] }}" dir="{{ $seo['dir'] }}">
 <head>
@@ -16,14 +15,6 @@
         <meta name="description" content="{{ $seo['description'] }}">
     @endif
     <link rel="canonical" href="{{ $seo['canonical'] }}">
-
-    {{-- hreflang needs a distinct URL per language. Locale used to live only in
-         the session, so every language shared one URL and a crawler — which has
-         no session — only ever saw the guest default. Public pages are now also
-         served under /fr, /en, /ar; "/" remains the x-default. --}}
-    @foreach($seo['alternates'] as $alternate)
-        <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['href'] }}">
-    @endforeach
 
     {{-- Only genuine marketing pages are indexable; the admin app, auth screens
          and the installer are noindex even though they are merely unlinked, so a
@@ -59,10 +50,6 @@
         @if($seo['twitterSite'])
             <meta name="twitter:site" content="{{ $seo['twitterSite'] }}">
         @endif
-    @endif
-
-    @if($jsonLd)
-        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @endif
 
     {{-- Brand typeface (Nunito) is self-hosted via @fontsource-variable/nunito,

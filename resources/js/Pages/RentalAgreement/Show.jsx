@@ -29,7 +29,7 @@ function Field({ label, value }) {
 function RentalAgreementShow({ agreement, settings, terms }) {
     const t = useTranslation();
     // Long terms (e.g. the directonderweg client, ~3.1k chars) overflow the
-    // dedicated terms page onto a 3rd page; shorter ones (drivedesk, ~1.9k) fit.
+    // dedicated terms page onto a 3rd page; shorter ones (~1.9k chars) fit.
     // Flow long terms into two print columns so they fit one page → 2 pages
     // total, while short terms stay single-column (unchanged). Threshold sits
     // between the two clients' nl2br'd term lengths.

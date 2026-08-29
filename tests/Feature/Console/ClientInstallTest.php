@@ -12,8 +12,8 @@ class ClientInstallTest extends TestCase
 
     // These tests exercise the command against a fixed client. Pin --client so
     // they're deterministic regardless of the CI matrix's ambient APP_CLIENT —
-    // without it, client:install installs the active client (e.g. drivedesk)
-    // and the directonderweg assertions break.
+    // without it, client:install installs the active client and the
+    // directonderweg assertions break.
     public function test_seeds_branding_on_first_run(): void
     {
         config(['clients.directonderweg.branding_seed' => [

@@ -24,8 +24,8 @@ class InstallerGuardTest extends TestCase
         // running the installed app), stash its exact contents and remove it,
         // restoring in tearDown so local state is never corrupted.
         //
-        // NOTE: storage/installed is a process-global file, and DemoGatewayTest
-        // toggles it the other way (it *creates* the marker). That's safe under
+        // NOTE: storage/installed is a process-global file, and the AsInstalledApp suites
+        // toggle it the other way (they *create* the marker). That's safe under
         // the single-process `php artisan test` we run today, but these two
         // classes would race if the suite is ever switched to --parallel.
         $marker = setup();

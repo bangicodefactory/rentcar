@@ -43,16 +43,6 @@ class Kernel extends ConsoleKernel
             ->dailyAt('02:30')
             ->withoutOverlapping()
             ->runInBackground();
-
-        // Refresh the demo sandbox nightly so its time-relative data stays
-        // anchored to "today" and each day starts pristine. --if-demo makes this
-        // a silent no-op on real clients, so it's safe to schedule everywhere
-        // (BAN-248). demo:seed is idempotent; it only acts when feature
-        // 'demo_gateway' is on (today: drivedesk).
-        $schedule->command('demo:seed --if-demo')
-            ->dailyAt('03:30')
-            ->withoutOverlapping()
-            ->runInBackground();
     }
     /**
      * Register the commands for the application.

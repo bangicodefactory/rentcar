@@ -76,12 +76,7 @@ class HomeController extends Controller
             if (!file_exists(setup())) {
                 return redirect('install');
             }
-            // Demo/showcase clients (feature 'demo_gateway') serve a public
-            // marketing landing at / with a "Book a demo" form. Every other
-            // tenant stays internal-only and redirects to login (BAN-241).
-            if (feature('demo_gateway')) {
-                return Inertia::render('Public/DemoGateway');
-            }
+            // The app is internal-only: an anonymous visitor at / goes to login.
             return redirect()->route('login');
         }
     }

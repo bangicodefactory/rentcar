@@ -49,24 +49,10 @@ Route::get('/', [HomeController::class, 'index'])->middleware(
         'XSS',
     ]
 );
-// Locale-prefixed public home (BAN-263): /fr, /en, /ar serve the same page in a
-// named language, so each has a real indexable URL that hreflang can point at.
-// `/` stays the x-default and serves the client's guest default.
-//
-// The constraint is the exact locale list, so this cannot swallow a literal path
-// like /login or /landing — and it is declared after them regardless.
-// `feature:demo_gateway` so this only exists for clients with a public product
-// page. Without it an internal-only tenant would gain three URLs that merely
-// redirect to login.
-Route::get('/{locale}', [HomeController::class, 'index'])
-    ->where('locale', \App\Support\Locales::routeConstraint())
-    ->middleware(['XSS', 'feature:demo_gateway'])
-    ->name('public.home.locale');
 
 // Crawler-facing endpoints (BAN-262). Generated, not static, because which
 // pages exist depends on the client's feature flags.
 Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemap'])->name('seo.sitemap');
-Route::get('/llms.txt', [\App\Http\Controllers\SeoController::class, 'llms'])->name('seo.llms');
 
 // Public B2C rental storefront: the fleet/booking landing plus the pages its
 // layout partials link to. Guarded by `feature:public_storefront` (BAN-261) so a
@@ -89,30 +75,6 @@ Route::middleware('feature:public_storefront')->group(function () {
     })->name('newsletter.subscribe');
 });
 
-// "Book a demo" form on the demo-gateway landing — guarded so the endpoint only
-// exists for clients that expose the marketing landing (drivedesk). 404 otherwise.
-Route::post('/demo-request', [\App\Http\Controllers\DemoRequestController::class, 'store'])
-    // Public, unauthenticated form that creates a pending user + sends mail —
-    // rate-limit per IP so bots can't flood the inbox or spam pending rows
-    // (BAN-251). 5/min is generous for a real prospect.
-    ->middleware(['feature:demo_gateway', 'throttle:5,1'])
-    ->name('demo.request');
-
-// Super-admin review of pending demo requests (BAN-249). A pending request is an
-// inactive `manager` sub-user of the demo tenant (no demo_requests table — schema
-// frozen, §4). `feature:demo_gateway` keeps these endpoints off real clients
-// (404); super-admin-only + the pending-row invariant are enforced in the
-// controller. The listing page is added separately.
-Route::middleware(['auth', 'feature:demo_gateway'])->group(function () {
-    Route::get('demo-requests', [\App\Http\Controllers\DemoApprovalController::class, 'index'])
-        ->name('demo-requests.index');
-    Route::post('demo-requests/{user}/approve', [\App\Http\Controllers\DemoApprovalController::class, 'approve'])
-        ->name('demo-requests.approve');
-    Route::post('demo-requests/{user}/decline', [\App\Http\Controllers\DemoApprovalController::class, 'decline'])
-        ->name('demo-requests.decline');
-});
-
-
 Route::get('home', [HomeController::class, 'index'])->name('home')->middleware(
     [
 
@@ -134,7 +96,6 @@ Route::resource('users', UserController::class)->middleware(
         'XSS',
     ]
 );
-
 
 //-------------------------------Settings-------------------------------------------
 Route::group(
@@ -172,7 +133,6 @@ Route::group(
         Route::get('settings/company', [SettingController::class, 'company'])->name('setting.company');
         Route::post('settings/company', [SettingController::class, 'companyData']);
 
-
         Route::post('theme/settings', [SettingController::class, 'themeSettings'])->name('theme.settings');
 
         Route::get('settings/site-seo', [SettingController::class, 'siteSEO'])->name('setting.site.seo');
@@ -206,7 +166,6 @@ Route::resource('role', RoleController::class)->middleware(
     ]
 );
 
-
 //-------------------------------logged History-------------------------------------------
 
 Route::group(
@@ -222,11 +181,8 @@ Route::group(
         Route::get('logged/{id}/history/show', [UserController::class, 'loggedHistoryShow'])->name('logged.history.show');
         Route::delete('logged/{id}/history', [UserController::class, 'loggedHistoryDestroy'])->name('logged.history.destroy');
 
-
     }
 );
-
-
 
 //-------------------------------driver-------------------------------------------
 Route::group(
@@ -246,7 +202,6 @@ Route::group(
         Route::resource('driver', DriverController::class);
     }
 );
-
 
 //-------------------------------Vehicle Type-------------------------------------------
 Route::resource('vehicle-type', VehicleTypeController::class)->middleware(
@@ -270,7 +225,6 @@ Route::group(
         Route::resource('vehicle', VehicleController::class);
     }
 );
-
 
 //-------------------------------Inspection-------------------------------------------
 Route::resource('inspection', InspectionController::class)->middleware(
@@ -427,8 +381,6 @@ Route::group(
     }
 );
 
-
-
 //-------------------------------Notification-------------------------------------------
 Route::resource('notification', NotificationController::class)->middleware(
     [
@@ -484,7 +436,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reminder/create-recurring', [ReminderController::class, 'createRecurringReminders'])->name('reminder.create.recurring');
 });
 
-
 //--------------------------------TVA--------------------------------
 Route::group([
     'middleware' => [
@@ -527,7 +478,6 @@ Route::delete('signature/{signature}', [SignatureController::class, 'destroy'])-
 
 Route::get('/drivers/search', [App\Http\Controllers\RentalAgreementController::class, 'searchDrivers'])->name('drivers.search');
 
-
 Route::post('/tva/bulk-download', [TvaController::class, 'bulkDownload'])->name('tva.bulk.download');
 
 // --------------------------------------------------------------------------
@@ -564,7 +514,6 @@ Route::prefix('ui-test')->name('ui.test.')->group(function () {
     Route::view('/cta-rental', 'client.tests.cta-rental')->name('cta_rental');
     Route::view('/cta-cheap-rental', 'client.tests.cta-cheap-rental')->name('cta_cheap_rental');
     Route::view('/full', 'client.home')->name('full'); // full landing page
-
 
 });
     Route::get('/car/{id}', [RequestBookingController::class, 'showSimilarCars'])->name('client.details');
