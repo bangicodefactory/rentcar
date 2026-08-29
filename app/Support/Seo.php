@@ -52,8 +52,7 @@ class Seo
     public static function forRequest(Request $request): array
     {
         $routeName  = optional($request->route())->getName();
-        $isGateway  = self::isGateway($request, $routeName);
-        $indexable  = self::isIndexable($routeName, $isGateway);
+        $indexable  = self::isIndexable($routeName);
         $seo        = config('client.seo', []);
 
         return [
@@ -67,22 +66,11 @@ class Seo
             'dir'         => self::isRtl() ? 'rtl' : 'ltr',
             'indexable'   => $indexable,
             'twitterSite' => $seo['twitter'] ?? null,
-            // hreflang only makes sense on the page that actually exists per
-            // locale; the storefront has no locale URLs yet.
-            'alternates'  => $isGateway && $indexable
-                ? Locales::alternatesFor(self::baseUrl($request))
-                : [],
         ];
     }
 
-    /** The product's public home, unprefixed (`/`) or locale-prefixed (`/fr`). */
-    private static function isGateway(Request $request, ?string $routeName): bool
-    {
-        return $request->path() === '/' || $routeName === 'public.home.locale';
-    }
-
     /** Guests only ever reach a public page; anything else must not be indexed. */
-    private static function isIndexable(?string $routeName, bool $isGateway): bool
+    private static function isIndexable(?string $routeName): bool
     {
         // A crawler is never signed in, so nothing an authenticated user sees is
         // ever the indexable version of a URL. This is not only an SEO nit:
@@ -92,11 +80,6 @@ class Seo
         // 7 routes and its sidebar's route('booking.index') threw client-side.
         if (Auth::check()) {
             return false;
-        }
-
-        // The gateway only exists for clients that enable it.
-        if ($isGateway) {
-            return (bool) feature('demo_gateway');
         }
 
         if ($routeName === null) {
@@ -189,68 +172,14 @@ class Seo
         return file_exists(public_path($relative)) ? $base.'/'.$relative : null;
     }
 
-    /**
-     * The language to declare on <html>.
-     *
-     * `ary` (Moroccan Arabic) is a valid locale for the app's own switcher, but
-     * the DriveDesk copy under it was rewritten into Modern Standard Arabic —
-     * declaring `ary` tells search engines the page is in a language it is not.
-     * Map it to `ar`, which is what the text actually is.
-     */
+    /** The language to declare on <html>. */
     private static function htmlLang(): string
     {
-        $locale = app()->getLocale();
-
-        return $locale === 'ary' ? 'ar' : str_replace('_', '-', $locale);
+        return str_replace('_', '-', app()->getLocale());
     }
 
     private static function isRtl(): bool
     {
-        return in_array(app()->getLocale(), ['ar', 'ary'], true);
-    }
-
-    /**
-     * Organization + SoftwareApplication JSON-LD for the product's own gateway.
-     *
-     * Emitted only on the demo gateway: it describes DriveDesk-the-product, so
-     * it would be a lie on a tenant's B2C storefront.
-     *
-     * @return array<string,mixed>|null
-     */
-    public static function jsonLd(Request $request): ?array
-    {
-        $routeName = optional($request->route())->getName();
-
-        if (! self::isGateway($request, $routeName) || ! feature('demo_gateway')) {
-            return null;
-        }
-
-        $seo  = config('client.seo', []);
-        $name = $seo['site_name'] ?? config('app.name', 'RentCar');
-        $url  = self::baseUrl($request);
-
-        $organization = array_filter([
-            '@type'       => 'Organization',
-            '@id'         => $url.'/#organization',
-            'name'        => $name,
-            'url'         => $url,
-            'logo'        => self::image($seo, $url),
-            'description' => $seo['description'] ?? null,
-        ]);
-
-        $application = array_filter([
-            '@type'               => 'SoftwareApplication',
-            'name'                => $name,
-            'applicationCategory' => 'BusinessApplication',
-            'operatingSystem'     => 'Web',
-            'url'                 => $url,
-            'description'         => $seo['description'] ?? null,
-            'publisher'           => ['@id' => $url.'/#organization'],
-        ]);
-
-        return [
-            '@context' => 'https://schema.org',
-            '@graph'   => [$organization, $application],
-        ];
+        return app()->getLocale() === 'ar';
     }
 }

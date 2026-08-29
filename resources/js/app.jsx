@@ -25,8 +25,8 @@ function injectDarkVars(darkMap) {
     el.textContent = `.dark {\n${rules}\n}`;
 }
 
-// RTL applies when the active locale is Arabic (MSA 'ar' or Moroccan Darija
-// 'ary'), or when the admin has set the layout_direction setting to rtlmode.
+// RTL applies when the active locale is Arabic, or when the admin has set the
+// layout_direction setting to rtlmode.
 // Locale takes precedence.
 function applyDirection(locale, branding) {
     const rtl = (locale || '').startsWith('ar') || branding?.layoutDirection === 'rtlmode';
@@ -66,8 +66,8 @@ createInertiaApp({
 
         if (!title) return appName;
 
-        // A page whose own title already names the product (the marketing
-        // gateway does) would otherwise render "DriveDesk — … - DriveDesk".
+        // A page whose own title already names the product would otherwise
+        // render "Name — … - Name".
         return title.includes(appName) ? title : `${title} - ${appName}`;
     },
     resolve: (name) => {
