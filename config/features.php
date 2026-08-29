@@ -20,7 +20,6 @@ return [
     'multi_branch'     => env('FEATURE_MULTI_BRANCH', null),
     'tva_renumber'     => env('FEATURE_TVA_RENUMBER', null),
     'signatures'       => env('FEATURE_SIGNATURES', null),
-    'demo_gateway'     => env('FEATURE_DEMO_GATEWAY', null),
     'cash_split'       => env('FEATURE_CASH_SPLIT', null),
     'invoice_on_full_payment' => env('FEATURE_INVOICE_ON_FULL_PAYMENT', null),
     'traffic_violations' => env('FEATURE_TRAFFIC_VIOLATIONS', null),

@@ -30,10 +30,6 @@ const NAV_SUPER_ADMIN = [
     { section: 'Users', items: [
         { label: 'Users', route: 'users.index', icon: Users, permission: 'manage user' },
     ]},
-    // Demo gateway only (drivedesk): pending "Book a demo" requests to approve.
-    { section: 'Demo', feature: 'demo_gateway', items: [
-        { label: 'Demo requests', route: 'demo-requests.index', icon: Inbox, feature: 'demo_gateway' },
-    ]},
     { section: 'System', items: [
         // Super admin bypasses Gate checks in Blade — no permission guard on children
         { label: 'Settings', icon: Settings, children: SETTINGS_CHILDREN.map(({ permission: _, ...c }) => c) },
