@@ -237,6 +237,94 @@ class SignatureControllerTest extends TestCase
         // That is a known gap; tracked separately.
     }
 
+    // ── tenant scope + store permission ───────────────────────────────────────
+    // Signatures carry no parent_id; the tenant is the signature's user (the
+    // owner, or a user whose parent_id is the owner). index/destroy/store are
+    // scoped through that relation, and store now requires 'manage driver'
+    // like index does.
+
+    private function otherTenantDriver(): User
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+
+        return User::factory()->create(['type' => 'driver', 'parent_id' => $otherOwner->id]);
+    }
+
+    public function test_index_only_lists_signatures_of_own_tenant(): void
+    {
+        $ownDriver = User::factory()->create(['type' => 'driver', 'parent_id' => $this->owner->id]);
+        $mine      = Signature::factory()->create(['user_id' => $ownDriver->id]);
+        $ownerSig  = Signature::factory()->create(['user_id' => $this->owner->id]);
+        Signature::factory()->create(['user_id' => $this->otherTenantDriver()->id]);
+
+        $this->actingAs($this->owner)
+            ->get(route('signature.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Signature/Index')
+                ->has('signatures', 2)
+                ->where('signatures', fn ($sigs) => collect($sigs)->pluck('id')->sort()->values()->all()
+                    === collect([$ownerSig->id, $mine->id])->sort()->values()->all())
+            );
+    }
+
+    public function test_destroy_denied_for_other_tenants_signature(): void
+    {
+        $foreign = Signature::factory()->create(['user_id' => $this->otherTenantDriver()->id]);
+
+        $this->actingAs($this->owner)
+            ->delete(route('signature.destroy', $foreign))
+            ->assertRedirect(route('signature.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('signatures', ['id' => $foreign->id]);
+    }
+
+    public function test_store_denied_without_manage_driver(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($noPerms)
+            ->post(route('signature.store'), [
+                'user_id'   => $noPerms->id,
+                'signature' => 'data:image/png;base64,' . self::VALID_PNG_BASE64,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseCount('signatures', 0);
+    }
+
+    public function test_store_rejects_user_from_other_tenant(): void
+    {
+        $foreignDriver = $this->otherTenantDriver();
+
+        $this->actingAs($this->owner)
+            ->post(route('signature.store'), [
+                'user_id'   => $foreignDriver->id,
+                'signature' => 'data:image/png;base64,' . self::VALID_PNG_BASE64,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('signatures', ['user_id' => $foreignDriver->id]);
+    }
+
+    public function test_store_accepts_own_tenants_driver(): void
+    {
+        $ownDriver = User::factory()->create(['type' => 'driver', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->post(route('signature.store'), [
+                'user_id'   => $ownDriver->id,
+                'signature' => 'data:image/png;base64,' . self::VALID_PNG_BASE64,
+            ])
+            ->assertRedirect(route('signature.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('signatures', ['user_id' => $ownDriver->id]);
+    }
+
     // ── SignatureController::create ───────────────────────────────────────────
 
     public function test_create_renders_inertia_component(): void
