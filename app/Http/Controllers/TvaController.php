@@ -111,6 +111,10 @@ class TvaController extends Controller
     }
     public function bulkDownload(Request $request)
     {
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
         $request->validate([
             'invoice_ids' => 'required|array',
         ]);
@@ -462,6 +466,10 @@ class TvaController extends Controller
 
     public function generateMonthlyTva(Request $request)
     {
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
         $request->validate([
             'month' => 'required|date_format:Y-m',
         ]);

@@ -489,14 +489,15 @@
 | ✗ | PUT/PATCH | `/tva/{tva}` | `tva.update` | `TvaController@update` | `manage tva` | tva_number, amount, tva_rate, facture_date, payment_date | updates Tva |
 | ✗ | DELETE | `/tva/{tva}` | `tva.destroy` | `TvaController@destroy` | `manage tva` | — | deletes Tva |
 | ✗ | GET | `/tva-report` | `tva.report` | `TvaController@report` | `manage tva report` | — | — |
-| ✓ | POST | `/tva/bulk-download` | `tva.bulk.download` | `TvaController@bulkDownload` | `manage tva` | ids[] | generates PDFs + ZIP archive, streams download |
-| ✓ | POST | `/tva/generate` | `tva.generate` | `TvaController@generateMonthlyTva` | none (auth only) | month | soft-deletes + rebuilds the month's Tva records |
+| ✓ | POST | `/tva/bulk-download` | `tva.bulk.download` | `TvaController@bulkDownload` | `manage tva` | invoice_ids[] | generates PDFs + ZIP archive, streams download |
+| ✓ | POST | `/tva/generate` | `tva.generate` | `TvaController@generateMonthlyTva` | `manage tva` | month | soft-deletes + rebuilds the month's Tva records |
 
 > **Note:** `tva.bulk.download` and `tva.generate` were registered outside
 > every auth group until they joined the `auth` + `XSS` TVA block (same
 > route-outside-auth-group class as Sentry DIRECTONDERWEG-8 / -B).
-> `TvaControllerTest` asserts a guest is redirected to login and that a
-> guest POST to `tva.generate` leaves existing invoices untouched.
+> `TvaControllerTest` asserts a guest is redirected to login, that a user
+> without `manage tva` is refused, and that neither reaches the soft-delete
+> in `generateMonthlyTva`. Neither action scopes by `parent_id` yet (open).
 
 ---
 
