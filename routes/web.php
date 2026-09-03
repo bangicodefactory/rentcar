@@ -451,6 +451,9 @@ Route::group([
 
     Route::resource('tva', TvaController::class);
     Route::get('/tva-report', [TvaController::class, 'report'])->name('tva.report');
+    Route::post('/tva/bulk-download', [TvaController::class, 'bulkDownload'])->name('tva.bulk.download');
+    // genere tva par mois
+    Route::post('/tva/generate', [TvaController::class, 'generateMonthlyTva'])->name('tva.generate');
 });
 
 //--------------------------------Credits--------------------------------
@@ -486,8 +489,6 @@ Route::group([
 
 Route::get('/drivers/search', [App\Http\Controllers\RentalAgreementController::class, 'searchDrivers'])->name('drivers.search');
 
-Route::post('/tva/bulk-download', [TvaController::class, 'bulkDownload'])->name('tva.bulk.download');
-
 // --------------------------------------------------------------------------
 // Sentry smoke-test — local env only, any authenticated user.
 // Throws a deliberate exception; verify it arrives in Sentry within ~1 minute.
@@ -498,9 +499,6 @@ if (app()->environment('local')) {
         throw new \RuntimeException('Sentry smoke-test — intentional exception from /sentry-test');
     })->middleware('auth')->name('sentry.test');
 }
-
-// genere tva par mois
-Route::post('/tva/generate', [TvaController::class, 'generateMonthlyTva'])->name('tva.generate');
 
 // --------------------------------------------------------------------------
 // UI COMPONENT TEST ROUTES (temporary for style / JS debugging)
