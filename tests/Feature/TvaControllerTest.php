@@ -392,11 +392,10 @@ class TvaControllerTest extends TestCase
     // NOTE: bulkDownload is registered OUTSIDE the auth middleware group.
     // Unauthenticated requests are NOT redirected to login — this is a security gap.
 
-    public function test_bulk_download_is_publicly_accessible_documents_missing_auth(): void
+    public function test_bulk_download_requires_auth(): void
     {
-        // No actingAs — unauthenticated request should hit validation, not login redirect
         $this->post(route('tva.bulk.download'), [])
-            ->assertSessionHasErrors(['invoice_ids']);
+            ->assertRedirect(route('login'));
     }
 
     public function test_bulk_download_rejects_missing_invoice_ids(): void
@@ -544,14 +543,28 @@ class TvaControllerTest extends TestCase
     }
 
     // ── TvaController::generateMonthlyTva ─────────────────────────────────────
-    // NOTE: tva.generate is registered OUTSIDE the auth middleware group.
-    // Unauthenticated requests hit validation, not a login redirect.
 
-    public function test_generate_monthly_tva_validates_when_unauthenticated(): void
+    public function test_generate_monthly_tva_requires_auth(): void
     {
-        // Outside auth middleware — no login redirect, just validation
         $this->post(route('tva.generate'), [])
-            ->assertSessionHasErrors(['month']);
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_generate_monthly_tva_as_guest_leaves_existing_invoices_untouched(): void
+    {
+        // generate() soft-deletes and rebuilds a whole month; a guest must never
+        // reach it, even with a well-formed payload.
+        $monthStart = now()->startOfMonth();
+        $existing = Tva::factory()->withInvoice()->create([
+            'month'     => $monthStart->month,
+            'year'      => $monthStart->year,
+            'parent_id' => $this->owner->id,
+        ]);
+
+        $this->post(route('tva.generate'), ['month' => $monthStart->format('Y-m')])
+            ->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('tvas', ['id' => $existing->id, 'deleted_at' => null]);
     }
 
     public function test_generate_monthly_tva_validates_month_format(): void
