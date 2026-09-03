@@ -471,10 +471,18 @@ Route::group([
     Route::get('credit/driver-credit/{driver_id}', [CreditController::class, 'getDriverCredit'])->name('credit.driver.details');
 });
 
-Route::get('signature', [SignatureController::class, 'index'])->name('signature.index');
-Route::get('signature/create', [SignatureController::class, 'create'])->name('signature.create');
-Route::post('signature-pad', [SignatureController::class, 'store'])->name('signature.store');
-Route::delete('signature/{signature}', [SignatureController::class, 'destroy'])->name('signature.destroy');
+//--------------------------------Signatures--------------------------------
+Route::group([
+    'middleware' => [
+        'auth',
+        'XSS',
+    ],
+], function () {
+    Route::get('signature', [SignatureController::class, 'index'])->name('signature.index');
+    Route::get('signature/create', [SignatureController::class, 'create'])->name('signature.create');
+    Route::post('signature-pad', [SignatureController::class, 'store'])->name('signature.store');
+    Route::delete('signature/{signature}', [SignatureController::class, 'destroy'])->name('signature.destroy');
+});
 
 Route::get('/drivers/search', [App\Http\Controllers\RentalAgreementController::class, 'searchDrivers'])->name('drivers.search');
 
