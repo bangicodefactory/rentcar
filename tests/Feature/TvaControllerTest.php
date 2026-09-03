@@ -388,14 +388,23 @@ class TvaControllerTest extends TestCase
             ->assertOk();
     }
 
-    // ── TvaController::bulkDownload (public route — outside auth middleware) ────
-    // NOTE: bulkDownload is registered OUTSIDE the auth middleware group.
-    // Unauthenticated requests are NOT redirected to login — this is a security gap.
+    // ── TvaController::bulkDownload ───────────────────────────────────────────
 
     public function test_bulk_download_requires_auth(): void
     {
         $this->post(route('tva.bulk.download'), [])
             ->assertRedirect(route('login'));
+    }
+
+    public function test_bulk_download_denied_without_manage_tva(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $this->owner->id]);
+
+        $this->actingAs($noPerms)
+            ->post(route('tva.bulk.download'), ['invoice_ids' => [$tva->id]])
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
     }
 
     public function test_bulk_download_rejects_missing_invoice_ids(): void
@@ -554,15 +563,36 @@ class TvaControllerTest extends TestCase
     {
         // generate() soft-deletes and rebuilds a whole month; a guest must never
         // reach it, even with a well-formed payload.
+        // Pin facture_date: that is the column the delete query reads.
         $monthStart = now()->startOfMonth();
         $existing = Tva::factory()->withInvoice()->create([
-            'month'     => $monthStart->month,
-            'year'      => $monthStart->year,
-            'parent_id' => $this->owner->id,
+            'facture_date' => $monthStart->format('Y-m-d'),
+            'month'        => $monthStart->month,
+            'year'         => $monthStart->year,
+            'parent_id'    => $this->owner->id,
         ]);
 
         $this->post(route('tva.generate'), ['month' => $monthStart->format('Y-m')])
             ->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('tvas', ['id' => $existing->id, 'deleted_at' => null]);
+    }
+
+    public function test_generate_monthly_tva_denied_without_manage_tva(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $monthStart = now()->startOfMonth();
+        $existing = Tva::factory()->withInvoice()->create([
+            'facture_date' => $monthStart->format('Y-m-d'),
+            'month'        => $monthStart->month,
+            'year'         => $monthStart->year,
+            'parent_id'    => $this->owner->id,
+        ]);
+
+        $this->actingAs($noPerms)
+            ->post(route('tva.generate'), ['month' => $monthStart->format('Y-m')])
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
 
         $this->assertDatabaseHas('tvas', ['id' => $existing->id, 'deleted_at' => null]);
     }
