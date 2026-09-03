@@ -50,7 +50,7 @@
 | TVA                     | 10        | ✗       |
 | TVA Renumber            | 3         | ✗       |
 | Credits                 | 9         | ✗       |
-| Signatures              | 4         | ✗       |
+| Signatures              | 4         | ✓       |
 | API                     | 1         | ✗       |
 | **Total**               | **246**   | **0**   |
 
@@ -529,10 +529,14 @@
 
 | ✓/✗ | Verb | Path | Route name | Controller@method | Permission | Key inputs | Side effects |
 | --- | ---- | ---- | ---------- | ----------------- | ---------- | ---------- | ------------ |
-| ✗ | GET | `/signature` | `signature.index` | `SignatureController@index` | `manage driver` | — | — |
-| ✗ | GET | `/signature/create` | `signature.create` | `SignatureController@create` | — | — | — |
-| ✗ | POST | `/signature-pad` | `signature.store` | `SignatureController@store` | `manage driver` | user_id, signature (base64 PNG) | stores signature file, creates Signature |
-| ✗ | DELETE | `/signature/{signature}` | `signature.destroy` | `SignatureController@destroy` | `delete driver` | — | deletes Signature + file |
+| ✓ | GET | `/signature` | `signature.index` | `SignatureController@index` | `manage driver` | — | — |
+| ✓ | GET | `/signature/create` | `signature.create` | `SignatureController@create` | — | — | — |
+| ✓ | POST | `/signature-pad` | `signature.store` | `SignatureController@store` | — (auth only, no permission check) | user_id, signature (base64 PNG) | stores signature file, creates Signature |
+| ✓ | DELETE | `/signature/{signature}` | `signature.destroy` | `SignatureController@destroy` | `delete driver` | — | deletes Signature + file |
+
+> **Note:** all four routes sit in an `auth` + `XSS` group since PR #218
+> (Sentry DIRECTONDERWEG-8 / -B). Guest access redirects to login;
+> `SignatureControllerTest` covers each route's auth denial.
 
 ---
 
