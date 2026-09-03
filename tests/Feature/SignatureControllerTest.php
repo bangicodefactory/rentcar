@@ -39,9 +39,38 @@ class SignatureControllerTest extends TestCase
     }
 
     // ── route accessibility ───────────────────────────────────────────────────
-    // NOTE: signature routes are registered OUTSIDE the auth middleware group
-    // (see routes/web.php:485-488). index/destroy crash when unauthenticated
-    // because \Auth::user() returns null; only store has no permission guard.
+    // Sentry DIRECTONDERWEG-8 / DIRECTONDERWEG-B: guests reaching /signature and
+    // /signature/create hit \Auth::user()->... on null and got a 500. All four
+    // signature routes now sit in the auth+XSS group like their neighbours.
+
+    public function test_index_requires_auth(): void
+    {
+        $this->get(route('signature.index'))->assertRedirect(route('login'));
+    }
+
+    public function test_create_requires_auth(): void
+    {
+        $this->get(route('signature.create'))->assertRedirect(route('login'));
+    }
+
+    public function test_store_requires_auth(): void
+    {
+        $this->post(route('signature.store'), [
+            'user_id'   => $this->owner->id,
+            'signature' => 'data:image/png;base64,' . self::VALID_PNG_BASE64,
+        ])->assertRedirect(route('login'));
+
+        $this->assertDatabaseCount('signatures', 0);
+    }
+
+    public function test_destroy_requires_auth(): void
+    {
+        $sig = Signature::factory()->create(['user_id' => $this->owner->id]);
+
+        $this->delete(route('signature.destroy', $sig))->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('signatures', ['id' => $sig->id]);
+    }
 
     // ── SignatureController::store ────────────────────────────────────────────
 
