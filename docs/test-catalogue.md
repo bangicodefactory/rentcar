@@ -531,12 +531,14 @@
 | --- | ---- | ---- | ---------- | ----------------- | ---------- | ---------- | ------------ |
 | ✓ | GET | `/signature` | `signature.index` | `SignatureController@index` | `manage driver` | — | — |
 | ✓ | GET | `/signature/create` | `signature.create` | `SignatureController@create` | — | — | — |
-| ✓ | POST | `/signature-pad` | `signature.store` | `SignatureController@store` | — (auth only, no permission check) | user_id, signature (base64 PNG) | stores signature file, creates Signature |
+| ✓ | POST | `/signature-pad` | `signature.store` | `SignatureController@store` | `manage driver` | user_id (must belong to tenant), signature (base64 PNG) | stores signature file, creates Signature |
 | ✓ | DELETE | `/signature/{signature}` | `signature.destroy` | `SignatureController@destroy` | `delete driver` | — | deletes Signature + file |
 
 > **Note:** all four routes sit in an `auth` + `XSS` group since PR #218
 > (Sentry DIRECTONDERWEG-8 / -B). Guest access redirects to login;
-> `SignatureControllerTest` covers each route's auth denial.
+> `SignatureControllerTest` covers each route's auth denial. index, store and
+> destroy are scoped to the tenant through the signature's user (the owner or
+> a user whose parent_id is the owner); cross-tenant rows are hidden / refused.
 
 ---
 

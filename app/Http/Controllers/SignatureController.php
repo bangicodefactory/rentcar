@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Role;
 // use Creagia\LaravelSignPad\Signature;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use App\Models\Signature;
 use Inertia\Inertia;
 
@@ -25,7 +26,10 @@ class SignatureController extends Controller
             // ->with('drivers')  // Eager load the drivers relationship
             // ->orderBy('created_at', 'desc')
             // ->get();
-            $signatures = Signature::with('user')->orderBy('created_at', 'desc')->get();
+            $signatures = Signature::with('user')
+                ->whereHas('user', fn ($q) => $this->scopeToTenant($q))
+                ->orderBy('created_at', 'desc')
+                ->get();
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -56,10 +60,14 @@ class SignatureController extends Controller
     }
     public function store(Request $request)
     {
+        if (!\Auth::user()->can('manage driver')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
         try {
             // Validate request
             $request->validate([
-                'user_id' => 'required|exists:users,id',
+                'user_id' => ['required', Rule::exists('users', 'id')->where(fn ($q) => $this->scopeToTenant($q))],
                 'signature' => 'required'
             ]);
     
@@ -130,6 +138,9 @@ class SignatureController extends Controller
 
     public function destroy(Signature $signature){
         if (\Auth::user()->can('delete driver')) {
+            if (!$signature->user || !$this->belongsToTenant($signature->user)) {
+                return redirect()->route('signature.index')->with('error', __('Permission Denied.'));
+            }
             
             \Log::info('Signature Path: ' . $signature->signature_path);
             \Log::info('Signature ID: ' . $signature->id);
@@ -145,6 +156,25 @@ class SignatureController extends Controller
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
+    }
+
+    /**
+     * Signatures have no parent_id; the tenant is the signature's user —
+     * the owner (id == parentId()) or a user whose parent_id is the owner.
+     * Works on both Eloquent and query builders (whereHas / Rule::exists).
+     */
+    private function scopeToTenant($query)
+    {
+        $parentId = parentId();
+
+        return $query->where(fn ($q) => $q->where('id', $parentId)->orWhere('parent_id', $parentId));
+    }
+
+    private function belongsToTenant(User $user): bool
+    {
+        $parentId = parentId();
+
+        return $user->id == $parentId || $user->parent_id == $parentId;
     }
 
 }
