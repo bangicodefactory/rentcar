@@ -238,9 +238,6 @@ class SignatureControllerTest extends TestCase
     }
 
     // ── SignatureController::create ───────────────────────────────────────────
-    // NOTE: signature.create is registered OUTSIDE the auth middleware group.
-    // Unauthenticated access crashes with a null-pointer on \Auth::user().
-    // These tests exercise it as an authenticated user only.
 
     public function test_create_renders_inertia_component(): void
     {
