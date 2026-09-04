@@ -310,13 +310,10 @@ class TvaControllerTest extends TestCase
             ->assertNotFound();
     }
 
-    // NOTE: update has no permission check and no tenant scoping — any authenticated
-    // user can mutate any TVA record regardless of parent_id. These tests document
-    // that gap so a future fix can close it.
-    public function test_update_succeeds_cross_tenant_documents_missing_scope(): void
+    public function test_update_refuses_other_tenants_tva(): void
     {
         $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
-        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id, 'facture_number' => 'THEIRS']);
 
         $this->actingAs($this->owner)
             ->put(route('tva.update', $tva), [
@@ -326,10 +323,37 @@ class TvaControllerTest extends TestCase
                 'tva'            => 83.33,
                 'facture_number' => 'CROSS',
             ])
-            ->assertRedirect(route('tva.index'));
+            ->assertNotFound();
 
-        // Succeeds — no scoping guard exists yet
-        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'facture_number' => 'CROSS']);
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'facture_number' => 'THEIRS']);
+    }
+
+    public function test_show_and_edit_refuse_other_tenants_tva(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id]);
+
+        $this->actingAs($this->owner)->get(route('tva.show', $tva))->assertNotFound();
+        $this->actingAs($this->owner)->get(route('tva.edit', $tva))->assertNotFound();
+    }
+
+    public function test_update_denied_without_manage_tva(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $this->owner->id, 'facture_number' => 'MINE']);
+
+        $this->actingAs($noPerms)
+            ->put(route('tva.update', $tva), [
+                'facture_date'   => '2025-08-15',
+                'montant_ttc'    => 500,
+                'unit_price_ht'  => 416.67,
+                'tva'            => 83.33,
+                'facture_number' => 'CROSS',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'facture_number' => 'MINE']);
     }
 
     // ── TvaController::destroy ────────────────────────────────────────────────
@@ -353,18 +377,90 @@ class TvaControllerTest extends TestCase
             ->assertNotFound();
     }
 
-    // NOTE: destroy has no permission check and no tenant scoping — documents the gap.
-    public function test_destroy_succeeds_cross_tenant_documents_missing_scope(): void
+    public function test_destroy_refuses_other_tenants_tva(): void
     {
         $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
         $tva = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id]);
 
         $this->actingAs($this->owner)
             ->delete(route('tva.destroy', $tva))
-            ->assertRedirect();
+            ->assertNotFound();
 
-        // Succeeds — no scoping guard exists yet
-        $this->assertSoftDeleted('tvas', ['id' => $tva->id]);
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'deleted_at' => null]);
+    }
+
+    public function test_destroy_denied_without_manage_tva(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $tva = Tva::factory()->withInvoice()->create(['parent_id' => $this->owner->id]);
+
+        $this->actingAs($noPerms)
+            ->delete(route('tva.destroy', $tva))
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'deleted_at' => null]);
+    }
+
+    // ── tenant isolation: bulkDownload / generateMonthlyTva ───────────────────
+
+    public function test_bulk_download_only_zips_own_tenants_invoices(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $mine    = Tva::factory()->withInvoice()->create(['parent_id' => $this->owner->id, 'facture_number' => 'OWN1']);
+        $foreign = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id, 'facture_number' => 'FOREIGN1']);
+
+        $response = $this->actingAs($this->owner)
+            ->post(route('tva.bulk.download'), ['invoice_ids' => [$mine->id, $foreign->id]])
+            ->assertOk();
+
+        $zipPath = $response->baseResponse->getFile()->getPathname();
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($zipPath) === true, 'bulkDownload did not return a readable zip');
+        $names = [];
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $names[] = $zip->getNameIndex($i);
+        }
+        $zip->close();
+        @unlink($zipPath);
+
+        $this->assertContains('invoice_OWN1.pdf', $names);
+        $this->assertNotContains('invoice_FOREIGN1.pdf', $names);
+    }
+
+    public function test_bulk_download_refuses_when_no_requested_invoice_is_own(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $foreign = Tva::factory()->withInvoice()->create(['parent_id' => $otherOwner->id]);
+
+        $this->actingAs($this->owner)
+            ->post(route('tva.bulk.download'), ['invoice_ids' => [$foreign->id]])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+    }
+
+    public function test_generate_monthly_tva_leaves_other_tenants_month_untouched(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $theirs = Tva::factory()->withInvoice()->create([
+            'parent_id'    => $otherOwner->id,
+            'facture_date' => '2024-03-10',
+            'month'        => 3,
+            'year'         => 2024,
+        ]);
+        // A payment of theirs in the same month must not become one of our invoices.
+        $theirBooking = \App\Models\Booking::factory()->create(['parent_id' => $otherOwner->id, 'amount' => 1000]);
+        \App\Models\BookingPayment::factory()->create([
+            'booking_id' => $theirBooking->id, 'parent_id' => $otherOwner->id, 'date' => '2024-03-12', 'amount' => 1000,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->post(route('tva.generate'), ['month' => '2024-03'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('tvas', ['id' => $theirs->id, 'deleted_at' => null]);
+        $this->assertSame(0, Tva::where('booking_id', $theirBooking->id)->count());
     }
 
     // ── TvaController::report ─────────────────────────────────────────────────
