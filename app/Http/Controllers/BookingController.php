@@ -1402,7 +1402,14 @@ class BookingController extends Controller
 
     public function paymentCreate($id)
     {
-        $booking = Booking::find($id);
+        if (!\Auth::user()->can('create booking payment')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $booking = $this->tenantBooking($id);
+        if (!$booking) {
+            abort(404);
+        }
         $paymentMethod = BookingPayment::$paymentMethod;
         
         // Calculate default quantity (total days adjusted by payment amount)
@@ -1410,7 +1417,7 @@ class BookingController extends Controller
         $endDate = Carbon::parse($booking->end_date);
         $totalDays = max(1, $startDate->diffInDays($endDate));
         $dueAmount = $booking->getTotalDueAmount();
-        $totalDaysAmount = ($dueAmount * $totalDays) / $booking->amount;
+        $totalDaysAmount = $booking->amount > 0 ? ($dueAmount * $totalDays) / $booking->amount : 0;
         $defaultQuantity = max(1, round($totalDaysAmount));
         
         return view('booking.payment', compact('booking', 'paymentMethod', 'defaultQuantity'));
@@ -1553,15 +1560,25 @@ class BookingController extends Controller
     public function paymentDestroy($booking_id, $id)
     {
         if (\Auth::user()->can('delete booking payment')) {
-            $payment = BookingPayment::find($id);
-            if ($payment) {
-                // Delete linked TVA records created for this payment via idpaiment
-                Tva::where('idpaiment', $payment->id)->delete();
-                
-                $payment->delete();
+            // Resolve + authorise the booking BEFORE any write, and constrain
+            // the payment to that booking (it used to be found by id alone,
+            // deleted, and only then was the booking looked up - unscoped).
+            $bookinmg = $this->tenantBooking($booking_id);
+            if (!$bookinmg) {
+                return redirect()->back()->with('error', __('Permission Denied.'));
+            }
+            $payment = BookingPayment::where('booking_id', $bookinmg->id)->find($id);
+            if (!$payment) {
+                return redirect()->back()->with('error', __('Permission Denied.'));
             }
 
-            $bookinmg = Booking::find($booking_id);
+            \DB::transaction(function () use ($payment) {
+                // Delete linked TVA records created for this payment via idpaiment
+                Tva::where('idpaiment', $payment->id)->delete();
+                $payment->delete();
+            });
+            $bookinmg->unsetRelation('payments');
+
             if ($bookinmg->getTotalDueAmount() <= 0) {
                 $status = 'paye';
             } elseif ($bookinmg->getTotalDueAmount() == $bookinmg->getTotalAmount()) {
@@ -1656,5 +1673,19 @@ class BookingController extends Controller
             'bookingData' => $bookingData,
             'vehicleData' => $vehicleData,
         ]);
+    }
+    /**
+     * A booking the current user may act on: same tenant as parentId(),
+     * super admin exempt (parentId() returns the SA's own id, never a
+     * booking's parent_id). Mirrors paymentSplitPreview / show.
+     */
+    private function tenantBooking($id): ?Booking
+    {
+        $query = Booking::query();
+        if (\Auth::user()->type !== 'super admin') {
+            $query->where('parent_id', parentId());
+        }
+
+        return $query->find($id);
     }
 }
