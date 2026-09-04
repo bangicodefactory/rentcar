@@ -119,7 +119,10 @@ class TvaController extends Controller
             'invoice_ids' => 'required|array',
         ]);
 
-        $invoices = Tva::whereIn('id', $request->invoice_ids)->get();
+        $invoices = $this->scopeToTenant(Tva::whereIn('id', $request->invoice_ids))->get();
+        if ($invoices->isEmpty()) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
         $zipFileName = 'invoices_' . now()->format('Ymd_His') . '.zip';
         $zipPath = storage_path("app/public/{$zipFileName}");
         $zip = new \ZipArchive;
@@ -267,7 +270,11 @@ class TvaController extends Controller
     }
     public function edit($id)
     {
-        $tva = Tva::findOrFail($id);
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
 
         return Inertia::render('Tva/Edit', [
             'tva' => [
@@ -288,6 +295,10 @@ class TvaController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
         $validated = $request->validate([
             'facture_date' => 'required|date',
             'montant_ttc' => 'required|numeric',
@@ -296,7 +307,7 @@ class TvaController extends Controller
             'facture_number' => 'required|string|max:255',
         ]);
 
-        $tva = Tva::findOrFail($id);
+        $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
 
         $tva->facture_date = $validated['facture_date'];
         $tva->montant_ttc = $validated['montant_ttc'];
@@ -314,7 +325,11 @@ class TvaController extends Controller
 
     public function show($id)
     {
-        $tva = Tva::findOrFail($id);
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
 
         return Inertia::render('Tva/Show', [
             'tva' => [
@@ -334,7 +349,11 @@ class TvaController extends Controller
     }
     public function destroy($id)
     {
-        $tva = Tva::findOrFail($id);
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
         $tva->delete();
         return redirect()->back()->with('success', 'The TVA has been deleted.');
     }
@@ -488,13 +507,15 @@ class TvaController extends Controller
         // generation. (Hard uniqueness still needs the DB unique index — IST-230.)
         return \DB::transaction(function () use ($monthStart, $monthEnd) {
         // 1. Delete existing TVA records in the selected month (facture_date within month)
-        $deleteQuery = Tva::whereYear('facture_date', $monthStart->year)
-            ->whereMonth('facture_date', $monthStart->month);
+        // Scoped to the caller's tenant (super admin unscoped): a month rebuild
+        // must never soft-delete or re-issue another business's invoices.
+        $deleteQuery = $this->scopeToTenant(Tva::whereYear('facture_date', $monthStart->year)
+            ->whereMonth('facture_date', $monthStart->month));
         $deletedCount = $deleteQuery->count();
         $deleteQuery->delete();
 
         // 2. Pull BookingPayments in that month to build TVAs (per payment)
-        $paymentQuery = BookingPayment::whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()]);
+        $paymentQuery = $this->scopeToTenant(BookingPayment::whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()]));
         $payments = $paymentQuery->get();
 
         $setting = settings();
@@ -796,5 +817,25 @@ class TvaController extends Controller
             'topProfitableCars'  => $topProfitableCars->values()->toArray(),
             'carPerformanceStats'=> $carPerformanceStats,
         ]);
+    }
+    /**
+     * Constrain a tvas / booking_payments query to the caller's tenant.
+     * Super admin is unscoped (parentId() returns the SA's own id, which is
+     * never a tenant's parent_id). A non-owner with no resolvable tenant
+     * matches nothing rather than everything - index/report's
+     * `if (parentId())` guard silently dropped the filter in that case.
+     */
+    private function scopeToTenant($query)
+    {
+        if (\Auth::user()->type === 'super admin') {
+            return $query;
+        }
+
+        $parentId = (int) parentId();
+        if ($parentId <= 0) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->where('parent_id', $parentId);
     }
 }
