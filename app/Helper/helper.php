@@ -392,10 +392,32 @@ if (!function_exists('userLoggedHistory')) {
         function specificPlacesRateCalculation($placeId)
         {
             $place = Place::where('id', $placeId)->first();
+            // Mirror placesRateCalculation(): a place that cannot be resolved
+            // is a blank line, not a null dereference. Callers validate the
+            // id with tenantPlaceRule() so this is only a last-resort guard.
+            if (empty($place)) {
+                return ['place' => '', 'final_price' => 0];
+            }
             $placeData['place'] = $place->name;
             // $placeData['final_price'] = priceFormat($place->price);
             $placeData['final_price'] = $place->price;
             return $placeData;
+        }
+    }
+
+    if (!function_exists('tenantPlaceRule')) {
+        /**
+         * Validation rule for a pickup / drop-off place id: must exist and
+         * belong to the caller's tenant (super admin unscoped). Rejecting at
+         * the boundary (422) beats pricing an unknown or foreign place at 0.
+         */
+        function tenantPlaceRule(): \Illuminate\Validation\Rules\Exists
+        {
+            $rule = \Illuminate\Validation\Rule::exists('places', 'id');
+            if (\Auth::check() && \Auth::user()->type !== 'super admin') {
+                $rule->where('parent_id', parentId());
+            }
+            return $rule;
         }
     }
 }
