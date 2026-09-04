@@ -539,6 +539,9 @@
 > `SignatureControllerTest` covers each route's auth denial. index, store and
 > destroy are scoped to the tenant through the signature's user (the owner or
 > a user whose parent_id is the owner); cross-tenant rows are hidden / refused.
+> The super admin is unscoped, and orphaned rows (signer deleted; real on the
+> MyISAM prod tables where the FK cascade is dropped) stay listed and deletable.
+> `signature.create` is gated on `manage driver` like `store`.
 
 ---
 

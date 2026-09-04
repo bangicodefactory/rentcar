@@ -27,7 +27,9 @@ class SignatureController extends Controller
             // ->orderBy('created_at', 'desc')
             // ->get();
             $signatures = Signature::with('user')
-                ->whereHas('user', fn ($q) => $this->scopeToTenant($q))
+                ->where(fn ($q) => $q
+                    ->whereHas('user', fn ($u) => $this->scopeToTenant($u))
+                    ->orWhereDoesntHave('user')) // orphaned rows (driver deleted) stay visible + deletable
                 ->orderBy('created_at', 'desc')
                 ->get();
         } else {
@@ -42,8 +44,11 @@ class SignatureController extends Controller
             ]),
         ]);
     }
-    public function create(){    
-        
+    public function create(){
+        if (!\Auth::user()->can('manage driver')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
         $users = User::where('id', parentId())->orderBy('created_at', 'desc')->get();
         
 
@@ -138,8 +143,9 @@ class SignatureController extends Controller
 
     public function destroy(Signature $signature){
         if (\Auth::user()->can('delete driver')) {
-            if (!$signature->user || !$this->belongsToTenant($signature->user)) {
-                return redirect()->route('signature.index')->with('error', __('Permission Denied.'));
+            $signerExists = User::whereKey($signature->user_id)->exists();
+            if ($signerExists && !$this->scopeToTenant(User::whereKey($signature->user_id))->exists()) {
+                return redirect()->back()->with('error', __('Permission Denied.'));
             }
             
             \Log::info('Signature Path: ' . $signature->signature_path);
@@ -161,20 +167,23 @@ class SignatureController extends Controller
     /**
      * Signatures have no parent_id; the tenant is the signature's user —
      * the owner (id == parentId()) or a user whose parent_id is the owner.
+     * The super admin is unscoped (owners hang off the SA, drivers off owners,
+     * so a parent_id scope would hide every driver from the SA). A user with
+     * no resolvable tenant (parent_id 0 on a non-owner row) matches nothing.
      * Works on both Eloquent and query builders (whereHas / Rule::exists).
      */
     private function scopeToTenant($query)
     {
-        $parentId = parentId();
+        if (\Auth::user()->type === 'super admin') {
+            return $query;
+        }
+
+        $parentId = (int) parentId();
+        if ($parentId <= 0) {
+            return $query->whereRaw('0 = 1');
+        }
 
         return $query->where(fn ($q) => $q->where('id', $parentId)->orWhere('parent_id', $parentId));
-    }
-
-    private function belongsToTenant(User $user): bool
-    {
-        $parentId = parentId();
-
-        return $user->id == $parentId || $user->parent_id == $parentId;
     }
 
 }
