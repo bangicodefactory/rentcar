@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Signature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Permission;
@@ -274,10 +275,78 @@ class SignatureControllerTest extends TestCase
 
         $this->actingAs($this->owner)
             ->delete(route('signature.destroy', $foreign))
-            ->assertRedirect(route('signature.index'))
+            ->assertRedirect()
             ->assertSessionHas('error', __('Permission Denied.'));
 
         $this->assertDatabaseHas('signatures', ['id' => $foreign->id]);
+    }
+
+    public function test_super_admin_sees_and_can_delete_every_tenants_signatures(): void
+    {
+        // Owners hang off the super admin (parent_id = SA id) and drivers hang
+        // off owners, so a parent_id scope would hide every driver from the SA.
+        // Pre-scope behaviour was "SA sees all"; keep it.
+        $superAdmin = User::factory()->create(['type' => 'super admin', 'parent_id' => 0]);
+        $superAdmin->givePermissionTo(['manage driver', 'delete driver']);
+        $ownDriver = User::factory()->create(['type' => 'driver', 'parent_id' => $this->owner->id]);
+        $a = Signature::factory()->create(['user_id' => $ownDriver->id]);
+        $b = Signature::factory()->create(['user_id' => $this->otherTenantDriver()->id]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('signature.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->has('signatures', 2));
+
+        $this->actingAs($superAdmin)
+            ->delete(route('signature.destroy', $b))
+            ->assertRedirect(route('signature.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('signatures', ['id' => $b->id]);
+        $this->assertDatabaseHas('signatures', ['id' => $a->id]);
+    }
+
+    public function test_orphaned_signature_is_still_listed_and_deletable(): void
+    {
+        // DriverController@destroy removes the user but not their signatures.
+        // The migration declares ON DELETE CASCADE, but the directonderweg prod
+        // tables are MyISAM, so the FK is silently dropped and orphans are real
+        // there. Those rows used to show with driver '—' and be deletable; the
+        // tenant scope must not strand them. Disable FK checks to model prod.
+        $driver = User::factory()->create(['type' => 'driver', 'parent_id' => $this->owner->id]);
+        $orphan = Signature::factory()->create(['user_id' => $driver->id]);
+        Schema::disableForeignKeyConstraints();
+        $driver->forceDelete();
+        Schema::enableForeignKeyConstraints();
+        $this->assertDatabaseHas('signatures', ['id' => $orphan->id]);
+
+        $this->actingAs($this->owner)
+            ->get(route('signature.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('signatures', 1)
+                ->where('signatures.0.id', $orphan->id)
+                ->where('signatures.0.driver_name', null)
+            );
+
+        $this->actingAs($this->owner)
+            ->delete(route('signature.destroy', $orphan))
+            ->assertRedirect(route('signature.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('signatures', ['id' => $orphan->id]);
+    }
+
+    public function test_create_denied_without_manage_driver(): void
+    {
+        // store is gated on 'manage driver'; the pad page must be gated the
+        // same way so a user is refused before drawing, not after.
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($noPerms)
+            ->get(route('signature.create'))
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
     }
 
     public function test_store_denied_without_manage_driver(): void
