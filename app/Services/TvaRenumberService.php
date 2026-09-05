@@ -10,13 +10,15 @@ class TvaRenumberService
 {
     /**
      * Build a read-only preview of the renumbering operation for a given
-     * year (based on facture_date). No data is mutated.
+     * year (based on facture_date), optionally limited to one tenant
+     * (null = every tenant, super-admin use). No data is mutated.
      *
      * @return array{year:int,count:int,records:array<int,array{id:int,old_number:?string,new_number:string,date:?string}>}
      */
-    public function preview(int $year): array
+    public function preview(int $year, ?int $parentId = null): array
     {
         $rows = Tva::withoutTrashed()
+            ->when($parentId !== null, fn ($q) => $q->where('parent_id', $parentId))
             ->forYear($year)
             ->orderBy('facture_date', 'asc')
             ->orderBy('id', 'asc')
@@ -48,10 +50,11 @@ class TvaRenumberService
      *
      * @return array{year:int,updated:int,records:array<int,array{id:int,old_number:?string,new_number:string,date:?string}>}
      */
-    public function renumber(int $year): array
+    public function renumber(int $year, ?int $parentId = null): array
     {
-        return DB::transaction(function () use ($year) {
+        return DB::transaction(function () use ($year, $parentId) {
             $rows = Tva::withoutTrashed()
+                ->when($parentId !== null, fn ($q) => $q->where('parent_id', $parentId))
                 ->forYear($year)
                 ->orderBy('facture_date', 'asc')
                 ->orderBy('id', 'asc')
