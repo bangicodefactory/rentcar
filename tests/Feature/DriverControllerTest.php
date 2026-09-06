@@ -355,6 +355,149 @@ class DriverControllerTest extends TestCase
         $this->assertDatabaseHas('users', ['name' => 'Licensed Driver', 'type' => 'driver']);
     }
 
+    // ── tenant scope + type guard ─────────────────────────────────────────────
+    // show/edit/update/destroy resolved the user with a bare User::find($id):
+    // any authenticated user could read any driver's file, and update/destroy
+    // wrote to / deleted any users row before any check. All four now resolve
+    // through one helper: same tenant, type = 'driver', super admin exempt.
+
+    private function foreignDriver(): User
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $driver = User::factory()->driver()->create(['name' => 'Foreign Driver', 'parent_id' => $otherOwner->id]);
+        Driver::create(['driver_id' => $driver->id, 'user_id' => $driver->id, 'gender' => 'Male', 'parent_id' => $otherOwner->id]);
+
+        return $driver;
+    }
+
+    public function test_show_denied_for_other_tenants_driver(): void
+    {
+        $foreign = $this->foreignDriver();
+
+        $this->actingAs($this->owner)
+            ->get(route('driver.show', $foreign->id))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+    }
+
+    public function test_edit_denied_for_other_tenants_driver(): void
+    {
+        $foreign = $this->foreignDriver();
+
+        $this->actingAs($this->owner)
+            ->get(route('driver.edit', $foreign->id))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+    }
+
+    public function test_update_does_not_write_to_other_tenants_driver(): void
+    {
+        $foreign = $this->foreignDriver();
+
+        $this->actingAs($this->owner)
+            ->put(route('driver.update', $foreign->id), [
+                'first_name' => 'Hijacked',
+                'last_name'  => 'Name',
+                'email'      => 'hijacked@example.com',
+            ])
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('users', ['id' => $foreign->id, 'name' => 'Foreign Driver', 'email' => $foreign->email]);
+    }
+
+    public function test_destroy_does_not_delete_other_tenants_driver(): void
+    {
+        $foreign = $this->foreignDriver();
+
+        $this->actingAs($this->owner)
+            ->delete(route('driver.destroy', $foreign->id))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('users', ['id' => $foreign->id]);
+        $this->assertDatabaseHas('drivers', ['user_id' => $foreign->id]);
+    }
+
+    public function test_destroy_refuses_same_tenant_non_driver_user(): void
+    {
+        // Without a type constraint, destroy was "delete any user by id":
+        // an employee, or the owner's own account.
+        $employee = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->delete(route('driver.destroy', $employee->id))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('users', ['id' => $employee->id]);
+
+        $this->actingAs($this->owner)
+            ->delete(route('driver.destroy', $this->owner->id))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('users', ['id' => $this->owner->id]);
+    }
+
+    public function test_update_refuses_same_tenant_non_driver_user(): void
+    {
+        $employee = User::factory()->create(['name' => 'Staff Member', 'type' => 'employee', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->put(route('driver.update', $employee->id), [
+                'first_name' => 'Renamed',
+                'last_name'  => 'Staff',
+                'email'      => $employee->email,
+            ])
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->assertDatabaseHas('users', ['id' => $employee->id, 'name' => 'Staff Member']);
+    }
+
+    public function test_show_and_edit_denied_without_permission(): void
+    {
+        // show/edit had no can() at all: a driver-type login could read every
+        // driver's file. show follows index (manage driver), edit follows update
+        // (edit driver).
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($noPerms)
+            ->get(route('driver.show', $driverUser->id))
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $this->actingAs($noPerms)
+            ->get(route('driver.edit', $driverUser->id))
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+    }
+
+    public function test_super_admin_can_show_any_tenants_driver(): void
+    {
+        // parentId() returns the SA's own id, which is never a driver's
+        // parent_id, so a plain parent_id scope would lock the SA out.
+        $superAdmin = User::factory()->create(['type' => 'super admin', 'parent_id' => 0]);
+        $superAdmin->givePermissionTo(['manage driver', 'edit driver', 'delete driver']);
+        $foreign = $this->foreignDriver();
+
+        $this->actingAs($superAdmin)
+            ->get(route('driver.show', $foreign->id))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Driver/Show'));
+    }
+
+    public function test_show_unknown_id_redirects_instead_of_crashing(): void
+    {
+        $this->actingAs($this->owner)
+            ->get(route('driver.show', 999999))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('error', __('Permission Denied.'));
+    }
+
     // ── DriverController::update — permission denied ──────────────────────────
 
     public function test_update_denied_without_edit_driver(): void
