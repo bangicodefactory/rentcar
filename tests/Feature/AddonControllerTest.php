@@ -272,6 +272,24 @@ class AddonControllerTest extends TestCase
             ->assertOk();
     }
 
+    // ── unresolvable place ids ────────────────────────────────────────────────
+
+    public function test_rate_calculation_rejects_unknown_place_id(): void
+    {
+        $this->actingAs($this->owner)
+            ->getJson(route('addon.rate.calculation', ['pickup_place' => 999999]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pickup_place']);
+    }
+
+    public function test_reduction_rate_calculation_rejects_unknown_place_id(): void
+    {
+        $this->actingAs($this->owner)
+            ->getJson(route('addon.rate.reduction', ['drop_off_place' => 999999]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['drop_off_place']);
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private function validPayload(array $overrides = []): array

@@ -373,6 +373,21 @@ class VehicleControllerTest extends TestCase
             ->assertOk();
     }
 
+    public function test_vehicle_rate_calculation_rejects_unknown_place_id(): void
+    {
+        $vehicle = Vehicle::factory()->create(['parent_id' => $this->owner->id, 'daily_rate' => 80]);
+
+        $this->actingAs($this->owner)
+            ->getJson(route('vehicle.rate.calculation', [
+                'vahicle_id'      => $vehicle->id,
+                'start_date_time' => now()->addDay()->format('Y/m/d') . ' 09:00',
+                'end_date_time'   => now()->addDays(4)->format('Y/m/d') . ' 09:00',
+                'pickup_place'    => 999999,
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pickup_place']);
+    }
+
     public function test_vehicle_rate_calculation_with_daychange_returns_json(): void
     {
         $vehicle = Vehicle::factory()->create(['parent_id' => $this->owner->id, 'daily_rate' => 80]);
