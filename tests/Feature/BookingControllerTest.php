@@ -1166,6 +1166,97 @@ class BookingControllerTest extends TestCase
         $this->assertSoftDeleted('tvas', ['id' => $tva->id]);
     }
 
+    // ── paymentDestroy / paymentCreate — tenant + ordering ────────────────────
+    // paymentDestroy found the payment by id alone, soft-deleted its factures
+    // and deleted it, and only THEN loaded the booking (unscoped, unguarded).
+    // paymentCreate had no permission check and no tenant scope.
+
+    private function foreignBookingWithPayment(): array
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $booking = Booking::factory()->create(['parent_id' => $otherOwner->id, 'amount' => 300, 'payment_status' => 'partiellement_paye']);
+        $payment = BookingPayment::factory()->create(['booking_id' => $booking->id, 'amount' => 100, 'parent_id' => $otherOwner->id]);
+        $tva = Tva::factory()->create(['booking_id' => $booking->id, 'idpaiment' => $payment->id, 'parent_id' => $otherOwner->id]);
+
+        return [$booking, $payment, $tva];
+    }
+
+    public function test_payment_destroy_refuses_other_tenants_booking(): void
+    {
+        [$booking, $payment, $tva] = $this->foreignBookingWithPayment();
+
+        $this->actingAs($this->owner)
+            ->delete(route('booking.payment.destroy', [$booking->id, $payment->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('booking_payments', ['id' => $payment->id]);
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'payment_status' => 'partiellement_paye']);
+    }
+
+    public function test_payment_destroy_refuses_payment_that_belongs_to_another_booking(): void
+    {
+        // Own booking in the URL, foreign payment id: the payment must be
+        // constrained to the booking, not found by id alone.
+        [, $payment, $tva] = $this->foreignBookingWithPayment();
+        $own = $this->makeBooking();
+
+        $this->actingAs($this->owner)
+            ->delete(route('booking.payment.destroy', [$own->id, $payment->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('booking_payments', ['id' => $payment->id]);
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'deleted_at' => null]);
+    }
+
+    public function test_payment_destroy_with_unknown_booking_deletes_nothing(): void
+    {
+        // Previously: payment + factures deleted, then a null-deref 500 on the
+        // missing booking, leaving the delete committed.
+        $booking = $this->makeBooking(['amount' => 300]);
+        $payment = BookingPayment::factory()->create(['booking_id' => $booking->id, 'amount' => 100, 'parent_id' => $this->owner->id]);
+        $tva = Tva::factory()->create(['booking_id' => $booking->id, 'idpaiment' => $payment->id, 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->delete(route('booking.payment.destroy', [999999, $payment->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('booking_payments', ['id' => $payment->id]);
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'deleted_at' => null]);
+    }
+
+    public function test_payment_create_denied_without_create_booking_payment(): void
+    {
+        $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $booking = $this->makeBooking();
+
+        $this->actingAs($noPerms)
+            ->get(route('booking.payment.create', $booking->id))
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+    }
+
+    public function test_payment_create_refuses_other_tenants_booking(): void
+    {
+        [$booking] = $this->foreignBookingWithPayment();
+
+        $this->actingAs($this->owner)
+            ->get(route('booking.payment.create', $booking->id))
+            ->assertNotFound();
+    }
+
+    public function test_payment_create_renders_for_own_booking(): void
+    {
+        $booking = $this->makeBooking(['amount' => 300]);
+
+        $this->actingAs($this->owner)
+            ->get(route('booking.payment.create', $booking->id))
+            ->assertOk();
+    }
+
     // ── BookingController::planning (BAN-238) ────────────────────────────────
 
     public function test_planning_returns_200_with_booking_and_vehicle_data(): void
