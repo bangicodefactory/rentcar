@@ -290,6 +290,26 @@ class AddonControllerTest extends TestCase
             ->assertJsonValidationErrors(['drop_off_place']);
     }
 
+    public function test_rate_calculation_accepts_zero_place_id(): void
+    {
+        $this->actingAs($this->owner)
+            ->getJson(route('addon.rate.calculation', [
+                'pickup_place'   => 0,
+                'drop_off_place' => 0,
+            ]))
+            ->assertOk();
+    }
+
+    public function test_reduction_rate_calculation_accepts_zero_place_id(): void
+    {
+        $this->actingAs($this->owner)
+            ->getJson(route('addon.rate.reduction', [
+                'pickup_place'   => 0,
+                'drop_off_place' => 0,
+            ]))
+            ->assertOk();
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private function validPayload(array $overrides = []): array
