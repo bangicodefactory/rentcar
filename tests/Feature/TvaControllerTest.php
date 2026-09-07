@@ -463,6 +463,116 @@ class TvaControllerTest extends TestCase
         $this->assertSame(0, Tva::where('booking_id', $theirBooking->id)->count());
     }
 
+    // ── pickup / return location line ────────────────────────
+    // The invoice PDF renders one line built from this row's own columns, so a
+    // location charge folded into the total had nowhere to appear. invoiceLines()
+    // splits it out while keeping the document footing to montant_ttc.
+
+    public function test_invoice_lines_returns_a_single_line_when_no_place_is_charged(): void
+    {
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'        => $this->owner->id,
+            'designation'      => 'RENAULT CLIO V-69742/A/44',
+            'quantity'         => 5,
+            'montant_ttc'      => 2750.00,
+            'place_amount_ttc' => null,
+        ]);
+
+        $lines = $tva->invoiceLines();
+
+        $this->assertCount(1, $lines);
+        $this->assertSame('RENAULT CLIO V-69742/A/44', $lines[0]->description);
+        $this->assertSame(2750.00, round($lines[0]->total_ttc, 2));
+    }
+
+    public function test_invoice_lines_splits_the_place_charge_onto_its_own_line(): void
+    {
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'        => $this->owner->id,
+            'designation'      => 'RENAULT CLIO V-69742/A/44',
+            'quantity'         => 5,
+            'montant_ttc'      => 2750.00,
+            'place_label'      => 'Prise en charge / restitution : LOCAL',
+            'place_amount_ttc' => 500.00,
+        ]);
+
+        $lines = $tva->invoiceLines();
+
+        $this->assertCount(2, $lines);
+        $this->assertSame(2250.00, round($lines[0]->total_ttc, 2));
+        $this->assertSame('Prise en charge / restitution : LOCAL', $lines[1]->description);
+        $this->assertSame(500.00, round($lines[1]->total_ttc, 2));
+
+        // The document must still foot to the invoice total.
+        $this->assertSame(
+            round((float) $tva->montant_ttc, 2),
+            round(array_sum(array_map(fn ($l) => $l->total_ttc, $lines)), 2)
+        );
+    }
+
+    public function test_invoice_lines_falls_back_to_a_generic_label(): void
+    {
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'        => $this->owner->id,
+            'montant_ttc'      => 1000.00,
+            'place_label'      => null,
+            'place_amount_ttc' => 250.00,
+        ]);
+
+        $lines = $tva->invoiceLines();
+
+        $this->assertCount(2, $lines);
+        $this->assertSame('Prise en charge / restitution', $lines[1]->description);
+    }
+
+    public function test_update_persists_the_place_charge(): void
+    {
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'   => $this->owner->id,
+            'montant_ttc' => 2750.00,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->put(route('tva.update', $tva), [
+                'facture_date'     => '2026-08-04',
+                'montant_ttc'      => 2750.00,
+                'unit_price_ht'    => 375.00,
+                'tva'              => 458.33,
+                'facture_number'   => (string) $tva->facture_number,
+                'place_label'      => 'Prise en charge / restitution : LOCAL',
+                'place_amount_ttc' => 500.00,
+            ])
+            ->assertRedirect(route('tva.index'));
+
+        $tva->refresh();
+        $this->assertSame(500.00, round((float) $tva->place_amount_ttc, 2));
+        $this->assertSame('Prise en charge / restitution : LOCAL', $tva->place_label);
+    }
+
+    public function test_update_rejects_a_place_charge_above_the_invoice_total(): void
+    {
+        // Otherwise the rental line goes negative and the invoice stops footing.
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'        => $this->owner->id,
+            'montant_ttc'      => 1000.00,
+            'place_amount_ttc' => null,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->put(route('tva.update', $tva), [
+                'facture_date'     => '2026-08-04',
+                'montant_ttc'      => 1000.00,
+                'unit_price_ht'    => 100.00,
+                'tva'              => 166.67,
+                'facture_number'   => (string) $tva->facture_number,
+                'place_amount_ttc' => 1500.00,
+            ])
+            ->assertSessionHasErrors('place_amount_ttc');
+
+        $tva->refresh();
+        $this->assertNull($tva->place_amount_ttc);
+    }
+
     // ── TvaController::report ─────────────────────────────────────────────────
 
     public function test_report_returns_200_for_authorized_user(): void
