@@ -1326,5 +1326,6 @@
     "Stopped at row :max — split the file and import the rest separately.": "توقف عند السطر :max — قسّم الملف واستورد الباقي على حدة.",
     "The rentals have changed since this was matched — re-run the match.": "تغيّرت عمليات الكراء منذ هذه المطابقة — أعد تشغيل المطابقة.",
     "Pickup / Return Location": "مكان الاستلام / الإرجاع",
-    "Location Charge TTC": "رسوم المكان شاملة الضريبة"
+    "Location Charge TTC": "رسوم المكان شاملة الضريبة",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "يُضاف إلى مبلغ الكراء. اخفض سعر الوحدة ليبقى الإجمالي مطابقًا للدفع."
 }

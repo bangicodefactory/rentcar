@@ -279,6 +279,8 @@ class TvaController extends Controller
                 'total_ht'      => $tva->total_ht,
                 'tva'           => $tva->tva,
                 'montant_ttc'   => $tva->montant_ttc,
+                'place_label'      => $tva->place_label,
+                'place_amount_ttc' => $tva->place_amount_ttc,
             ],
         ]);
     }
@@ -341,6 +343,8 @@ class TvaController extends Controller
                 'montant_ttc'    => $tva->montant_ttc,
                 'designation'    => $tva->designation,
                 'payment_method' => $tva->payment_method,
+                'place_label'      => $tva->place_label,
+                'place_amount_ttc' => $tva->place_amount_ttc,
             ],
         ]);
     }

@@ -620,5 +620,6 @@
   "Country": "Страна",
   "System": "Система",
     "Pickup / Return Location": "Место получения / возврата",
-    "Location Charge TTC": "Сбор за место с НДС"
+    "Location Charge TTC": "Сбор за место с НДС",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Добавляется к аренде. Снизьте цену за единицу, чтобы итог совпадал с платежом."
 }

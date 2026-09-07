@@ -620,5 +620,6 @@
   "Country": "国",
   "System": "システム",
     "Pickup / Return Location": "受取 / 返却場所",
-    "Location Charge TTC": "場所料金（税込）"
+    "Location Charge TTC": "場所料金（税込）",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "レンタル料金に加算されます。合計が支払額と一致するよう単価を下げてください。"
 }

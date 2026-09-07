@@ -620,5 +620,6 @@
   "Country": "País",
   "System": "Sistema",
     "Pickup / Return Location": "Miejsce odbioru / zwrotu",
-    "Location Charge TTC": "Opłata za miejsce z VAT"
+    "Location Charge TTC": "Opłata za miejsce z VAT",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Doliczane do wynajmu. Obniż cenę jednostkową, aby suma nadal zgadzała się z płatnością."
 }

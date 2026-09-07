@@ -160,6 +160,9 @@ function TvaEdit({ tva }) {
                                 step="0.01"
                                 {...register('place_amount_ttc')}
                             />
+                            <p className="text-xs text-muted-foreground">
+                                {t('Added on top of the rental. Lower the unit price so the total still matches the payment.')}
+                            </p>
                             {errors.place_amount_ttc && (
                                 <p className="text-sm text-destructive">{errors.place_amount_ttc.message}</p>
                             )}

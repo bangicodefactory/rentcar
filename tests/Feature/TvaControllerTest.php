@@ -549,6 +549,45 @@ class TvaControllerTest extends TestCase
         $this->assertSame('Prise en charge / restitution : LOCAL', $tva->place_label);
     }
 
+    public function test_edit_exposes_the_place_charge_so_a_save_cannot_wipe_it(): void
+    {
+        // The edit page builds its props explicitly. When it omitted these two,
+        // the form defaulted them to blank and 0, so saving the page for any
+        // unrelated reason silently dropped the location line from the PDF.
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'        => $this->owner->id,
+            'montant_ttc'      => 2750.00,
+            'place_label'      => 'Prise en charge / restitution : LOCAL',
+            'place_amount_ttc' => 500.00,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->get(route('tva.edit', $tva))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Tva/Edit')
+                ->where('tva.place_label', 'Prise en charge / restitution : LOCAL')
+                ->where('tva.place_amount_ttc', 500)
+            );
+    }
+
+    public function test_show_exposes_the_place_charge(): void
+    {
+        $tva = Tva::factory()->withInvoice()->create([
+            'parent_id'        => $this->owner->id,
+            'place_label'      => 'Prise en charge / restitution : LOCAL',
+            'place_amount_ttc' => 500.00,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->get(route('tva.show', $tva))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Tva/Show')
+                ->where('tva.place_amount_ttc', 500)
+            );
+    }
+
     public function test_update_rejects_a_place_charge_above_the_invoice_total(): void
     {
         // Otherwise the rental line goes negative and the invoice stops footing.

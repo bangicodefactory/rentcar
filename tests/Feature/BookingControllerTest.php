@@ -1441,8 +1441,15 @@ class BookingControllerTest extends TestCase
 
     // ── pickup / return location on the invoice ──────────────────
 
-    public function test_live_facture_records_the_bookings_place_charge(): void
+    public function test_a_new_facture_never_infers_a_place_charge_from_the_booking(): void
     {
+        // Deriving it here was wrong three ways: createFactureForPayment runs
+        // once per payment, so a split or partial payment stamped the whole
+        // charge on every receipt (and a payment smaller than the charge drove
+        // the rental line negative); the monthly rebuild does not derive it, so
+        // the two creation paths disagreed; and RentalAgreement / booking
+        // request totals never included a place price to carve out. The charge
+        // is set on the invoice explicitly instead.
         $place = Place::factory()->create([
             'parent_id' => $this->owner->id, 'name' => 'Aeroport Tanger', 'price' => 250,
         ]);
@@ -1455,37 +1462,7 @@ class BookingControllerTest extends TestCase
 
         $this->actingAs($this->owner)
             ->post(route('booking.payment.store', $booking->id), [
-                'amount'         => 1000,
-                'date'           => '2026-08-04',
-                'payment_method' => 'Virement bancaire',
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
-
-        $tva = Tva::where('booking_id', $booking->id)->orderByDesc('id')->first();
-
-        // Pickup and return are both charged, mirroring the rate calculator.
-        $this->assertSame(500.00, round((float) $tva->place_amount_ttc, 2));
-        $this->assertStringContainsString('Aeroport Tanger', (string) $tva->place_label);
-    }
-
-    public function test_live_facture_leaves_the_place_charge_null_when_none_applies(): void
-    {
-        // pickup_address defaults to 0 ("not chosen") and free places cost 0;
-        // neither may put an empty location line on the invoice.
-        $free = Place::factory()->create([
-            'parent_id' => $this->owner->id, 'name' => 'LOCAL', 'price' => 0,
-        ]);
-        $booking = $this->makeBooking([
-            'amount'           => 800,
-            'payment_status'   => 'impaye',
-            'pickup_address'   => $free->id,
-            'drop_off_address' => 0,
-        ]);
-
-        $this->actingAs($this->owner)
-            ->post(route('booking.payment.store', $booking->id), [
-                'amount'         => 800,
+                'amount'         => 400,
                 'date'           => '2026-08-04',
                 'payment_method' => 'Virement bancaire',
             ])
@@ -1495,7 +1472,10 @@ class BookingControllerTest extends TestCase
         $tva = Tva::where('booking_id', $booking->id)->orderByDesc('id')->first();
 
         $this->assertNull($tva->place_amount_ttc);
+        $this->assertNull($tva->place_label);
         $this->assertCount(1, $tva->invoiceLines());
+        // The single line still carries the whole payment.
+        $this->assertSame(400.00, round($tva->invoiceLines()[0]->total_ttc, 2));
     }
 
     // ── BookingController::planning (BAN-238) ────────────────────────────────
