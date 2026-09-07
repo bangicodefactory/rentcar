@@ -129,16 +129,7 @@ class TvaController extends Controller
 
         if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
             foreach ($invoices as $invoice) {
-                $items = [
-                    (object) [
-                        'description' => $invoice->designation,
-                        'quantity' => $invoice->quantity,
-                        'unit_price' => $invoice->unit_price_ht,
-                        'total_ttc' => $invoice->montant_ttc,
-
-                    ]
-                ];
-                $invoice->items = $items;
+                $invoice->items = $invoice->invoiceLines();
 
                 // Fetch client ICE from related booking/driver
                 $clientIce = null;
@@ -288,6 +279,8 @@ class TvaController extends Controller
                 'total_ht'      => $tva->total_ht,
                 'tva'           => $tva->tva,
                 'montant_ttc'   => $tva->montant_ttc,
+                'place_label'      => $tva->place_label,
+                'place_amount_ttc' => $tva->place_amount_ttc,
             ],
         ]);
     }
@@ -305,6 +298,10 @@ class TvaController extends Controller
             'unit_price_ht' => 'required|numeric',
             'tva' => 'required|numeric',
             'facture_number' => 'required|string|max:255',
+            'place_label' => 'nullable|string|max:191',
+            // Above the invoice total the rental line would go negative and
+            // the document would stop footing.
+            'place_amount_ttc' => 'nullable|numeric|min:0|lte:montant_ttc',
         ]);
 
         $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
@@ -314,6 +311,8 @@ class TvaController extends Controller
         $tva->unit_price_ht = $validated['unit_price_ht'];
         $tva->tva = $validated['tva'];
         $tva->facture_number = $validated['facture_number'];
+        $tva->place_label = $validated['place_label'] ?? null;
+        $tva->place_amount_ttc = $validated['place_amount_ttc'] ?? null;
         $tva->total_ht = $request->total_ht;
 
 
@@ -344,6 +343,8 @@ class TvaController extends Controller
                 'montant_ttc'    => $tva->montant_ttc,
                 'designation'    => $tva->designation,
                 'payment_method' => $tva->payment_method,
+                'place_label'      => $tva->place_label,
+                'place_amount_ttc' => $tva->place_amount_ttc,
             ],
         ]);
     }

@@ -618,5 +618,8 @@
   "System IP": "System-IP",
   "State": "Zustand",
   "Country": "Land",
-  "System": "System"
+  "System": "System",
+    "Pickup / Return Location": "Abhol- / Rückgabeort",
+    "Location Charge TTC": "Ortsgebühr inkl. MwSt.",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Wird zur Miete addiert. Senken Sie den Einzelpreis, damit die Summe weiterhin zur Zahlung passt."
 }

@@ -618,5 +618,8 @@
   "System IP": "IP del sistema",
   "State": "Stato",
   "Country": "Paese",
-  "System": "Sistema"
+  "System": "Sistema",
+    "Pickup / Return Location": "Luogo di ritiro / riconsegna",
+    "Location Charge TTC": "Supplemento luogo IVA incl.",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Si aggiunge al noleggio. Abbassare il prezzo unitario affinché il totale corrisponda ancora al pagamento."
 }

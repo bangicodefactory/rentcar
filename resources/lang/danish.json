@@ -618,5 +618,8 @@
   "System IP": "System IP",
   "State": "Tilstand",
   "Country": "Land",
-  "System": "System"
+  "System": "System",
+    "Pickup / Return Location": "Afhentnings- / afleveringssted",
+    "Location Charge TTC": "Stedgebyr inkl. moms",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Lægges oven i lejen. Sænk enhedsprisen, så totalen stadig svarer til betalingen."
 }

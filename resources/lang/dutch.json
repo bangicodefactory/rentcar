@@ -703,5 +703,8 @@
   "Line :line: reference :reference already imported.": "Regel :line: referentie :reference is al geïmporteerd.",
   "Line :line: unreadable amount.": "Regel :line: onleesbaar bedrag.",
   "Stopped at row :max — split the file and import the rest separately.": "Gestopt bij regel :max — splits het bestand en importeer de rest apart.",
-  "The rentals have changed since this was matched — re-run the match.": "De verhuringen zijn sinds deze koppeling gewijzigd — voer de koppeling opnieuw uit."
+  "The rentals have changed since this was matched — re-run the match.": "De verhuringen zijn sinds deze koppeling gewijzigd — voer de koppeling opnieuw uit.",
+    "Pickup / Return Location": "Ophaal- / retourlocatie",
+    "Location Charge TTC": "Locatiekosten incl. btw",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Wordt bij de huur opgeteld. Verlaag de eenheidsprijs zodat het totaal blijft overeenkomen met de betaling."
 }

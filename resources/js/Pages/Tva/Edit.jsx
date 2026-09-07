@@ -18,6 +18,8 @@ const schema = z.object({
     total_ht:       z.coerce.number().min(0),
     tva:            z.coerce.number().min(0),
     montant_ttc:    z.coerce.number().min(0),
+    place_label:      z.string().max(191).optional().or(z.literal('')),
+    place_amount_ttc: z.coerce.number().min(0),
 });
 
 const TVA_RATE = 0.2;
@@ -42,6 +44,8 @@ function TvaEdit({ tva }) {
             total_ht:       tva.total_ht       ?? 0,
             tva:            tva.tva            ?? 0,
             montant_ttc:    tva.montant_ttc    ?? 0,
+            place_label:      tva.place_label      ?? '',
+            place_amount_ttc: tva.place_amount_ttc ?? 0,
         },
     });
 
@@ -53,18 +57,23 @@ function TvaEdit({ tva }) {
         });
     }, [serverErrors]);
 
-    // Auto-calculate HT / TVA / TTC from unit_price_ht × quantity
+    // Auto-calculate HT / TVA / TTC from (unit_price_ht x quantity) plus the
+    // pickup / return charge, which is entered TTC because that is what the
+    // invoice line prints. With no charge this is the original calculation.
     const unitPriceHt = watch('unit_price_ht');
+    const placeAmount = watch('place_amount_ttc');
     useEffect(() => {
-        const puht = parseFloat(unitPriceHt) || 0;
-        const qty  = parseFloat(tva.quantity) || 0;
-        const ht   = parseFloat((puht * qty).toFixed(2));
-        const tvaAmt = parseFloat((ht * TVA_RATE).toFixed(2));
-        const ttc  = parseFloat((ht + tvaAmt).toFixed(2));
+        const puht  = parseFloat(unitPriceHt) || 0;
+        const qty   = parseFloat(tva.quantity) || 0;
+        const place = parseFloat(placeAmount) || 0;
+        const rentalTtc = puht * qty * (1 + TVA_RATE);
+        const ttc = parseFloat((rentalTtc + place).toFixed(2));
+        const ht  = parseFloat((ttc / (1 + TVA_RATE)).toFixed(2));
+        const tvaAmt = parseFloat((ttc - ht).toFixed(2));
         setValue('total_ht',    ht,      { shouldValidate: false });
         setValue('tva',         tvaAmt,  { shouldValidate: false });
         setValue('montant_ttc', ttc,     { shouldValidate: false });
-    }, [unitPriceHt, tva.quantity]);
+    }, [unitPriceHt, placeAmount, tva.quantity]);
 
     function onSubmit(data) {
         router.put(route('tva.update', tva.id), data);
@@ -130,6 +139,32 @@ function TvaEdit({ tva }) {
                             />
                             {errors.unit_price_ht && (
                                 <p className="text-sm text-destructive">{errors.unit_price_ht.message}</p>
+                            )}
+                        </div>
+
+                        {/* Pickup / return location — printed as its own invoice line */}
+                        <div className="space-y-1">
+                            <Label htmlFor="place_label">{t('Pickup / Return Location')}</Label>
+                            <Input id="place_label" {...register('place_label')} />
+                            {errors.place_label && (
+                                <p className="text-sm text-destructive">{errors.place_label.message}</p>
+                            )}
+                        </div>
+
+                        {/* Location charge (TTC) — triggers auto-calc */}
+                        <div className="space-y-1">
+                            <Label htmlFor="place_amount_ttc">{t('Location Charge TTC')}</Label>
+                            <Input
+                                id="place_amount_ttc"
+                                type="number"
+                                step="0.01"
+                                {...register('place_amount_ttc')}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                {t('Added on top of the rental. Lower the unit price so the total still matches the payment.')}
+                            </p>
+                            {errors.place_amount_ttc && (
+                                <p className="text-sm text-destructive">{errors.place_amount_ttc.message}</p>
                             )}
                         </div>
 

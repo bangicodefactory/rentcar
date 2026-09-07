@@ -1335,5 +1335,8 @@
     "Line :line: reference :reference already imported.": "Ligne :line : la référence :reference a déjà été importée.",
     "Line :line: unreadable amount.": "Ligne :line : montant illisible.",
     "Stopped at row :max — split the file and import the rest separately.": "Arrêté à la ligne :max — divisez le fichier et importez le reste séparément.",
-    "The rentals have changed since this was matched — re-run the match.": "Les locations ont changé depuis cette correspondance — relancez la recherche."
+    "The rentals have changed since this was matched — re-run the match.": "Les locations ont changé depuis cette correspondance — relancez la recherche.",
+    "Pickup / Return Location": "Lieu de prise en charge / restitution",
+    "Location Charge TTC": "Frais de lieu TTC",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Ajouté au montant de la location. Baissez le prix unitaire pour que le total corresponde toujours au paiement."
 }

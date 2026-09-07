@@ -618,5 +618,8 @@
   "System IP": "IP systemu",
   "State": "Państwo",
   "Country": "Kraj",
-  "System": "System"
+  "System": "System",
+    "Pickup / Return Location": "Local de levantamento / devolução",
+    "Location Charge TTC": "Taxa de local c/ IVA",
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Somado ao aluguer. Baixe o preço unitário para que o total continue a corresponder ao pagamento."
 }
