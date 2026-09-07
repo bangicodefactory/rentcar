@@ -23,7 +23,7 @@ class DriverControllerTest extends TestCase
         parent::setUp();
         $this->asClient('directonderweg');
 
-        $perms = ['manage driver', 'create driver', 'edit driver', 'delete driver'];
+        $perms = ['manage driver', 'create driver', 'edit driver', 'delete driver', 'show driver'];
         foreach ($perms as $p) {
             Permission::firstOrCreate(['name' => $p, 'guard_name' => 'web']);
         }
@@ -459,8 +459,8 @@ class DriverControllerTest extends TestCase
     public function test_show_and_edit_denied_without_permission(): void
     {
         // show/edit had no can() at all: a driver-type login could read every
-        // driver's file. show follows index (manage driver), edit follows update
-        // (edit driver).
+        // driver's file. show follows the sidebar's own gate (show driver),
+        // edit follows update (edit driver).
         $noPerms = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
         $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
         Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
@@ -481,7 +481,7 @@ class DriverControllerTest extends TestCase
         // parentId() returns the SA's own id, which is never a driver's
         // parent_id, so a plain parent_id scope would lock the SA out.
         $superAdmin = User::factory()->create(['type' => 'super admin', 'parent_id' => 0]);
-        $superAdmin->givePermissionTo(['manage driver', 'edit driver', 'delete driver']);
+        $superAdmin->givePermissionTo(['show driver', 'edit driver', 'delete driver']);
         $foreign = $this->foreignDriver();
 
         $this->actingAs($superAdmin)
@@ -554,6 +554,66 @@ class DriverControllerTest extends TestCase
             ]))
             ->assertRedirect()
             ->assertSessionHas('error');
+    }
+
+    // ── permission + tenant scope for non-owners ──────────────
+
+    public function test_show_is_gated_on_show_driver_not_manage_driver(): void
+    {
+        // Driver/Index.jsx renders the Details link behind can('show driver'),
+        // and BookingController@show uses the matching 'show booking'. Gating
+        // this endpoint on 'manage driver' instead would show a role the link
+        // and then refuse the page.
+        $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+
+        $manageOnly = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $manageOnly->givePermissionTo('manage driver');
+
+        $this->actingAs($manageOnly)
+            ->get(route('driver.show', $driverUser->id))
+            ->assertRedirect()
+            ->assertSessionHas('error', __('Permission Denied.'));
+
+        $showOnly = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $showOnly->givePermissionTo('show driver');
+
+        $this->actingAs($showOnly)
+            ->get(route('driver.show', $driverUser->id))
+            ->assertOk();
+    }
+
+    public function test_same_tenant_employee_with_permissions_can_use_all_four(): void
+    {
+        // Every other passing case acts as the owner or the super admin, for
+        // whom parentId() is the caller's own id. Only a non-owner proves the
+        // resolver scopes by parentId() rather than by the caller's id.
+        $employee = User::factory()->create(['type' => 'employee', 'parent_id' => $this->owner->id]);
+        $employee->givePermissionTo(['show driver', 'edit driver', 'delete driver']);
+
+        $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($employee)->get(route('driver.show', $driverUser->id))->assertOk();
+        $this->actingAs($employee)->get(route('driver.edit', $driverUser->id))->assertOk();
+
+        $this->actingAs($employee)
+            ->put(route('driver.update', $driverUser->id), [
+                'first_name' => 'Scoped',
+                'last_name'  => 'Byparent',
+                'email'      => 'scoped.byparent@example.com',
+            ])
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', ['id' => $driverUser->id, 'name' => 'Scoped Byparent']);
+
+        $this->actingAs($employee)
+            ->delete(route('driver.destroy', $driverUser->id))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('users', ['id' => $driverUser->id]);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
