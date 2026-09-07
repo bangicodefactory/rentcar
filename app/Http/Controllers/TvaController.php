@@ -564,7 +564,7 @@ class TvaController extends Controller
             $bookingParentId = $booking->parent_id ?? null;
             $counterKey = $bookingParentId ?? '__null__';
             if (!array_key_exists($counterKey, $factureCounters)) {
-                $factureCounters[$counterKey] = $this->lastFactureNumberForYear($monthStart->year, $bookingParentId);
+                $factureCounters[$counterKey] = Tva::lastFactureNumberForYear($monthStart->year, $bookingParentId);
             }
 
             // Driver / client
@@ -660,26 +660,6 @@ class TvaController extends Controller
      * numbers like "FACT-12" still participate; the max is computed in PHP
      * because the column is a string and won't sort numerically in SQL.
      */
-    private function lastFactureNumberForYear(int $year, $parentId): int
-    {
-        $numbers = Tva::query()
-            ->where(fn ($q) => $parentId === null
-                ? $q->whereNull('parent_id')
-                : $q->where('parent_id', $parentId))
-            ->whereYear('facture_date', $year)
-            ->lockForUpdate()
-            ->pluck('facture_number');
-
-        $max = 0;
-        foreach ($numbers as $number) {
-            if (preg_match('/\d+$/', (string) $number, $matches)) {
-                $max = max($max, (int) $matches[0]);
-            }
-        }
-
-        return $max;
-    }
-
     public function report(Request $request)
     {
         if (!\Auth::user()->can('manage tva report')) {

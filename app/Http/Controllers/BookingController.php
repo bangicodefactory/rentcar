@@ -869,11 +869,16 @@ class BookingController extends Controller
         $totalHT   = round($amount / 1.2, 2);
         $tvaAmount = round($amount - $totalHT, 2);
 
-        // Global last facture number (matches paymentStore; per-year unification
-        // is tracked in IST-230).
-        $lastFacture = Tva::orderByDesc('id')->first();
-        $lastNumber = ($lastFacture && preg_match('/\d+$/', (string) $lastFacture->facture_number, $matches)) ? (int) $matches[0] : 0;
-        $factureNumber = $lastNumber + 1;
+        // Continue this year's own sequence for this tenant, the same rule the
+        // monthly rebuild and the Renumber tool use (IST-230). Numbering from
+        // the newest ROW id instead diverges from facture_date order the moment
+        // a payment is back-dated or a month is renumbered, and then re-issues
+        // numbers that already exist. Both callers run inside a transaction,
+        // so the lock this takes is effective.
+        $factureNumber = Tva::lastFactureNumberForYear(
+            (int) date('Y', strtotime((string) $date)),
+            parentId()
+        ) + 1;
 
         $tva = new Tva();
         $tva->facture_number = $factureNumber;
