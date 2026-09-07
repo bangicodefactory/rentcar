@@ -119,10 +119,7 @@ class PlaceController extends Controller
 
     public function getPlaceRateCalculation(Request $request)
     {
-        $request->validate([
-            'pickup_place'   => ['nullable', tenantPlaceRule()],
-            'drop_off_place' => ['nullable', tenantPlaceRule()],
-        ]);
+        validateTenantPlaces($request);
 
         $addonAmount=0;
         $totalRate=0;

@@ -112,10 +112,7 @@ class AddonController extends Controller
 
     public function getAddonRateCalculation(Request $request)
     {
-        $request->validate([
-            'pickup_place'   => ['nullable', tenantPlaceRule()],
-            'drop_off_place' => ['nullable', tenantPlaceRule()],
-        ]);
+        validateTenantPlaces($request);
 
         $addonAmount=0;
         $totalRate=0;
@@ -181,10 +178,7 @@ class AddonController extends Controller
     }
     public function getReductionRateCalculation(Request $request)
     {
-        $request->validate([
-            'pickup_place'   => ['nullable', tenantPlaceRule()],
-            'drop_off_place' => ['nullable', tenantPlaceRule()],
-        ]);
+        validateTenantPlaces($request);
 
         $addonAmount=0;
         $totalRate=0;

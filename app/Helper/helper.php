@@ -404,21 +404,56 @@ if (!function_exists('userLoggedHistory')) {
             return $placeData;
         }
     }
+}
 
-    if (!function_exists('tenantPlaceRule')) {
-        /**
-         * Validation rule for a pickup / drop-off place id: must exist and
-         * belong to the caller's tenant (super admin unscoped). Rejecting at
-         * the boundary (422) beats pricing an unknown or foreign place at 0.
-         */
-        function tenantPlaceRule(): \Illuminate\Validation\Rules\Exists
-        {
-            $rule = \Illuminate\Validation\Rule::exists('places', 'id');
-            if (\Auth::check() && \Auth::user()->type !== 'super admin') {
-                $rule->where('parent_id', parentId());
-            }
+if (!function_exists('tenantPlaceRule')) {
+    /**
+     * Validation rule for a pickup / drop-off place id: the place must exist
+     * and belong to the caller's tenant (super admin unscoped).
+     *
+     * Fails CLOSED. A guest, or a non-owner with no resolvable tenant, matches
+     * nothing rather than every parent_id-0 place - the same guard shape
+     * TvaController, SignatureController and DriverController apply.
+     */
+    function tenantPlaceRule(): \Illuminate\Validation\Rules\Exists
+    {
+        $rule = \Illuminate\Validation\Rule::exists('places', 'id');
+
+        if (\Auth::check() && \Auth::user()->type === 'super admin') {
             return $rule;
         }
+
+        $parentId = \Auth::check() ? (int) parentId() : 0;
+        if ($parentId <= 0) {
+            return $rule->where(fn ($query) => $query->whereRaw('0 = 1'));
+        }
+
+        return $rule->where('parent_id', $parentId);
+    }
+}
+
+if (!function_exists('validateTenantPlaces')) {
+    /**
+     * Validate the pickup / drop-off place ids carried by the rate endpoints.
+     *
+     * `bookings.pickup_address` is an integer column defaulting to 0, so a
+     * booking with no pickup place posts a literal 0 back here. That means
+     * "not chosen", not a dangling reference: it is normalised to null rather
+     * than rejected, which is what the rate calculators below already assume
+     * (they test the id with empty()). Anything else must resolve to a place
+     * in the caller's tenant or the request is refused with a 422.
+     */
+    function validateTenantPlaces(\Illuminate\Http\Request $request): void
+    {
+        $request->merge([
+            'pickup_place'   => $request->input('pickup_place') ?: null,
+            'drop_off_place' => $request->input('drop_off_place') ?: null,
+        ]);
+
+        $request->validate([
+            'pickup_place'   => ['nullable', tenantPlaceRule()],
+            'drop_off_place' => ['nullable', tenantPlaceRule()],
+        ]);
     }
 }
 

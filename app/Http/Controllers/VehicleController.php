@@ -295,10 +295,7 @@ class VehicleController extends Controller
 
     public function getVehicleRateCalculation(Request $request)
     {
-        $request->validate([
-            'pickup_place'   => ['nullable', tenantPlaceRule()],
-            'drop_off_place' => ['nullable', tenantPlaceRule()],
-        ]);
+        validateTenantPlaces($request);
 
         $vehicle = Vehicle::find($request->vahicle_id);
         $start_date_time = $request->start_date_time;
