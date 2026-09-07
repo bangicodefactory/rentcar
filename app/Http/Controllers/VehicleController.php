@@ -295,6 +295,8 @@ class VehicleController extends Controller
 
     public function getVehicleRateCalculation(Request $request)
     {
+        validateTenantPlaces($request);
+
         $vehicle = Vehicle::find($request->vahicle_id);
         $start_date_time = $request->start_date_time;
         $end_date_time = $request->end_date_time;

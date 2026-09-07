@@ -208,6 +208,84 @@ class PlaceControllerTest extends TestCase
             ->assertOk();
     }
 
+    // ── place ids that cannot be resolved ─────────────────────────────────────
+    // specificPlacesRateCalculation() dereferenced a missing place (500), and
+    // none of the rate endpoints validated pickup/drop-off ids, so a stale or
+    // foreign id either crashed the quote or priced another tenant's place.
+
+    public function test_place_rate_calculation_rejects_unknown_place_id(): void
+    {
+        $this->actingAs($this->owner)
+            ->getJson(route('place.rate.calculation', ['pickup_place' => 999999]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pickup_place']);
+
+        $this->actingAs($this->owner)
+            ->getJson(route('place.rate.calculation', ['drop_off_place' => 999999]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['drop_off_place']);
+    }
+
+    public function test_place_rate_calculation_rejects_other_tenants_place(): void
+    {
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+        $foreign = Place::factory()->create(['parent_id' => $otherOwner->id, 'price' => 999]);
+
+        $this->actingAs($this->owner)
+            ->getJson(route('place.rate.calculation', ['pickup_place' => $foreign->id]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pickup_place']);
+    }
+
+    public function test_place_rate_calculation_prices_own_place(): void
+    {
+        $place = Place::factory()->create(['parent_id' => $this->owner->id, 'price' => 50, 'name' => 'Aeroport']);
+
+        $response = $this->actingAs($this->owner)
+            ->getJson(route('place.rate.calculation', ['pickup_place' => $place->id]))
+            ->assertOk();
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertSame('50', (string) $data['placeAmount']);
+        $this->assertStringContainsString('Aeroport', $data['pickup_place']);
+    }
+
+    public function test_specific_places_rate_helper_survives_missing_place(): void
+    {
+        $this->assertSame(['place' => '', 'final_price' => 0], specificPlacesRateCalculation(999999));
+    }
+
+    // ── "no place chosen" is 0, not null ────────────────────
+    // bookings.pickup_address is an integer defaulting to 0, so a booking with
+    // no pickup place posts a literal 0 back to the rate endpoints. That is
+    // "not chosen", not a bad reference, and must still price at 0.
+
+    public function test_place_rate_calculation_accepts_zero_place_id(): void
+    {
+        $response = $this->actingAs($this->owner)
+            ->getJson(route('place.rate.calculation', [
+                'pickup_place'   => 0,
+                'drop_off_place' => 0,
+            ]))
+            ->assertOk();
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertSame(0, (int) $data['placeAmount']);
+    }
+
+    public function test_place_rate_calculation_fails_closed_when_tenant_unresolvable(): void
+    {
+        // A non-owner whose parent_id is 0 has no resolvable tenant. The rule
+        // must match nothing rather than every parent_id-0 place.
+        $orphanPlace = Place::factory()->create(['parent_id' => 0, 'price' => 500]);
+        $noTenant = User::factory()->create(['type' => 'employee', 'parent_id' => 0]);
+
+        $this->actingAs($noTenant)
+            ->getJson(route('place.rate.calculation', ['pickup_place' => $orphanPlace->id]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pickup_place']);
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private function validPayload(array $overrides = []): array

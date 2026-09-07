@@ -112,6 +112,8 @@ class AddonController extends Controller
 
     public function getAddonRateCalculation(Request $request)
     {
+        validateTenantPlaces($request);
+
         $addonAmount=0;
         $totalRate=0;
         $considerDays=1;
@@ -176,6 +178,8 @@ class AddonController extends Controller
     }
     public function getReductionRateCalculation(Request $request)
     {
+        validateTenantPlaces($request);
+
         $addonAmount=0;
         $totalRate=0;
         $considerDays=1;

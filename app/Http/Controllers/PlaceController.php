@@ -119,6 +119,8 @@ class PlaceController extends Controller
 
     public function getPlaceRateCalculation(Request $request)
     {
+        validateTenantPlaces($request);
+
         $addonAmount=0;
         $totalRate=0;
         $considerDays=1;
