@@ -43,6 +43,8 @@ class Tva extends Model
         'nif_number',
     'booking_id',
     'idpaiment',
+        'place_label',
+        'place_amount_ttc',
     ];
 
     protected $casts = [
@@ -55,6 +57,7 @@ class Tva extends Model
     'montant_ttc' => 'float',
     'total_amount' => 'float',
     'tva_amount' => 'float',
+        'place_amount_ttc' => 'float',
     ];
 
     // Accessor for formatted facture date
