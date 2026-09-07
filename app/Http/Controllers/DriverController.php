@@ -296,7 +296,9 @@ class DriverController extends Controller
 
     public function show($id)
     {
-        if (!\Auth::user()->can('manage driver')) {
+        // 'show driver' is the permission Driver/Index.jsx gates the Details
+        // link on, and the one BookingController@show's 'show booking' mirrors.
+        if (!\Auth::user()->can('show driver')) {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
 

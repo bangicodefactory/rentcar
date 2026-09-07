@@ -223,8 +223,8 @@
 | ✗ | GET | `/driver/new/create` | `driver.new.create` | `DriverController@newCreate` | — | — | — |
 | ✗ | GET | `/driver/create` | `driver.create` | `DriverController@create` | — | — | — |
 | ✗ | POST | `/driver` | `driver.store` | `DriverController@store` | `create driver` | name, email, phone_number, address, license_number, license_expiry_date, document_file | creates User + Driver; stores document file; assigns role; sends mail |
-| ✗ | GET | `/driver/{driver}` | `driver.show` | `DriverController@show` | — | — | — |
-| ✗ | GET | `/driver/{driver}/edit` | `driver.edit` | `DriverController@edit` | — | — | — |
+| ✗ | GET | `/driver/{driver}` | `driver.show` | `DriverController@show` | `show driver` | — | tenant + type=driver scoped |
+| ✗ | GET | `/driver/{driver}/edit` | `driver.edit` | `DriverController@edit` | `edit driver` | — | tenant + type=driver scoped |
 | ✗ | PUT/PATCH | `/driver/{driver}` | `driver.update` | `DriverController@update` | `edit driver` | name, email, phone_number, address, license_number, license_expiry_date, document_file | stores document file, updates Driver |
 | ✗ | DELETE | `/driver/{driver}` | `driver.destroy` | `DriverController@destroy` | `delete driver` | — | deletes Driver + User |
 
