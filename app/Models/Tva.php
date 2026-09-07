@@ -130,6 +130,37 @@ class Tva extends Model
         }
         return $this->total_ht ?? 0;
     }
+    /**
+     * Highest invoice number already issued for a year within one tenant.
+     *
+     * Scoped by year because the sequence restarts every January, and by
+     * tenant because each business numbers its own invoices. Soft-deleted
+     * rows are excluded, so this agrees with the monthly rebuild and the
+     * Renumber tool on what "the last number" means.
+     *
+     * Call it inside a transaction: the rows are locked for update so two
+     * concurrent payments cannot claim the same number.
+     */
+    public static function lastFactureNumberForYear(int $year, $parentId): int
+    {
+        $numbers = static::query()
+            ->where(fn ($q) => $parentId === null
+                ? $q->whereNull('parent_id')
+                : $q->where('parent_id', $parentId))
+            ->whereYear('facture_date', $year)
+            ->lockForUpdate()
+            ->pluck('facture_number');
+
+        $max = 0;
+        foreach ($numbers as $number) {
+            if (preg_match('/\d+$/', (string) $number, $matches)) {
+                $max = max($max, (int) $matches[0]);
+            }
+        }
+
+        return $max;
+    }
+
     // Relations
     public function booking()
     {

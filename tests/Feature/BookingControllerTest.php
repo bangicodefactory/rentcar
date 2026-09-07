@@ -751,8 +751,14 @@ class BookingControllerTest extends TestCase
     public function test_split_generates_successive_facture_numbers(): void
     {
         config(['client.features.cash_split' => true]);
-        // Establish the current global invoice-number high-water mark.
-        Tva::factory()->create(['facture_number' => 500, 'parent_id' => $this->owner->id]);
+        // Establish the high-water mark for this tenant's 2026 sequence. The
+        // date matters: numbering restarts each year, so an invoice carries a
+        // number only within the year its facture_date falls in.
+        Tva::factory()->create([
+            'facture_number' => 500,
+            'facture_date'   => '2026-06-30',
+            'parent_id'      => $this->owner->id,
+        ]);
 
         $booking = $this->makeBooking([
             'amount' => 13000, 'start_date' => '2026-07-01', 'end_date' => '2026-07-11',
@@ -1333,6 +1339,104 @@ class BookingControllerTest extends TestCase
         $this->actingAs($this->owner)
             ->get(route('booking.payment.create', $booking->id))
             ->assertOk();
+    }
+
+    // ── live facture numbering (IST-230) ────────────────────
+    // The live path numbered a new invoice from the newest ROW id + 1, while
+    // the monthly rebuild and the Renumber tool number per year in
+    // facture_date order. Once a renumber runs, the newest row no longer
+    // carries the highest number, and the live path starts re-issuing numbers
+    // that already exist. On directonderweg that put August and September 2026
+    // inside July's range and left 21 duplicated numbers.
+
+    public function test_live_facture_number_continues_the_years_sequence(): void
+    {
+        $booking = $this->makeBooking(['amount' => 600, 'payment_status' => 'impaye']);
+
+        $highestNumber = Tva::factory()->create([
+            'parent_id'      => $this->owner->id,
+            'facture_date'   => '2026-07-31',
+            'facture_number' => '779',
+        ]);
+        // Created last, so it is the newest row, but a renumber gave it a low
+        // number because its date is early in the month.
+        $newestRow = Tva::factory()->create([
+            'parent_id'      => $this->owner->id,
+            'facture_date'   => '2026-07-10',
+            'facture_number' => '681',
+        ]);
+        $this->assertGreaterThan($highestNumber->id, $newestRow->id);
+
+        $this->actingAs($this->owner)
+            ->post(route('booking.payment.store', $booking->id), [
+                'amount'         => 200,
+                'date'           => '2026-08-01',
+                'payment_method' => 'Virement bancaire',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $issued = Tva::where('booking_id', $booking->id)->orderByDesc('id')->first();
+        $this->assertSame('780', (string) $issued->facture_number);
+    }
+
+    public function test_live_facture_number_restarts_each_year(): void
+    {
+        $booking = $this->makeBooking(['amount' => 600, 'payment_status' => 'impaye']);
+
+        Tva::factory()->create([
+            'parent_id'      => $this->owner->id,
+            'facture_date'   => '2025-12-31',
+            'facture_number' => '90',
+        ]);
+        // Newest row, but it belongs to another year's sequence.
+        Tva::factory()->create([
+            'parent_id'      => $this->owner->id,
+            'facture_date'   => '2026-05-01',
+            'facture_number' => '500',
+        ]);
+
+        $this->actingAs($this->owner)
+            ->post(route('booking.payment.store', $booking->id), [
+                'amount'         => 100,
+                'date'           => '2025-12-31',
+                'payment_method' => 'Virement bancaire',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $issued = Tva::where('booking_id', $booking->id)->orderByDesc('id')->first();
+        $this->assertSame('91', (string) $issued->facture_number);
+    }
+
+    public function test_live_facture_number_ignores_another_tenants_invoices(): void
+    {
+        $booking = $this->makeBooking(['amount' => 600, 'payment_status' => 'impaye']);
+        $otherOwner = User::factory()->create(['type' => 'owner', 'parent_id' => 0]);
+
+        Tva::factory()->create([
+            'parent_id'      => $this->owner->id,
+            'facture_date'   => '2026-06-02',
+            'facture_number' => '12',
+        ]);
+        // Newest row, but it is another business's sequence entirely.
+        Tva::factory()->create([
+            'parent_id'      => $otherOwner->id,
+            'facture_date'   => '2026-06-01',
+            'facture_number' => '9000',
+        ]);
+
+        $this->actingAs($this->owner)
+            ->post(route('booking.payment.store', $booking->id), [
+                'amount'         => 150,
+                'date'           => '2026-06-03',
+                'payment_method' => 'Virement bancaire',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $issued = Tva::where('booking_id', $booking->id)->orderByDesc('id')->first();
+        $this->assertSame('13', (string) $issued->facture_number);
     }
 
     // ── BookingController::planning (BAN-238) ────────────────────────────────
