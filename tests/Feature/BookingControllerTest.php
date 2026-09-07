@@ -1257,6 +1257,84 @@ class BookingControllerTest extends TestCase
             ->assertOk();
     }
 
+    public function test_payment_store_refuses_other_tenants_booking(): void
+    {
+        // paymentCreate (the form) is scoped, but the POST that actually
+        // writes a receipt, a facture and the booking's payment_status was
+        // still resolving the booking with an unscoped find().
+        [$booking] = $this->foreignBookingWithPayment();
+
+        $this->actingAs($this->owner)
+            ->post(route('booking.payment.store', $booking->id), [
+                'amount'         => 300,
+                'date'           => now()->format('Y-m-d'),
+                'payment_method' => 'Virement bancaire',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame(1, BookingPayment::where('booking_id', $booking->id)->count());
+        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'payment_status' => 'partiellement_paye']);
+    }
+
+    public function test_payment_store_with_unknown_booking_is_refused(): void
+    {
+        $this->actingAs($this->owner)
+            ->post(route('booking.payment.store', 999999), [
+                'amount'         => 100,
+                'date'           => now()->format('Y-m-d'),
+                'payment_method' => 'Virement bancaire',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame(0, BookingPayment::count());
+    }
+
+    public function test_payment_destroy_of_an_already_deleted_payment_is_idempotent(): void
+    {
+        // The booking is the caller's own and the receipt is simply gone
+        // (double click, stale page). That is a no-op, not "Permission Denied".
+        $booking = $this->makeBooking(['amount' => 300, 'payment_status' => 'impaye']);
+
+        $this->actingAs($this->owner)
+            ->delete(route('booking.payment.destroy', [$booking->id, 999999]))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'payment_status' => 'impaye']);
+    }
+
+    public function test_super_admin_cannot_reach_other_tenants_payment_endpoints(): void
+    {
+        // show() and paymentSplitPreview() scope on parentId() with no super
+        // admin exemption, so the SA cannot open the booking. It must not be
+        // able to price or delete its receipts either.
+        $superAdmin = User::factory()->create(['type' => 'super admin', 'parent_id' => 0]);
+        $superAdmin->givePermissionTo(['create booking payment', 'delete booking payment']);
+        [$booking, $payment, $tva] = $this->foreignBookingWithPayment();
+
+        $this->actingAs($superAdmin)
+            ->get(route('booking.payment.create', $booking->id))
+            ->assertNotFound();
+
+        $this->actingAs($superAdmin)
+            ->delete(route('booking.payment.destroy', [$booking->id, $payment->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('booking_payments', ['id' => $payment->id]);
+        $this->assertDatabaseHas('tvas', ['id' => $tva->id, 'deleted_at' => null]);
+    }
+
+    public function test_payment_create_handles_a_zero_amount_booking(): void
+    {
+        // The default quantity divides by the booking amount.
+        $booking = $this->makeBooking(['amount' => 0]);
+
+        $this->actingAs($this->owner)
+            ->get(route('booking.payment.create', $booking->id))
+            ->assertOk();
+    }
+
     // ── BookingController::planning (BAN-238) ────────────────────────────────
 
     public function test_planning_returns_200_with_booking_and_vehicle_data(): void
