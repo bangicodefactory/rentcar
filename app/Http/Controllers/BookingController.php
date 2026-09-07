@@ -1426,6 +1426,14 @@ class BookingController extends Controller
     public function paymentStore(Request $request, $id)
     {
         if (\Auth::user()->can('create booking payment')) {
+            // Authorise the booking BEFORE validating or writing: this method
+            // inserts a receipt, issues a facture and flips payment_status, so
+            // an unscoped lookup let one tenant write into another's booking.
+            $booking = $this->tenantBooking($id);
+            if (!$booking) {
+                abort(404);
+            }
+
             $validator = \Validator::make(
                 $request->all(),
                 [
@@ -1462,7 +1470,6 @@ class BookingController extends Controller
             $cashMax = (float) config('client.cash_payment_max', 5000);
             $paymentMethodNormalized = strtolower($request->payment_method);
             $isCash = $paymentMethodNormalized === 'espece';
-            $booking = Booking::find($id);
 
             if ($isCash && $numericAmount > $cashMax) {
                 if (!feature('cash_split')) {
@@ -1569,24 +1576,31 @@ class BookingController extends Controller
             }
             $payment = BookingPayment::where('booking_id', $bookinmg->id)->find($id);
             if (!$payment) {
-                return redirect()->back()->with('error', __('Permission Denied.'));
+                // A receipt that exists but hangs off a different booking is a
+                // real authorisation miss and is refused.
+                if (BookingPayment::whereKey($id)->exists()) {
+                    return redirect()->back()->with('error', __('Permission Denied.'));
+                }
+
+                // Otherwise the caller's own receipt is simply already gone
+                // (double click, stale page). Deleting it again is a no-op,
+                // not an authorisation failure, and the status is still
+                // resynced exactly as it was before this branch existed.
+                $this->syncPaymentStatus($bookinmg);
+                return redirect()->back()->with('success', __('Booking payment successfully deleted.'));
             }
 
-            \DB::transaction(function () use ($payment) {
+            // The status recompute is part of the same unit of work: committing
+            // the deletes and then failing here would leave the booking marked
+            // paid with its receipts gone.
+            \DB::transaction(function () use ($payment, $bookinmg) {
                 // Delete linked TVA records created for this payment via idpaiment
                 Tva::where('idpaiment', $payment->id)->delete();
                 $payment->delete();
-            });
-            $bookinmg->unsetRelation('payments');
 
-            if ($bookinmg->getTotalDueAmount() <= 0) {
-                $status = 'paye';
-            } elseif ($bookinmg->getTotalDueAmount() == $bookinmg->getTotalAmount()) {
-                $status = 'impaye';
-            } else {
-                $status = 'partiellement_paye';
-            }
-            Booking::statusChange($bookinmg->id, $status);
+                $this->syncPaymentStatus($bookinmg);
+            });
+
             return redirect()->back()->with('success', __('Booking payment successfully deleted.'));
         } else {
             return redirect()->back()->with('error', __('Permission Denied!'));
@@ -1675,17 +1689,46 @@ class BookingController extends Controller
         ]);
     }
     /**
-     * A booking the current user may act on: same tenant as parentId(),
-     * super admin exempt (parentId() returns the SA's own id, never a
-     * booking's parent_id). Mirrors paymentSplitPreview / show.
+     * A booking the current user may act on: same tenant as parentId().
+     *
+     * The super admin is deliberately NOT exempt, so this really does mirror
+     * show() and paymentSplitPreview(): parentId() returns the SA's own id,
+     * which is never a booking's parent_id, and an SA that cannot open a
+     * booking must not be able to price or delete its receipts either. A
+     * caller with no resolvable tenant matches nothing rather than every
+     * parent_id-0 booking.
      */
     private function tenantBooking($id): ?Booking
     {
-        $query = Booking::query();
-        if (\Auth::user()->type !== 'super admin') {
-            $query->where('parent_id', parentId());
+        $parentId = (int) parentId();
+        if ($parentId <= 0) {
+            return null;
         }
 
-        return $query->find($id);
+        return Booking::where('parent_id', $parentId)->find($id);
+    }
+
+    /**
+     * Recompute and persist a booking's payment_status from its payments.
+     *
+     * Rounded to cents before comparing, matching recordBookingPayment() and
+     * bulkMarkPaid(): an unrounded float sum leaves a residual that can read
+     * as "still owing" on a fully paid booking.
+     */
+    private function syncPaymentStatus(Booking $booking): void
+    {
+        $booking->load('payments');
+
+        $due = round((float) $booking->getTotalDueAmount(), 2);
+        if ($due <= 0) {
+            $status = 'paye';
+        } elseif ($due == round((float) $booking->getTotalAmount(), 2)) {
+            $status = 'impaye';
+        } else {
+            $status = 'partiellement_paye';
+        }
+
+        $booking->payment_status = $status;
+        $booking->save();
     }
 }
