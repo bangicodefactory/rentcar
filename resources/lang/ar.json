@@ -1324,5 +1324,7 @@
     "Line :line: reference :reference already imported.": "السطر :line: المرجع :reference مستورد من قبل.",
     "Line :line: unreadable amount.": "السطر :line: مبلغ غير مقروء.",
     "Stopped at row :max — split the file and import the rest separately.": "توقف عند السطر :max — قسّم الملف واستورد الباقي على حدة.",
-    "The rentals have changed since this was matched — re-run the match.": "تغيّرت عمليات الكراء منذ هذه المطابقة — أعد تشغيل المطابقة."
+    "The rentals have changed since this was matched — re-run the match.": "تغيّرت عمليات الكراء منذ هذه المطابقة — أعد تشغيل المطابقة.",
+    "Pickup / Return Location": "مكان الاستلام / الإرجاع",
+    "Location Charge TTC": "رسوم المكان شاملة الضريبة"
 }

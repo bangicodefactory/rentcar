@@ -618,5 +618,7 @@
   "System IP": "Системный IP",
   "State": "Состояние",
   "Country": "Страна",
-  "System": "Система"
+  "System": "Система",
+    "Pickup / Return Location": "Место получения / возврата",
+    "Location Charge TTC": "Сбор за место с НДС"
 }

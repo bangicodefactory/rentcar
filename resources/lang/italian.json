@@ -618,5 +618,7 @@
   "System IP": "IP del sistema",
   "State": "Stato",
   "Country": "Paese",
-  "System": "Sistema"
+  "System": "Sistema",
+    "Pickup / Return Location": "Luogo di ritiro / riconsegna",
+    "Location Charge TTC": "Supplemento luogo IVA incl."
 }

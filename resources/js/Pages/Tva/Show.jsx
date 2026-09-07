@@ -46,6 +46,8 @@ function TvaShow({ tva }) {
                         <DetailRow label={t('TVA (Tax)')}      value={fmt(tva.tva)} />
                         <DetailRow label={t('Montant TTC')}    value={fmt(tva.montant_ttc)} />
                         <DetailRow label={t('Vehicle')}        value={tva.designation} />
+                        <DetailRow label={t('Pickup / Return Location')} value={tva.place_label || '-'} />
+                        <DetailRow label={t('Location Charge TTC')}      value={fmt(tva.place_amount_ttc ?? 0)} />
                         <DetailRow label={t('ICE')}            value={tva.payment_method} />
                     </div>
                 </CardContent>

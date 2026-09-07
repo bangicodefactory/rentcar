@@ -618,5 +618,7 @@
   "System IP": "System IP",
   "State": "Tilstand",
   "Country": "Land",
-  "System": "System"
+  "System": "System",
+    "Pickup / Return Location": "Afhentnings- / afleveringssted",
+    "Location Charge TTC": "Stedgebyr inkl. moms"
 }

@@ -133,6 +133,45 @@ class Tva extends Model
         }
         return $this->total_ht ?? 0;
     }
+    /** Shown when a location is charged but was never labelled. */
+    public const PLACE_LINE_FALLBACK = 'Prise en charge / restitution';
+
+    /**
+     * The invoice's printable lines.
+     *
+     * The document is a single-line one by default. When a pickup / return
+     * charge was recorded, it is split onto its own line and the rental line
+     * carries the remainder, so the two still foot to montant_ttc. An invoice
+     * with no charge returns exactly the one line it always did.
+     *
+     * Amounts are TTC because that is what the invoice's TOTAL column prints.
+     */
+    public function invoiceLines(): array
+    {
+        $place = round((float) ($this->place_amount_ttc ?? 0), 2);
+        $total = round((float) $this->montant_ttc, 2);
+
+        $lines = [
+            (object) [
+                'description' => $this->designation,
+                'quantity'    => $this->quantity,
+                'unit_price'  => $this->unit_price_ht,
+                'total_ttc'   => round($total - $place, 2),
+            ],
+        ];
+
+        if ($place > 0) {
+            $lines[] = (object) [
+                'description' => $this->place_label ?: self::PLACE_LINE_FALLBACK,
+                'quantity'    => 1,
+                'unit_price'  => $place,
+                'total_ttc'   => $place,
+            ];
+        }
+
+        return $lines;
+    }
+
     /**
      * Highest invoice number already issued for a year within one tenant.
      *

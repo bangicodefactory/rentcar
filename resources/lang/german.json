@@ -618,5 +618,7 @@
   "System IP": "System-IP",
   "State": "Zustand",
   "Country": "Land",
-  "System": "System"
+  "System": "System",
+    "Pickup / Return Location": "Abhol- / Rückgabeort",
+    "Location Charge TTC": "Ortsgebühr inkl. MwSt."
 }

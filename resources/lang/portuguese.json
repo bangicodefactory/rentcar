@@ -618,5 +618,7 @@
   "System IP": "IP systemu",
   "State": "Państwo",
   "Country": "Kraj",
-  "System": "System"
+  "System": "System",
+    "Pickup / Return Location": "Local de levantamento / devolução",
+    "Location Charge TTC": "Taxa de local c/ IVA"
 }

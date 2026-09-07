@@ -880,8 +880,12 @@ class BookingController extends Controller
             parentId()
         ) + 1;
 
+        [$placeLabel, $placeAmount] = $this->bookingPlaceCharge($booking);
+
         $tva = new Tva();
         $tva->facture_number = $factureNumber;
+        $tva->place_label = $placeLabel;
+        $tva->place_amount_ttc = $placeAmount;
         $tva->facture_date = $date;
         $tva->idpaiment = $payment->id;
         $tva->client_name = optional($user)->name ?? '';
@@ -908,6 +912,39 @@ class BookingController extends Controller
         $tva->save();
 
         return $tva;
+    }
+
+    /**
+     * The booking's pickup / return charge, as [label, amountTtc].
+     *
+     * Pickup and return are priced separately and summed, mirroring the rate
+     * calculator the booking total was built from. Returns [null, null] when
+     * no place is set or every place is free, so the invoice keeps its single
+     * line. The amount is snapshotted onto the invoice: re-pricing a place
+     * later must not rewrite an invoice already issued.
+     */
+    private function bookingPlaceCharge(Booking $booking): array
+    {
+        $pickupId = (int) $booking->pickup_address;
+        $dropId   = (int) $booking->drop_off_address;
+
+        $places = Place::whereIn('id', array_filter([$pickupId, $dropId]))->get()->keyBy('id');
+
+        $amount = round(
+            (float) ($places[$pickupId]->price ?? 0) + (float) ($places[$dropId]->price ?? 0),
+            2
+        );
+
+        if ($amount <= 0) {
+            return [null, null];
+        }
+
+        $names = array_values(array_unique(array_filter([
+            $places[$pickupId]->name ?? null,
+            $places[$dropId]->name ?? null,
+        ])));
+
+        return [Tva::PLACE_LINE_FALLBACK . ' : ' . implode(' / ', $names), $amount];
     }
 
     /**

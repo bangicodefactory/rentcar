@@ -618,5 +618,7 @@
   "System IP": "システムIP",
   "State": "州",
   "Country": "国",
-  "System": "システム"
+  "System": "システム",
+    "Pickup / Return Location": "受取 / 返却場所",
+    "Location Charge TTC": "場所料金（税込）"
 }
