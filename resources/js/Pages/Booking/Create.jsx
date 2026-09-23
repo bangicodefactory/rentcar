@@ -103,7 +103,8 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
 
             setPriceBreakdown({ ...res, finalTotal, discountAmount: disc });
         }).catch(() => {
-            if (seq === rateRequestSeq.current) vehicleRatePending.current = false;
+            // Leave a failed car-switch lookup pending: the field still holds the
+            // previous car's price, so the next change re-fetches the stock rate.
         });
     }
 
@@ -121,11 +122,14 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
 
     // Typing a price is an explicit choice: it wins over a car switch's
     // in-flight stock-rate lookup, whose reply is dropped (the blur that follows
-    // re-prices with the typed value).
+    // re-prices with the typed value). Any other in-flight recalculation (e.g. a
+    // date change) is left to land, since Enter can submit without a blur.
     const dailyPriceField = register('daily_price');
     function onDailyPriceTyped(e) {
-        ++rateRequestSeq.current;
-        vehicleRatePending.current = false;
+        if (vehicleRatePending.current) {
+            ++rateRequestSeq.current;
+            vehicleRatePending.current = false;
+        }
         return dailyPriceField.onChange(e);
     }
 
