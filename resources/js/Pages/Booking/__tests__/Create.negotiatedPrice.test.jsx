@@ -199,3 +199,61 @@ describe('Booking/Create — price field during a car switch', () => {
         expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
     });
 });
+
+// Third review of PR #227. Rate mock where the day count follows the end date
+// (Oct 11 → 10 days, else 7) and `hold(params)` / `fail(params)` pick a request
+// to hold back until release() or to reject.
+function mockRatesBy(stock, { hold = () => false, fail = () => false } = {}) {
+    const held = { release: undefined };
+    axios.get.mockImplementation((url, { params } = {}) => {
+        if (url !== '/vehicle.rate.calculation') {
+            return Promise.resolve({ data: { 1: 'Car A - 1-A-1', 2: 'Car B - 2-B-2' } });
+        }
+        if (fail(params)) return Promise.reject(new Error('network'));
+        const days = String(params.end_date_time).startsWith('2026/10/11') ? 10 : 7;
+        const daily = params.daychange ? Number(params.daily_price) : stock[params.vahicle_id];
+        const data = { considerDays: days, totalRate: String(daily * days), addonAmount: 0, placeAmount: 0, daily_price: stock[params.vahicle_id] };
+        if (!held.release && hold(params)) {
+            return new Promise((resolve) => { held.release = () => resolve({ data }); });
+        }
+        return Promise.resolve({ data });
+    });
+    return held;
+}
+
+describe('Booking/Create — typing a price and failed car lookups', () => {
+    const amountOf = (container) => container.querySelector('input[name="amount"]').value;
+    const price = () => screen.getByLabelText('Price per day');
+
+    it('typing a price does not drop an in-flight date recalculation', async () => {
+        const held = mockRatesBy({ 1: 200 }, { hold: (p) => String(p.end_date_time).startsWith('2026/10/11') });
+        const { container } = render(<BookingCreate vehicles={[]} drivers={[]} statuses={[]} places={[]} addons={[]} />);
+        await pickDatesAndVehicle();
+        await waitFor(() => expect(amountOf(container)).toBe('1400'));
+
+        fireEvent.change(screen.getByLabelText('End Date & Time'), { target: { value: '2026-10-11T09:00' } });
+        await waitFor(() => expect(held.release).toBeDefined());
+
+        // Typed, then submitted with Enter: no blur, so no re-price follows.
+        fireEvent.change(price(), { target: { value: '175' } });
+        held.release();
+
+        // The date reply (10 × 200, sent before typing) still lands.
+        await waitFor(() => expect(amountOf(container)).toBe('2000'));
+    });
+
+    it('a failed car-switch lookup keeps the next date change on the new car rate', async () => {
+        mockRatesBy({ 1: 200, 2: 300 }, { fail: (p) => String(p.vahicle_id) === '2' && !p.daychange && !String(p.end_date_time).startsWith('2026/10/11') });
+        render(<BookingCreate vehicles={[]} drivers={[]} statuses={[]} places={[]} addons={[]} />);
+        await pickDatesAndVehicle();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Vehicle' }));
+        fireEvent.click(screen.getByText('Car B - 2-B-2'));
+        await waitFor(() => expect(String(rateCalls().at(-1)[1].params.vahicle_id)).toBe('2'));
+
+        fireEvent.change(screen.getByLabelText('End Date & Time'), { target: { value: '2026-10-11T09:00' } });
+        await waitFor(() => expect(rateCalls().at(-1)[1].params.end_date_time).toBe('2026/10/11 09:00'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
+        await waitFor(() => expect(price().value).toBe('300'));
+    });
+});
