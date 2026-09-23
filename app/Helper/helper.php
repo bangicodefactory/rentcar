@@ -310,7 +310,14 @@ if (!function_exists('userLoggedHistory')) {
     }
 
     if (!function_exists('vehicleRateCalculation')) {
-        function vehicleRateCalculation($daily_rate, $startDateTime, $endDateTime)
+        /**
+         * Rental days charged: whole days, plus one more when the time past
+         * the last whole day exceeds the client's late-return allowance
+         * (client.late_return_grace_minutes). The default 14 keeps the original
+         * rule: up to 14 min late is free, 15 min or more adds a day. Anything
+         * under a day is charged as 1 day.
+         */
+        function vehicleRateCalculation($daily_rate, $startDateTime, $endDateTime, ?int $graceMinutes = null)
         {
             $startDateTime = new DateTime($startDateTime);
             $endDateTime = new DateTime($endDateTime);
@@ -321,19 +328,15 @@ if (!function_exists('userLoggedHistory')) {
             $hours = $interval->h;
             $minuts = $interval->i;
 
-            if ($days > 0 && $hours > 0) {
-                $considerDays = $days + 1;
-                $totalRate = $considerDays * $daily_rate;
-            } elseif ($days > 0 && $hours == 0 && $minuts >= 15) {
-                $considerDays = $days + 1;
-                $totalRate = $considerDays * $daily_rate;
-            } elseif ($days > 0 && $hours == 0) {
-                $considerDays = $days;
-                $totalRate = $considerDays * $daily_rate;
+            $grace = $graceMinutes ?? (int) config('client.late_return_grace_minutes', 14);
+            $extraMinutes = $hours * 60 + $minuts;
+
+            if ($days > 0) {
+                $considerDays = $extraMinutes > $grace ? $days + 1 : $days;
             } else {
                 $considerDays = 1;
-                $totalRate = $considerDays * $daily_rate;
             }
+            $totalRate = $considerDays * $daily_rate;
 
             $data['considerDays'] = $considerDays;
             $data['totalDays'] = $days;
