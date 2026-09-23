@@ -418,6 +418,46 @@ class VehicleControllerTest extends TestCase
             ->assertOk();
     }
 
+    public function test_vehicle_rate_calculation_with_daychange_prices_every_day_at_the_negotiated_rate(): void
+    {
+        // A 7-day booking negotiated down to 150/day, extended by 3 days: all
+        // 10 days are priced at 150, not the vehicle's 200 set rate.
+        $vehicle = Vehicle::factory()->create(['parent_id' => $this->owner->id, 'daily_rate' => 200]);
+
+        $response = $this->actingAs($this->owner)
+            ->getJson(route('vehicle.rate.calculation', [
+                'vahicle_id'      => $vehicle->id,
+                'start_date_time' => '2026/10/01 09:00',
+                'end_date_time'   => '2026/10/11 09:00',
+                'daychange'       => 1,
+                'daily_price'     => 150,
+            ]))
+            ->assertOk();
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertSame(10, $data['considerDays']);
+        $this->assertEquals(1500, $data['totalRate']);
+    }
+
+    public function test_vehicle_rate_calculation_without_daychange_uses_the_vehicle_rate(): void
+    {
+        $vehicle = Vehicle::factory()->create(['parent_id' => $this->owner->id, 'daily_rate' => 200]);
+
+        $response = $this->actingAs($this->owner)
+            ->getJson(route('vehicle.rate.calculation', [
+                'vahicle_id'      => $vehicle->id,
+                'start_date_time' => '2026/10/01 09:00',
+                'end_date_time'   => '2026/10/11 09:00',
+                'daychange'       => 0,
+                'daily_price'     => 150,
+            ]))
+            ->assertOk();
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertSame(10, $data['considerDays']);
+        $this->assertEquals(2000, $data['totalRate']);
+    }
+
     // ── VehicleController::getAvailableVehicle ────────────────────────────────
 
     public function test_available_vehicle_requires_auth(): void
