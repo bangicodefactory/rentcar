@@ -55,13 +55,21 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
 
     // Ref guard: prevents recalculate from re-firing when it sets daily_price
     const apiWriting = useRef(false);
+    const rateRequestSeq = useRef(0);
+    // True while a stock-rate lookup (car switch) hasn't come back yet.
+    const vehicleRatePending = useRef(false);
 
 
     // dayChange mirrors booking/create.blade.php: false = recompute from the
-    // vehicle's stock rate and auto-fill the per-day price (vehicle/date change);
-    // true = use the manually typed per-day price and keep it (price/addon/place edit).
+    // vehicle's stock rate and auto-fill the per-day price (vehicle change, or
+    // dates with no price yet); true = use the per-day price in the field and
+    // keep it (date/price/addon/place edit).
     function recalculate(dayChange = false) {
         if (!vehicleId || !startDt || !endDt) return;
+        // Only the newest request may write back; a slow earlier reply must not
+        // overwrite it (e.g. a car switch landing after a later date change).
+        const seq = ++rateRequestSeq.current;
+        if (!dayChange) vehicleRatePending.current = true;
         axios.get(route('vehicle.rate.calculation'), {
             params: {
                 vahicle_id: vehicleId,
@@ -74,6 +82,8 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
                 daychange: dayChange ? 1 : 0,
             },
         }).then((r) => {
+            if (seq !== rateRequestSeq.current) return;
+            vehicleRatePending.current = false;
             const res = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
             const total = (parseFloat(res.totalRate) || 0)
                 + (parseFloat(res.addonAmount) || 0)
@@ -86,12 +96,16 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
             setValue('amount', finalTotal);
             // Auto-fill the per-day price from the vehicle's rate only when it's
             // NOT a manual edit, so a typed override is preserved (Blade parity).
-            if (!dayChange && res.daily_price) setValue('daily_price', res.daily_price);
+            // A car with no set rate fills 0, so the previous car's price never lingers.
+            if (!dayChange && res.daily_price != null) setValue('daily_price', res.daily_price);
             setValue('details', JSON.stringify(res));
             apiWriting.current = false;
 
             setPriceBreakdown({ ...res, finalTotal, discountAmount: disc });
-        }).catch(() => {});
+        }).catch(() => {
+            // Leave a failed car-switch lookup pending: the field still holds the
+            // previous car's price, so the next change re-fetches the stock rate.
+        });
     }
 
     // Fetch available vehicles when date range is set
@@ -106,19 +120,46 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
         }).catch(() => {});
     }, [startDt, endDt]);
 
-    // Vehicle/date change → recompute from the vehicle's stock rate and
-    // auto-fill the per-day price (Blade: #vehicle / date handlers, daychange != 1).
+    // Typing a price is an explicit choice: it wins over a car switch's
+    // in-flight stock-rate lookup, whose reply is dropped (the blur that follows
+    // re-prices with the typed value). Any other in-flight recalculation (e.g. a
+    // date change) is left to land, since Enter can submit without a blur.
+    const dailyPriceField = register('daily_price');
+    function onDailyPriceTyped(e) {
+        if (vehicleRatePending.current) {
+            ++rateRequestSeq.current;
+            vehicleRatePending.current = false;
+        }
+        return dailyPriceField.onChange(e);
+    }
+
+    // A per-day price is already in the field (auto-filled or typed/negotiated)
+    // and belongs to the current car. While a car switch's stock-rate lookup is
+    // in flight the field still holds the OLD car's price, so don't reuse it.
+    const hasDailyPrice = () => !vehicleRatePending.current && parseFloat(getValues('daily_price')) > 0;
+
+    // Vehicle change → recompute from the vehicle's stock rate and auto-fill
+    // the per-day price (Blade: #vehicle handler, daychange != 1).
     useEffect(() => {
         if (apiWriting.current) return;
         recalculate(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [vehicleId, startDt, endDt]);
+    }, [vehicleId]);
 
-    // Addons / pickup / drop-off change → recompute but PRESERVE a manually
-    // entered per-day price (Blade: .addon / #pickup,#drop handlers, daychange = 1).
+    // Date change → keep a per-day price already entered (a negotiated rate)
+    // for every day; only auto-fill the stock rate when none is set yet.
     useEffect(() => {
         if (apiWriting.current) return;
-        recalculate(true);
+        recalculate(hasDailyPrice());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startDt, endDt]);
+
+    // Addons / pickup / drop-off change → recompute but PRESERVE a manually
+    // entered per-day price (Blade: .addon / #pickup,#drop handlers, daychange = 1),
+    // unless a car switch's rate is still pending.
+    useEffect(() => {
+        if (apiWriting.current) return;
+        recalculate(!vehicleRatePending.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedAddons, pickupId, dropoffId]);
 
@@ -241,7 +282,7 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
 
                             <div className="space-y-1">
                                 <Label htmlFor="discount">{t('Discount')}</Label>
-                                <Input id="discount" type="number" step="any" min="0" placeholder={t('Enter discount')} {...register('discount')} onBlur={() => recalculate(true)} />
+                                <Input id="discount" type="number" step="any" min="0" placeholder={t('Enter discount')} {...register('discount')} onBlur={() => recalculate(!vehicleRatePending.current)} />
                             </div>
 
                             <div className="space-y-1">
@@ -251,8 +292,9 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
                                     type="number"
                                     step="any"
                                     min="0"
-                                    {...register('daily_price')}
-                                    onBlur={() => recalculate(true)}
+                                    {...dailyPriceField}
+                                    onChange={onDailyPriceTyped}
+                                    onBlur={() => recalculate(!vehicleRatePending.current)}
                                 />
                             </div>
 
