@@ -63,10 +63,11 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
 
     const apiWriting = useRef(false);
     // Unlike create, edit loads a SAVED per-day price/amount. Skip the first
-    // vehicle/date effect so opening a booking doesn't overwrite that saved
-    // price with the vehicle's stock rate — only recompute on a real change.
+    // run of every re-pricing effect (vehicle, dates, addons/places) so opening
+    // a booking never overwrites them — only recompute on a real change.
     const isFirstVehicleEffect = useRef(true);
     const isFirstDatesEffect = useRef(true);
+    const isFirstExtrasEffect = useRef(true);
     const rateRequestSeq = useRef(0);
     // True while a stock-rate lookup (car switch) hasn't come back yet.
     const vehicleRatePending = useRef(false);
@@ -154,11 +155,15 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [startDt, endDt]);
 
-    // Addons / pickup / drop-off change → recompute but PRESERVE a manually
-    // entered per-day price (unless a car switch's rate is still pending).
+    // Addons / pickup / drop-off change → recompute but PRESERVE the per-day
+    // price in the field. Skipped on load like the effects above: imported
+    // bookings store a 0 price next to their real amount, and re-pricing on
+    // open showed (and on save stored) an amount of 0. With no price set (or a
+    // car switch still pending) fall back to the car's stock rate, not 0/day.
     useEffect(() => {
+        if (isFirstExtrasEffect.current) { isFirstExtrasEffect.current = false; return; }
         if (apiWriting.current) return;
-        recalculate(!vehicleRatePending.current);
+        recalculate(hasDailyPrice());
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedAddons, pickupId, dropoffId]);
 
