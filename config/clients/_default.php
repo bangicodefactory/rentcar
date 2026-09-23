@@ -65,6 +65,14 @@ return [
     'cash_payment_max' => 5000,
 
     /*
+     * Late-return allowance, in minutes: the longest a return may run past the
+     * last whole rental day before a full extra day is charged. Up to and
+     * including this value is free. 14 keeps the original rule (15 min late
+     * adds a day). Read via config('client.late_return_grace_minutes', 14).
+     */
+    'late_return_grace_minutes' => 14,
+
+    /*
      * Interface → concrete bindings resolved by ClientServiceProvider.
      * Core code injects the interface; each client supplies the class.
      */

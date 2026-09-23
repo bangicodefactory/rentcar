@@ -458,6 +458,44 @@ class VehicleControllerTest extends TestCase
         $this->assertEquals(2000, $data['totalRate']);
     }
 
+    public function test_vehicle_rate_calculation_honours_a_7_hour_late_return_allowance(): void
+    {
+        // Forced, not inherited from a tenant (CLAUDE.md §10.2 rule 6).
+        config(['client.late_return_grace_minutes' => 420]);
+        $vehicle = Vehicle::factory()->create(['parent_id' => $this->owner->id, 'daily_rate' => 200]);
+
+        $days = fn (string $end) => json_decode($this->actingAs($this->owner)
+            ->getJson(route('vehicle.rate.calculation', [
+                'vahicle_id'      => $vehicle->id,
+                'start_date_time' => '2026/10/01 08:00',
+                'end_date_time'   => $end,
+                'daychange'       => 1,
+                'daily_price'     => 150,
+            ]))->assertOk()->getContent(), true);
+
+        // Up to and including 7h00 late is free; 7h01 adds a day.
+        $this->assertSame(7, $days('2026/10/08 15:00')['considerDays']);
+        $this->assertEquals(1050, $days('2026/10/08 15:00')['totalRate']);
+        $this->assertSame(8, $days('2026/10/08 15:01')['considerDays']);
+    }
+
+    public function test_vehicle_rate_calculation_default_allowance_is_14_minutes(): void
+    {
+        config(['client.late_return_grace_minutes' => 14]);
+        $vehicle = Vehicle::factory()->create(['parent_id' => $this->owner->id, 'daily_rate' => 200]);
+
+        $days = fn (string $end) => json_decode($this->actingAs($this->owner)
+            ->getJson(route('vehicle.rate.calculation', [
+                'vahicle_id'      => $vehicle->id,
+                'start_date_time' => '2026/10/01 08:00',
+                'end_date_time'   => $end,
+                'daychange'       => 0,
+            ]))->assertOk()->getContent(), true)['considerDays'];
+
+        $this->assertSame(7, $days('2026/10/08 08:14'));
+        $this->assertSame(8, $days('2026/10/08 08:15'));
+    }
+
     // ── VehicleController::getAvailableVehicle ────────────────────────────────
 
     public function test_available_vehicle_requires_auth(): void

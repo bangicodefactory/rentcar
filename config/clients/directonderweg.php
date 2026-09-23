@@ -30,6 +30,12 @@ return [
     ],
 
     /*
+     * A client may return the car up to 7 hours late (7h00 included) without
+     * being charged an extra day; 7h01 adds one. Default is 14 min.
+     */
+    'late_return_grace_minutes' => 420,
+
+    /*
      * Explicit provider class — required because Str::studly('directonderweg')
      * produces 'Directonderweg', not 'DirectOnderweg'.
      */

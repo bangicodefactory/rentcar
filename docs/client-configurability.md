@@ -159,6 +159,18 @@ A small `ClientServiceProvider` merges `_default.php` with the active
 client's file (the client's keys win), publishes the result to the
 runtime config, and binds the requested interfaces.
 
+### Business-rule values
+
+Besides feature flags, a client file can override a few scalar business
+rules. `_default.php` documents each one; read them with
+`config('client.<key>', <default>)`.
+
+| Key | Default | directonderweg | Meaning |
+|---|---|---|---|
+| `cash_payment_max` | 5000 | 5000 | Largest single cash receipt (MAD). |
+| `violation_match_grace_hours` | 12 | 12 | How far outside a rental a traffic violation is still matched to it. |
+| `late_return_grace_minutes` | 14 | 420 | How late a return may be, past the last whole rental day, before a full extra day is charged (this value included). Applied in `vehicleRateCalculation()`. |
+
 ---
 
 ## 5. The `ClientServiceProvider`
