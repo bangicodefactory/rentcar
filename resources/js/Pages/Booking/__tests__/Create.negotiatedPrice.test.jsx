@@ -121,3 +121,81 @@ describe('Booking/Create — vehicle change then date change before the rate ret
         await waitFor(() => expect(amount()).toBe('3000'));
     });
 });
+
+// Follow-up review of PR #227. `stock` is each car's set rate; the first rate
+// request for `holdId` is held back until release().
+function mockRates(stock, holdId) {
+    const held = { release: undefined };
+    axios.get.mockImplementation((url, { params } = {}) => {
+        if (url !== '/vehicle.rate.calculation') {
+            return Promise.resolve({ data: { 1: 'Car A - 1-A-1', 2: 'Car B - 2-B-2', 3: 'Car C - 3-C-3' } });
+        }
+        const daily = params.daychange ? Number(params.daily_price) : stock[params.vahicle_id];
+        const data = { considerDays: 10, totalRate: String(daily * 10), addonAmount: 0, placeAmount: 0, daily_price: stock[params.vahicle_id] };
+        if (String(params.vahicle_id) === String(holdId) && !held.release) {
+            return new Promise((resolve) => { held.release = () => resolve({ data }); });
+        }
+        return Promise.resolve({ data });
+    });
+    return held;
+}
+
+describe('Booking/Create — price field during a car switch', () => {
+    const amountOf = (container) => container.querySelector('input[name="amount"]').value;
+    const price = () => screen.getByLabelText('Price per day');
+
+    it('leaving the price field untouched while the car rate is pending uses the new car rate', async () => {
+        const held = mockRates({ 1: 200, 2: 300 }, 2);
+        const { container } = render(<BookingCreate vehicles={[]} drivers={[]} statuses={[]} places={[]} addons={[]} />);
+        await pickDatesAndVehicle();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Vehicle' }));
+        fireEvent.click(screen.getByText('Car B - 2-B-2'));
+        await waitFor(() => expect(held.release).toBeDefined());
+        const callsBefore = rateCalls().length;
+
+        fireEvent.focus(price());
+        fireEvent.blur(price());
+        await waitFor(() => expect(rateCalls().length).toBeGreaterThan(callsBefore));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
+
+        held.release();
+        await waitFor(() => expect(price().value).toBe('300'));
+        await waitFor(() => expect(amountOf(container)).toBe('3000'));
+    });
+
+    it('a price typed during a car switch survives a later date change', async () => {
+        const held = mockRates({ 1: 200, 2: 300 }, 2);
+        const { container } = render(<BookingCreate vehicles={[]} drivers={[]} statuses={[]} places={[]} addons={[]} />);
+        await pickDatesAndVehicle();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Vehicle' }));
+        fireEvent.click(screen.getByText('Car B - 2-B-2'));
+        await waitFor(() => expect(held.release).toBeDefined());
+
+        fireEvent.change(price(), { target: { value: '150' } });
+        fireEvent.blur(price());
+        fireEvent.change(screen.getByLabelText('End Date & Time'), { target: { value: '2026-10-11T09:00' } });
+        await waitFor(() => expect(rateCalls().at(-1)[1].params.end_date_time).toBe('2026/10/11 09:00'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(1);
+        expect(String(rateCalls().at(-1)[1].params.daily_price)).toBe('150');
+
+        held.release();
+        await waitFor(() => expect(amountOf(container)).toBe('1500'));
+        expect(price().value).toBe('150');
+    });
+
+    it('switching to a car with no set rate clears the previous car price', async () => {
+        mockRates({ 1: 200, 3: 0 });
+        render(<BookingCreate vehicles={[]} drivers={[]} statuses={[]} places={[]} addons={[]} />);
+        await pickDatesAndVehicle();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Vehicle' }));
+        fireEvent.click(screen.getByText('Car C - 3-C-3'));
+        await waitFor(() => expect(price().value).toBe('0'));
+
+        fireEvent.change(screen.getByLabelText('End Date & Time'), { target: { value: '2026-10-11T09:00' } });
+        await waitFor(() => expect(rateCalls().at(-1)[1].params.end_date_time).toBe('2026/10/11 09:00'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
+    });
+});
