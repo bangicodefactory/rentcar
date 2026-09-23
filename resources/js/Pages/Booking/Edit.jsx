@@ -67,6 +67,9 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     // price with the vehicle's stock rate — only recompute on a real change.
     const isFirstVehicleEffect = useRef(true);
     const isFirstDatesEffect = useRef(true);
+    const rateRequestSeq = useRef(0);
+    // True while a stock-rate lookup (car switch) hasn't come back yet.
+    const vehicleRatePending = useRef(false);
 
     // dayChange mirrors create: false = recompute from the vehicle's stock rate
     // and auto-fill the per-day price (vehicle change, or dates with no price
@@ -74,6 +77,10 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     // for every day (date/price/addon/place edit).
     function recalculate(dayChange = false) {
         if (!vehicleId || !startDt || !endDt) return;
+        // Only the newest request may write back; a slow earlier reply must not
+        // overwrite it (e.g. a car switch landing after a later date change).
+        const seq = ++rateRequestSeq.current;
+        if (!dayChange) vehicleRatePending.current = true;
         axios.get(route('vehicle.rate.calculation'), {
             params: {
                 vahicle_id: vehicleId,
@@ -86,6 +93,8 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
                 daychange: dayChange ? 1 : 0,
             },
         }).then((r) => {
+            if (seq !== rateRequestSeq.current) return;
+            vehicleRatePending.current = false;
             const res = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
             const total = (parseFloat(res.totalRate) || 0) + (parseFloat(res.addonAmount) || 0) + (parseFloat(res.placeAmount) || 0);
             const disc = parseFloat(getValues('discount')) || 0;
@@ -98,12 +107,16 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
             setValue('details', JSON.stringify(res));
             apiWriting.current = false;
             setPriceBreakdown({ ...res, finalTotal, discountAmount: disc });
-        }).catch(() => {});
+        }).catch(() => {
+            if (seq === rateRequestSeq.current) vehicleRatePending.current = false;
+        });
     }
 
-    // A per-day price is already set (saved/negotiated or typed). Imported
+    // A per-day price is already set (saved/negotiated or typed) and belongs to
+    // the current car. While a car switch's stock-rate lookup is in flight the
+    // field still holds the OLD car's price, so don't reuse it. Imported
     // bookings store 0, which falls back to the vehicle's stock rate.
-    const hasDailyPrice = () => parseFloat(getValues('daily_price')) > 0;
+    const hasDailyPrice = () => !vehicleRatePending.current && parseFloat(getValues('daily_price')) > 0;
 
     // Preserve the saved price/amount on initial load; recompute only when the
     // user actually changes the vehicle or dates afterwards.
@@ -127,10 +140,10 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     }, [startDt, endDt]);
 
     // Addons / pickup / drop-off change → recompute but PRESERVE a manually
-    // entered per-day price.
+    // entered per-day price (unless a car switch's rate is still pending).
     useEffect(() => {
         if (apiWriting.current) return;
-        recalculate(true);
+        recalculate(!vehicleRatePending.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedAddons, pickupId, dropoffId]);
 
