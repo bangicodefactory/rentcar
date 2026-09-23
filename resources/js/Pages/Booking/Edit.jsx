@@ -49,7 +49,21 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     });
 
     const [selectedAddons, setSelectedAddons] = useState(existingAddons);
-    const [priceBreakdown, setPriceBreakdown] = useState(null);
+    // Show the breakdown saved with the booking on load (Edit no longer
+    // re-prices on open). Imported bookings have none, so nothing is shown
+    // until a real change re-prices them.
+    const [priceBreakdown, setPriceBreakdown] = useState(() => {
+        let saved = booking.details;
+        if (typeof saved === 'string') {
+            try { saved = JSON.parse(saved); } catch { saved = null; }
+        }
+        if (!saved || !saved.duration) return null;
+        return {
+            ...saved,
+            finalTotal: parseFloat(booking.amount) || 0,
+            discountAmount: parseFloat(booking.discount) || 0,
+        };
+    });
     // Vehicle dropdown options. Seeded with the server's initial available list
     // (computed for the saved dates) and refreshed whenever the dates change.
     const [availableVehicles, setAvailableVehicles] = useState(initialVehicles);
@@ -68,6 +82,7 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     const isFirstVehicleEffect = useRef(true);
     const isFirstDatesEffect = useRef(true);
     const isFirstExtrasEffect = useRef(true);
+    const isFirstDiscountEffect = useRef(true);
     const rateRequestSeq = useRef(0);
     // True while a stock-rate lookup (car switch) hasn't come back yet.
     const vehicleRatePending = useRef(false);
@@ -201,6 +216,8 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     }, [startDt, endDt]);
 
     useEffect(() => {
+        // Not on load: the saved amount stands until the discount changes.
+        if (isFirstDiscountEffect.current) { isFirstDiscountEffect.current = false; return; }
         if (!priceBreakdown) return;
         const total = (parseFloat(priceBreakdown.totalRate) || 0)
             + (parseFloat(priceBreakdown.addonAmount) || 0)

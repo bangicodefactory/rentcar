@@ -96,3 +96,37 @@ describe('Booking/Edit — the saved amount survives opening the page', () => {
         expect(container.querySelector('input[name="amount"]').value).toBe('8200');
     });
 });
+
+describe('Booking/Edit — saved price breakdown on load', () => {
+    const saved = {
+        ...importedBooking,
+        daily_price_final: '150.00',
+        amount: 1050,
+        details: JSON.stringify({ considerDays: 7, totalRate: '1050', addonAmount: 0, placeAmount: 0, duration: '7 * 150 = 1050 Dh' }),
+    };
+
+    it('shows the saved breakdown without re-pricing', async () => {
+        const { container } = renderEdit(saved);
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+
+        expect(screen.getByText('7 * 150 = 1050 Dh')).toBeTruthy();
+        expect(rateCalls()).toHaveLength(0);
+        expect(container.querySelector('input[name="amount"]').value).toBe('1050');
+    });
+
+    it('a discount typed after load still updates the amount from the saved breakdown', async () => {
+        const { container } = renderEdit(saved);
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+
+        fireEvent.change(screen.getByLabelText('Discount'), { target: { value: '50' } });
+
+        await waitFor(() => expect(container.querySelector('input[name="amount"]').value).toBe('1000'));
+    });
+
+    it('shows no breakdown for an imported booking (nothing saved to show)', async () => {
+        renderEdit(importedBooking);
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+
+        expect(screen.queryByText('Duration')).toBeNull();
+    });
+});
