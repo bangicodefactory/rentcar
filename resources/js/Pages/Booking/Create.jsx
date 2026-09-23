@@ -106,13 +106,24 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
         }).catch(() => {});
     }, [startDt, endDt]);
 
-    // Vehicle/date change → recompute from the vehicle's stock rate and
-    // auto-fill the per-day price (Blade: #vehicle / date handlers, daychange != 1).
+    // A per-day price is already in the field (auto-filled or typed/negotiated).
+    const hasDailyPrice = () => parseFloat(getValues('daily_price')) > 0;
+
+    // Vehicle change → recompute from the vehicle's stock rate and auto-fill
+    // the per-day price (Blade: #vehicle handler, daychange != 1).
     useEffect(() => {
         if (apiWriting.current) return;
         recalculate(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [vehicleId, startDt, endDt]);
+    }, [vehicleId]);
+
+    // Date change → keep a per-day price already entered (a negotiated rate)
+    // for every day; only auto-fill the stock rate when none is set yet.
+    useEffect(() => {
+        if (apiWriting.current) return;
+        recalculate(hasDailyPrice());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startDt, endDt]);
 
     // Addons / pickup / drop-off change → recompute but PRESERVE a manually
     // entered per-day price (Blade: .addon / #pickup,#drop handlers, daychange = 1).

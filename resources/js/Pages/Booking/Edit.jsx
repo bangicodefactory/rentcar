@@ -65,11 +65,13 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     // Unlike create, edit loads a SAVED per-day price/amount. Skip the first
     // vehicle/date effect so opening a booking doesn't overwrite that saved
     // price with the vehicle's stock rate — only recompute on a real change.
-    const isFirstRateEffect = useRef(true);
+    const isFirstVehicleEffect = useRef(true);
+    const isFirstDatesEffect = useRef(true);
 
     // dayChange mirrors create: false = recompute from the vehicle's stock rate
-    // and auto-fill the per-day price (vehicle/date change); true = keep the
-    // manually typed per-day price (price/addon/place edit) so it stays editable.
+    // and auto-fill the per-day price (vehicle change, or dates with no price
+    // yet); true = keep the per-day price in the field — the negotiated one —
+    // for every day (date/price/addon/place edit).
     function recalculate(dayChange = false) {
         if (!vehicleId || !startDt || !endDt) return;
         axios.get(route('vehicle.rate.calculation'), {
@@ -99,16 +101,30 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
         }).catch(() => {});
     }
 
-    // Vehicle/date change → recompute from the vehicle's stock rate and auto-fill
-    // the per-day price.
+    // A per-day price is already set (saved/negotiated or typed). Imported
+    // bookings store 0, which falls back to the vehicle's stock rate.
+    const hasDailyPrice = () => parseFloat(getValues('daily_price')) > 0;
+
+    // Preserve the saved price/amount on initial load; recompute only when the
+    // user actually changes the vehicle or dates afterwards.
+
+    // Vehicle change → a different car, so recompute from its stock rate and
+    // auto-fill the per-day price.
     useEffect(() => {
-        // Preserve the saved price/amount on initial load; recompute only when
-        // the user actually changes the vehicle or dates afterwards.
-        if (isFirstRateEffect.current) { isFirstRateEffect.current = false; return; }
+        if (isFirstVehicleEffect.current) { isFirstVehicleEffect.current = false; return; }
         if (apiWriting.current) return;
         recalculate(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [vehicleId, startDt, endDt]);
+    }, [vehicleId]);
+
+    // Date change (e.g. extending a rental) → keep the negotiated per-day price
+    // for every day, extra days included, instead of the vehicle's stock rate.
+    useEffect(() => {
+        if (isFirstDatesEffect.current) { isFirstDatesEffect.current = false; return; }
+        if (apiWriting.current) return;
+        recalculate(hasDailyPrice());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startDt, endDt]);
 
     // Addons / pickup / drop-off change → recompute but PRESERVE a manually
     // entered per-day price.
