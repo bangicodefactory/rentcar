@@ -103,13 +103,24 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
             setValue('amount', finalTotal);
             // Auto-fill the per-day price from the vehicle's rate only when it's
             // NOT a manual edit, so a typed override is preserved (create parity).
-            if (!dayChange && res.daily_price) setValue('daily_price', res.daily_price);
+            // A car with no set rate fills 0, so the previous car's price never lingers.
+            if (!dayChange && res.daily_price != null) setValue('daily_price', res.daily_price);
             setValue('details', JSON.stringify(res));
             apiWriting.current = false;
             setPriceBreakdown({ ...res, finalTotal, discountAmount: disc });
         }).catch(() => {
             if (seq === rateRequestSeq.current) vehicleRatePending.current = false;
         });
+    }
+
+    // Typing a price is an explicit choice: it wins over a car switch's
+    // in-flight stock-rate lookup, whose reply is dropped (the blur that follows
+    // re-prices with the typed value).
+    const dailyPriceField = register('daily_price');
+    function onDailyPriceTyped(e) {
+        ++rateRequestSeq.current;
+        vehicleRatePending.current = false;
+        return dailyPriceField.onChange(e);
     }
 
     // A per-day price is already set (saved/negotiated or typed) and belongs to
@@ -295,7 +306,7 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
 
                             <div className="space-y-1">
                                 <Label htmlFor="daily_price">{t('Price per day')}</Label>
-                                <Input id="daily_price" type="number" step="any" min="0" {...register('daily_price')} onBlur={() => recalculate(true)} />
+                                <Input id="daily_price" type="number" step="any" min="0" {...dailyPriceField} onChange={onDailyPriceTyped} onBlur={() => recalculate(!vehicleRatePending.current)} />
                             </div>
 
                             <div className="space-y-1">
