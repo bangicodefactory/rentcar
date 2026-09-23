@@ -48,6 +48,23 @@ class ClientFeatureMatrixTest extends TestCase
         $this->assertSame(5000, (int) config('client.cash_payment_max'));
     }
 
+    public function test_directonderweg_allows_returns_up_to_7_hours_late_without_an_extra_day(): void
+    {
+        $this->asClient('directonderweg');
+
+        $this->assertSame(420, (int) config('client.late_return_grace_minutes'));
+        $this->assertSame(7, vehicleRateCalculation(150, '2026-10-01 08:00', '2026-10-08 15:00')['considerDays']);
+        $this->assertSame(8, vehicleRateCalculation(150, '2026-10-01 08:00', '2026-10-08 15:01')['considerDays']);
+    }
+
+    public function test_the_default_late_return_allowance_is_todays_15_minute_rule(): void
+    {
+        // Any other client keeps the pre-existing rule: 15 min late adds a day.
+        $default = require config_path('clients/_default.php');
+
+        $this->assertSame(14, $default['late_return_grace_minutes']);
+    }
+
     public function test_directonderweg_still_invoices_every_payment_immediately(): void
     {
         // Deliberately off: one facture per payment, including partials.
