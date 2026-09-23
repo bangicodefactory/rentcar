@@ -125,3 +125,46 @@ describe('Booking/Edit — negotiated price per day on date change', () => {
         await waitFor(() => expect(screen.getByLabelText('Price per day').value).toBe('150'));
     });
 });
+
+// Race (review of PR #227): switch car, then change the dates before the new
+// car's rate comes back. The date recalculation must not reuse the OLD car's
+// price, and a late stale reply must not overwrite the newer one — the saved
+// per-day price and total have to agree.
+describe('Booking/Edit — vehicle change then date change before the rate returns', () => {
+    it('prices the new car at its own rate and keeps price and total consistent', async () => {
+        const stock = { 1: 200, 2: 300 };
+        let releaseVehicleReply;
+        axios.get.mockImplementation((url, { params } = {}) => {
+            if (url !== '/vehicle.rate.calculation') {
+                return Promise.resolve({ data: { 1: 'Car A - 1-A-1', 2: 'Car B - 2-B-2' } });
+            }
+            const daily = params.daychange ? Number(params.daily_price) : stock[params.vahicle_id];
+            const data = { considerDays: 10, totalRate: String(daily * 10), addonAmount: 0, placeAmount: 0, daily_price: stock[params.vahicle_id] };
+            // Hold back the first reply for the car switch.
+            if (String(params.vahicle_id) === '2' && !releaseVehicleReply) {
+                return new Promise((resolve) => { releaseVehicleReply = () => resolve({ data }); });
+            }
+            return Promise.resolve({ data });
+        });
+
+        const { container } = renderEdit(makeBooking());
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+
+        fireEvent.click(screen.getByRole('button', { name: 'Vehicle' }));
+        fireEvent.click(screen.getByText('Car B - 2-B-2'));
+        await waitFor(() => expect(releaseVehicleReply).toBeDefined());
+
+        fireEvent.change(screen.getByLabelText('End Date & Time'), {
+            target: { value: '2026-10-11T09:00' },
+        });
+        await waitFor(() => expect(rateCalls().at(-1)[1].params.end_date_time).toBe('2026/10/11 09:00'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
+
+        // The stale car-switch reply lands last.
+        releaseVehicleReply();
+
+        const amount = () => container.querySelector('input[name="amount"]').value;
+        await waitFor(() => expect(screen.getByLabelText('Price per day').value).toBe('300'));
+        await waitFor(() => expect(amount()).toBe('3000'));
+    });
+});
