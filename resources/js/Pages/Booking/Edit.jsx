@@ -69,6 +69,8 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     const isFirstDatesEffect = useRef(true);
     const isFirstExtrasEffect = useRef(true);
     const isFirstDiscountEffect = useRef(true);
+    // Discount already reflected in the amount; a change adjusts by the delta.
+    const lastDiscount = useRef(parseFloat(booking.discount) || 0);
     const rateRequestSeq = useRef(0);
     // True while a stock-rate lookup (car switch) hasn't come back yet.
     const vehicleRatePending = useRef(false);
@@ -100,11 +102,25 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
             if (seq !== rateRequestSeq.current) return;
             const res = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
             if (displayOnly) {
-                setPriceBreakdown({
-                    ...res,
-                    finalTotal: parseFloat(getValues('amount')) || 0,
-                    discountAmount: parseFloat(getValues('discount')) || 0,
-                });
+                const extras = (parseFloat(res.addonAmount) || 0) + (parseFloat(res.placeAmount) || 0);
+                const amount = parseFloat(getValues('amount')) || 0;
+                const disc = parseFloat(getValues('discount')) || 0;
+                if (!(parseFloat(getValues('daily_price')) > 0)) {
+                    // Imported booking: its per-day price was never stored. Derive
+                    // it from the saved amount so later changes re-price at the
+                    // real rate (form only until saved). No table: the server's
+                    // figures here are at the car's set rate, not the real one.
+                    const days = parseInt(res.considerDays, 10) || 0;
+                    if (days > 0 && amount > 0) {
+                        setValue('daily_price', String(Math.round(((amount + disc - extras) / days) * 100) / 100));
+                    }
+                    return;
+                }
+                // Only show the table when it explains the saved amount.
+                const serverTotal = (parseFloat(res.totalRate) || 0) + extras - disc;
+                if (Math.abs(serverTotal - amount) < 0.01) {
+                    setPriceBreakdown({ ...res, finalTotal: amount, discountAmount: disc });
+                }
                 return;
             }
             vehicleRatePending.current = false;
@@ -211,27 +227,29 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [startDt, endDt]);
 
-    // On load, show the price breakdown without re-pricing: it comes from the
-    // server's rate calculation (never from the saved `details`, which is an
-    // unvalidated hidden field and would be rendered as HTML). Skipped when
-    // there's no saved per-day price (imported bookings store 0) — a table
-    // priced at the car's rate would contradict the saved amount.
+    // On load, without re-pricing: fetch the breakdown from the server's rate
+    // calculation (never from the saved `details`, an unvalidated hidden field
+    // that would be rendered as HTML), and for an imported booking (price 0)
+    // derive its per-day price from the saved amount.
     useEffect(() => {
-        if (parseFloat(booking.daily_price_final) > 0) recalculate(true, { displayOnly: true });
+        const savedPrice = parseFloat(booking.daily_price_final) || 0;
+        const savedAmount = parseFloat(booking.amount) || 0;
+        if (savedPrice > 0 || savedAmount > 0) recalculate(savedPrice > 0, { displayOnly: true });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         // Not on load: the saved amount stands until the discount changes.
         if (isFirstDiscountEffect.current) { isFirstDiscountEffect.current = false; return; }
-        // No breakdown yet (imported booking): re-price so the discount applies.
-        if (!priceBreakdown) { recalculate(hasDailyPrice()); return; }
-        const total = (parseFloat(priceBreakdown.totalRate) || 0)
-            + (parseFloat(priceBreakdown.addonAmount) || 0)
-            + (parseFloat(priceBreakdown.placeAmount) || 0);
+        // Adjust the current amount by the change in discount, so a saved
+        // amount the price per day doesn't explain (imports, manual totals)
+        // is kept: 8800 with a 500 discount becomes 8300, and clearing it
+        // restores 8800.
         const disc = parseFloat(discount) || 0;
-        setValue('amount', total - disc);
-        setPriceBreakdown((prev) => prev ? { ...prev, finalTotal: total - disc, discountAmount: disc } : null);
+        const amount = (parseFloat(getValues('amount')) || 0) + lastDiscount.current - disc;
+        lastDiscount.current = disc;
+        setValue('amount', amount);
+        setPriceBreakdown((prev) => prev ? { ...prev, finalTotal: amount, discountAmount: disc } : null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [discount]);
 
