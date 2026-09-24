@@ -158,3 +158,45 @@ describe('Booking/Edit — discount adjusts the current amount', () => {
         expect(price().value).toBe('550');
     });
 });
+
+describe('Booking/Edit — imported booking edge cases (fourth review)', () => {
+    it('a change made before the load-time price is known waits for it, then prices at the real rate', async () => {
+        let releaseLoad;
+        axios.get.mockImplementation((url, { params } = {}) => {
+            if (url !== '/vehicle.rate.calculation') {
+                return Promise.resolve({ data: { 37: 'Seat Ibiza - 79780' } });
+            }
+            const daily = params.daychange ? Number(params.daily_price) : 500;
+            const data = { considerDays: 16, totalRate: String(daily * 16), addonAmount: params.addons?.length ? 200 : 0, placeAmount: 0, daily_price: 500, duration: `16 * ${daily}` };
+            if (!releaseLoad) return new Promise((resolve) => { releaseLoad = () => resolve({ data }); });
+            return Promise.resolve({ data });
+        });
+        const { container } = renderEdit(importedBooking);
+        await waitFor(() => expect(releaseLoad).toBeDefined());
+
+        // Tick an addon while the load request is still in flight.
+        fireEvent.click(screen.getByRole('checkbox'));
+        await new Promise((r) => setTimeout(r, 20));
+        expect(rateCalls()).toHaveLength(1);
+
+        releaseLoad();
+
+        await waitFor(() => expect(amountOf(container)).toBe('9000'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(1);
+        expect(String(rateCalls().at(-1)[1].params.daily_price)).toBe('550');
+    });
+
+    it('never fills a negative per-day price (saved amount below its fees)', async () => {
+        axios.get.mockImplementation((url) => {
+            if (url !== '/vehicle.rate.calculation') {
+                return Promise.resolve({ data: { 37: 'Seat Ibiza - 79780' } });
+            }
+            return Promise.resolve({ data: { considerDays: 16, totalRate: '8000', addonAmount: 0, placeAmount: 400, daily_price: 500 } });
+        });
+        renderEdit({ ...importedBooking, amount: 300 });
+        await waitFor(() => expect(rateCalls().length).toBe(1));
+        await new Promise((r) => setTimeout(r, 20));
+
+        expect(price().value).toBe('0.00');
+    });
+});
