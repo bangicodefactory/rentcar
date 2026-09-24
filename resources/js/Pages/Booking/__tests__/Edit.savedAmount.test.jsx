@@ -62,7 +62,7 @@ beforeEach(() => {
         }
         const daily = params.daychange ? Number(params.daily_price) : 500;
         return Promise.resolve({
-            data: { considerDays: 16, totalRate: String(daily * 16), addonAmount: params.addons?.length ? 200 : 0, placeAmount: 0, daily_price: 500 },
+            data: { considerDays: 16, totalRate: String(daily * 16), addonAmount: params.addons?.length ? 200 : 0, placeAmount: 0, daily_price: 500, duration: `16 * ${daily} = ${daily * 16} Dh` },
         });
     });
 });
@@ -76,12 +76,13 @@ describe('Booking/Edit — the saved amount survives opening the page', () => {
         expect(container.querySelector('input[name="amount"]').value).toBe('8800');
     });
 
-    it('does not re-price a booking with a saved price on load either', async () => {
-        const { container } = renderEdit({ ...importedBooking, daily_price_final: '150.00', amount: 2400 });
-        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+    it('does not overwrite a saved booking on load (the breakdown fetch is display-only)', async () => {
+        // Saved 9999 on purpose: the server would compute 16 × 150 = 2400.
+        const { container } = renderEdit({ ...importedBooking, daily_price_final: '150.00', amount: 9999 });
 
-        expect(rateCalls()).toHaveLength(0);
-        expect(container.querySelector('input[name="amount"]').value).toBe('2400');
+        await waitFor(() => expect(screen.getByText('16 * 150 = 2400 Dh')).toBeTruthy());
+        expect(container.querySelector('input[name="amount"]').value).toBe('9999');
+        expect(screen.getByLabelText('Price per day').value).toBe('150.00');
     });
 
     it('an addon change on a booking with no saved price uses the car rate, not 0', async () => {
@@ -97,36 +98,46 @@ describe('Booking/Edit — the saved amount survives opening the page', () => {
     });
 });
 
-describe('Booking/Edit — saved price breakdown on load', () => {
+describe('Booking/Edit — price breakdown on load', () => {
     const saved = {
         ...importedBooking,
         daily_price_final: '150.00',
-        amount: 1050,
-        details: JSON.stringify({ considerDays: 7, totalRate: '1050', addonAmount: 0, placeAmount: 0, duration: '7 * 150 = 1050 Dh' }),
+        amount: 2400,
+        // A tampered hidden field: saved details must never be rendered as HTML.
+        details: JSON.stringify({ totalRate: '2400', duration: '<img src="x" data-xss="1">' }),
     };
 
-    it('shows the saved breakdown without re-pricing', async () => {
+    it('shows the breakdown from the server, never the saved details HTML', async () => {
         const { container } = renderEdit(saved);
-        await waitFor(() => expect(axios.get).toHaveBeenCalled());
 
-        expect(screen.getByText('7 * 150 = 1050 Dh')).toBeTruthy();
-        expect(rateCalls()).toHaveLength(0);
-        expect(container.querySelector('input[name="amount"]').value).toBe('1050');
+        await waitFor(() => expect(screen.getByText('16 * 150 = 2400 Dh')).toBeTruthy());
+        expect(container.querySelector('img[data-xss]')).toBeNull();
     });
 
-    it('a discount typed after load still updates the amount from the saved breakdown', async () => {
+    it('a discount typed after load updates the amount from that breakdown', async () => {
         const { container } = renderEdit(saved);
-        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+        await waitFor(() => expect(screen.getByText('16 * 150 = 2400 Dh')).toBeTruthy());
 
         fireEvent.change(screen.getByLabelText('Discount'), { target: { value: '50' } });
 
-        await waitFor(() => expect(container.querySelector('input[name="amount"]').value).toBe('1000'));
+        await waitFor(() => expect(container.querySelector('input[name="amount"]').value).toBe('2350'));
     });
 
-    it('shows no breakdown for an imported booking (nothing saved to show)', async () => {
+    it('shows no breakdown for an imported booking on load', async () => {
         renderEdit(importedBooking);
         await waitFor(() => expect(axios.get).toHaveBeenCalled());
 
         expect(screen.queryByText('Duration')).toBeNull();
+    });
+
+    it('a discount on an imported booking re-prices at the car rate instead of being ignored', async () => {
+        const { container } = renderEdit(importedBooking);
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+
+        fireEvent.change(screen.getByLabelText('Discount'), { target: { value: '500' } });
+
+        // 16 × 500 (car rate, not the stored 0) − 500 discount.
+        await waitFor(() => expect(container.querySelector('input[name="amount"]').value).toBe('7500'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
     });
 });
