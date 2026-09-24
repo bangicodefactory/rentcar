@@ -71,6 +71,8 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     const isFirstDiscountEffect = useRef(true);
     // Discount already reflected in the amount; a change adjusts by the delta.
     const lastDiscount = useRef(parseFloat(booking.discount) || 0);
+    // Pending load-time lookup that derives an imported booking's per-day price.
+    const loadPriceRef = useRef(null);
     const rateRequestSeq = useRef(0);
     // True while a stock-rate lookup (car switch) hasn't come back yet.
     const vehicleRatePending = useRef(false);
@@ -87,7 +89,7 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
         // overwrite it (e.g. a car switch landing after a later date change).
         const seq = ++rateRequestSeq.current;
         if (!dayChange && !displayOnly) vehicleRatePending.current = true;
-        axios.get(route('vehicle.rate.calculation'), {
+        return axios.get(route('vehicle.rate.calculation'), {
             params: {
                 vahicle_id: vehicleId,
                 start_date_time: formatDt(startDt),
@@ -111,9 +113,9 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
                     // real rate (form only until saved). No table: the server's
                     // figures here are at the car's set rate, not the real one.
                     const days = parseInt(res.considerDays, 10) || 0;
-                    if (days > 0 && amount > 0) {
-                        setValue('daily_price', String(Math.round(((amount + disc - extras) / days) * 100) / 100));
-                    }
+                    const derived = days > 0 ? Math.round(((amount + disc - extras) / days) * 100) / 100 : 0;
+                    // Never a negative/zero price (amount below its fees): leave 0.
+                    if (derived > 0) setValue('daily_price', String(derived));
                     return;
                 }
                 // Only show the table when it explains the saved amount.
@@ -161,6 +163,13 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     // bookings store 0, which falls back to the vehicle's stock rate.
     const hasDailyPrice = () => !vehicleRatePending.current && parseFloat(getValues('daily_price')) > 0;
 
+    // Run a re-price once an imported booking's load-time per-day price is
+    // known (immediately otherwise), so it prices at the real rate.
+    function whenPriceKnown(reprice) {
+        const pending = loadPriceRef.current;
+        if (pending) pending.then(reprice); else reprice();
+    }
+
     // Preserve the saved price/amount on initial load; recompute only when the
     // user actually changes the vehicle or dates afterwards.
 
@@ -178,7 +187,7 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     useEffect(() => {
         if (isFirstDatesEffect.current) { isFirstDatesEffect.current = false; return; }
         if (apiWriting.current) return;
-        recalculate(hasDailyPrice());
+        whenPriceKnown(() => recalculate(hasDailyPrice()));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [startDt, endDt]);
 
@@ -190,7 +199,7 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     useEffect(() => {
         if (isFirstExtrasEffect.current) { isFirstExtrasEffect.current = false; return; }
         if (apiWriting.current) return;
-        recalculate(hasDailyPrice());
+        whenPriceKnown(() => recalculate(hasDailyPrice()));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedAddons, pickupId, dropoffId]);
 
@@ -234,7 +243,13 @@ function BookingEdit({ booking, vehicles: initialVehicles, drivers, statuses, pl
     useEffect(() => {
         const savedPrice = parseFloat(booking.daily_price_final) || 0;
         const savedAmount = parseFloat(booking.amount) || 0;
-        if (savedPrice > 0 || savedAmount > 0) recalculate(savedPrice > 0, { displayOnly: true });
+        if (!(savedPrice > 0 || savedAmount > 0)) return;
+        const request = recalculate(savedPrice > 0, { displayOnly: true });
+        // Imported booking: changes made before its per-day price is known wait
+        // for it (see whenPriceKnown), so they don't re-price at the car's rate.
+        if (!(savedPrice > 0) && request) {
+            loadPriceRef.current = request.finally(() => { loadPriceRef.current = null; });
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
