@@ -93,7 +93,8 @@ describe('Booking/Edit — negotiated price per day on date change', () => {
     });
 
     it('falls back to the vehicle rate when the booking has no saved price', async () => {
-        renderEdit(makeBooking({ daily_price_final: 0 }));
+        // Nothing to derive a per-day price from (no price, no amount).
+        renderEdit(makeBooking({ daily_price_final: 0, amount: 0 }));
 
         fireEvent.change(screen.getByLabelText('End Date & Time'), {
             target: { value: '2026-10-11T09:00' },
