@@ -90,18 +90,26 @@ class CashPaymentSplitterTest extends TestCase
 
     // --- Dates ----------------------------------------------------------------
 
-    public function test_dates_are_distinct_and_within_range(): void
+    public function test_dates_are_consecutive_from_the_start_date(): void
     {
+        // Receipts are one day apart from the rental start, not spread across
+        // the whole period (a 2-week rental no longer ends on 07-15).
         $plan  = $this->plan(13000, '2026-07-01', '2026-07-15', 10);
         $dates = array_column($plan, 'date');
 
-        $this->assertSame($dates, array_values(array_unique($dates)), 'dates must be distinct');
-        $this->assertSame('2026-07-01', $dates[0]);
-        $this->assertSame('2026-07-15', $dates[2]);
-        foreach ($dates as $d) {
-            $this->assertGreaterThanOrEqual('2026-07-01', $d);
-            $this->assertLessThanOrEqual('2026-07-15', $d);
-        }
+        $this->assertSame(['2026-07-01', '2026-07-02', '2026-07-03'], $dates);
+    }
+
+    public function test_five_receipts_on_a_month_rental_take_the_first_five_days(): void
+    {
+        // #BOK-0002099 shape: 21,600 DH over Aug 3 → Sep 3 (31 days).
+        $plan = $this->plan(21600, '2026-08-03', '2026-09-03', 31);
+
+        $this->assertSame(
+            ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'],
+            array_column($plan, 'date'),
+        );
+        $this->assertSame([7, 7, 7, 7, 3], array_column($plan, 'days'));
     }
 
     public function test_short_period_falls_back_to_consecutive_days(): void

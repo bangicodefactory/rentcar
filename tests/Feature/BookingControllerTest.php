@@ -986,6 +986,41 @@ class BookingControllerTest extends TestCase
         $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'payment_status' => 'paye']);
     }
 
+    public function test_cash_split_receipts_are_dated_one_day_apart_from_the_start(): void
+    {
+        config(['client.features.cash_split' => true, 'client.features.invoice_on_full_payment' => false]);
+        $booking = $this->makeBooking([
+            'amount' => 13000, 'start_date' => '2026-07-01', 'end_date' => '2026-07-11',
+            'payment_status' => 'impaye',
+        ]);
+
+        $this->actingAs($this->owner)->post(route('booking.payment.store', $booking->id), [
+            'amount' => 13000, 'date' => '2026-07-05', 'payment_method' => 'Espece',
+        ])->assertSessionHas('success');
+
+        $expected = ['2026-07-01', '2026-07-02', '2026-07-03'];
+        $this->assertSame($expected, BookingPayment::where('booking_id', $booking->id)->orderBy('id')->pluck('date')->map(fn ($d) => substr((string) $d, 0, 10))->all());
+        $this->assertSame($expected, Tva::where('booking_id', $booking->id)->orderBy('id')->pluck('facture_date')->map(fn ($d) => substr((string) $d, 0, 10))->all());
+    }
+
+    public function test_bulk_mark_paid_cash_split_receipts_are_dated_one_day_apart(): void
+    {
+        config(['client.features.cash_split' => true, 'client.features.invoice_on_full_payment' => false]);
+        $booking = $this->makeBooking([
+            'amount' => 13000, 'start_date' => '2026-08-03', 'end_date' => '2026-09-03',
+            'payment_status' => 'impaye',
+        ]);
+
+        $this->actingAs($this->owner)->post(route('booking.bulk-mark-paid'), [
+            'ids' => [$booking->id], 'payment_method' => 'Espece', 'date' => '2026-09-20',
+        ]);
+
+        $this->assertSame(
+            ['2026-08-03', '2026-08-04', '2026-08-05'],
+            BookingPayment::where('booking_id', $booking->id)->orderBy('id')->pluck('date')->map(fn ($d) => substr((string) $d, 0, 10))->all()
+        );
+    }
+
     public function test_cash_split_partial_defers_then_flushes_when_both_flags_on(): void
     {
         config(['client.features.cash_split' => true, 'client.features.invoice_on_full_payment' => true]);

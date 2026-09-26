@@ -6,7 +6,8 @@ use Carbon\Carbon;
 
 /**
  * Splits a cash payment that exceeds the legal ceiling into several receipts,
- * each within the cap, on distinct days, with the rental days apportioned.
+ * each within the cap, on consecutive days from the rental start, with the
+ * rental days apportioned.
  *
  * Background: Moroccan tax law (CGI art. 193) treats cash paid above the
  * ceiling (5000 MAD) per day / per transaction as non-deductible. Rather than
@@ -25,9 +26,10 @@ class CashPaymentSplitter
      * Strategy: "max-out 5000 chunks" — floor(amount / max) receipts of `max`,
      * then the remainder as a final receipt. Days are apportioned proportionally
      * to each receipt (each at least 1 day, for the per-day unit price), summed
-     * back to $totalDays. Dates are spread across [$start, $end] as distinct
-     * days; if the rental period is too short for N distinct days, they fall
-     * back to consecutive days from $start.
+     * back to $totalDays. Receipts are dated one day apart from $start
+     * (start, start+1, ...).
+     *
+     * $end is kept in the signature for the callers; dates no longer use it.
      *
      * @param  float  $amount     Full cash amount (TTC) to split.
      * @param  Carbon $start      Booking start date.
@@ -59,7 +61,7 @@ class CashPaymentSplitter
         $n = count($chunkCents);
 
         $days  = $this->apportionDays($chunkCents, $amountCents, $totalDays, $n);
-        $dates = $this->spreadDates($start->copy()->startOfDay(), $end->copy()->startOfDay(), $n);
+        $dates = $this->consecutiveDates($start->copy()->startOfDay(), $n);
 
         $plan = [];
         for ($i = 0; $i < $n; $i++) {
@@ -114,39 +116,15 @@ class CashPaymentSplitter
     }
 
     /**
-     * N distinct receipt dates spread across [$start, $end]. If the period is
-     * too short for N distinct days, use consecutive days from $start.
+     * N receipt dates one day apart, starting on $start.
      *
      * @return string[] Y-m-d dates.
      */
-    private function spreadDates(Carbon $start, Carbon $end, int $n): array
+    private function consecutiveDates(Carbon $start, int $n): array
     {
-        if ($n <= 1) {
-            return [$start->toDateString()];
-        }
-
-        $span = $start->diffInDays($end); // absolute day count between the two
-
-        if ($span < $n - 1) {
-            // Period too short for N distinct days: consecutive from start.
-            $dates = [];
-            for ($i = 0; $i < $n; $i++) {
-                $dates[] = $start->copy()->addDays($i)->toDateString();
-            }
-            return $dates;
-        }
-
-        // Enough room: spread evenly, forcing strictly increasing offsets so
-        // rounding can never collide two receipts onto the same day.
         $dates = [];
-        $prev  = -1;
-        for ($i = 0; $i < $n; $i++) {
-            $offset = (int) round($i * $span / ($n - 1));
-            if ($offset <= $prev) {
-                $offset = $prev + 1;
-            }
-            $prev    = $offset;
-            $dates[] = $start->copy()->addDays($offset)->toDateString();
+        for ($i = 0; $i < max(1, $n); $i++) {
+            $dates[] = $start->copy()->addDays($i)->toDateString();
         }
 
         return $dates;
