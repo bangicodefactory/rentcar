@@ -957,9 +957,32 @@ class BookingController extends Controller
     }
 
     /**
+     * First receipt date for a cash split: the rental start, or the day after
+     * the booking's last cash receipt when that is later. The cash ceiling is
+     * per day, so a second over-cap cash payment on the same booking must not
+     * reuse days that already carry a cash receipt. Other methods don't count.
+     */
+    private function cashSplitStartDate(Booking $booking): Carbon
+    {
+        $start    = Carbon::parse($booking->start_date)->startOfDay();
+        $lastCash = BookingPayment::where('booking_id', $booking->id)
+            ->whereRaw('LOWER(payment_method) = ?', ['espece'])
+            ->max('date');
+
+        if ($lastCash) {
+            $next = Carbon::parse($lastCash)->startOfDay()->addDay();
+            if ($next->greaterThan($start)) {
+                return $next;
+            }
+        }
+
+        return $start;
+    }
+
+    /**
      * Record a cash payment that exceeds the legal ceiling as several compliant
-     * receipts (each <= cash_payment_max), on distinct days across the rental
-     * period, with the rental days apportioned. Each receipt goes through
+     * receipts (each <= cash_payment_max), on consecutive days from
+     * cashSplitStartDate(), with the rental days apportioned. Each receipt goes through
      * recordBookingPayment, so it gets its own BookingPayment + facture and the
      * booking status is kept in sync — identical to a normal payment.
      *
@@ -972,7 +995,7 @@ class BookingController extends Controller
 
         $plan = app(CashPaymentSplitter::class)->plan(
             $amount,
-            Carbon::parse($booking->start_date),
+            $this->cashSplitStartDate($booking),
             Carbon::parse($booking->end_date),
             $totalDays,
             $cashMax
@@ -1554,7 +1577,7 @@ class BookingController extends Controller
 
         $plan = app(CashPaymentSplitter::class)->plan(
             $amount,
-            Carbon::parse($booking->start_date),
+            $this->cashSplitStartDate($booking),
             Carbon::parse($booking->end_date),
             $totalDays,
             $cashMax
