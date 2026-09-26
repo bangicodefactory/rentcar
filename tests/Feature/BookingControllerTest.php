@@ -1003,6 +1003,54 @@ class BookingControllerTest extends TestCase
         $this->assertSame($expected, Tva::where('booking_id', $booking->id)->orderBy('id')->pluck('facture_date')->map(fn ($d) => substr((string) $d, 0, 10))->all());
     }
 
+    public function test_a_second_cash_split_continues_after_the_previous_cash_receipts(): void
+    {
+        // Two over-cap cash payments on one booking must not stack two 5000
+        // receipts on the same day (the cash ceiling is per day).
+        config(['client.features.cash_split' => true, 'client.features.invoice_on_full_payment' => false]);
+        $booking = $this->makeBooking([
+            'amount' => 20000, 'start_date' => '2026-07-01', 'end_date' => '2026-07-11',
+            'payment_status' => 'impaye',
+        ]);
+        $dates = fn () => BookingPayment::where('booking_id', $booking->id)->orderBy('id')->pluck('date')->map(fn ($d) => substr((string) $d, 0, 10))->all();
+
+        $this->actingAs($this->owner)->post(route('booking.payment.store', $booking->id), [
+            'amount' => 8000, 'date' => '2026-07-01', 'payment_method' => 'Espece',
+        ])->assertSessionHas('success');
+        $this->assertSame(['2026-07-01', '2026-07-02'], $dates());
+
+        // The preview for the next split already shows the continued dates.
+        $preview = $this->actingAs($this->owner)->postJson(route('booking.payment.split-preview', $booking->id), [
+            'amount' => 6000, 'payment_method' => 'Espece',
+        ])->assertOk()->json();
+        $this->assertSame(['2026-07-03', '2026-07-04'], array_column($preview['receipts'], 'date'));
+
+        $this->actingAs($this->owner)->post(route('booking.payment.store', $booking->id), [
+            'amount' => 6000, 'date' => '2026-07-01', 'payment_method' => 'Espece',
+        ])->assertSessionHas('success');
+        $this->assertSame(['2026-07-01', '2026-07-02', '2026-07-03', '2026-07-04'], $dates());
+    }
+
+    public function test_a_card_payment_does_not_push_back_a_cash_split(): void
+    {
+        config(['client.features.cash_split' => true, 'client.features.invoice_on_full_payment' => false]);
+        $booking = $this->makeBooking([
+            'amount' => 10000, 'start_date' => '2026-07-01', 'end_date' => '2026-07-11',
+            'payment_status' => 'impaye',
+        ]);
+
+        $this->actingAs($this->owner)->post(route('booking.payment.store', $booking->id), [
+            'amount' => 1000, 'date' => '2026-07-05', 'payment_method' => 'Carte',
+        ])->assertSessionHas('success');
+        $this->actingAs($this->owner)->post(route('booking.payment.store', $booking->id), [
+            'amount' => 9000, 'date' => '2026-07-05', 'payment_method' => 'Espece',
+        ])->assertSessionHas('success');
+
+        $cash = BookingPayment::where('booking_id', $booking->id)->where('payment_method', 'Espece')
+            ->orderBy('id')->pluck('date')->map(fn ($d) => substr((string) $d, 0, 10))->all();
+        $this->assertSame(['2026-07-01', '2026-07-02'], $cash);
+    }
+
     public function test_bulk_mark_paid_cash_split_receipts_are_dated_one_day_apart(): void
     {
         config(['client.features.cash_split' => true, 'client.features.invoice_on_full_payment' => false]);
