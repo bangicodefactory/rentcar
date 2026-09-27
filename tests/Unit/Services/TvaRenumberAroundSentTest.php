@@ -123,4 +123,18 @@ class TvaRenumberAroundSentTest extends TestCase
         $this->assertFalse($records[1]['sent']);
         $this->assertSame('2', $records[1]['new_number']);
     }
+
+    public function test_a_sent_number_is_kept_exactly_as_stored_even_with_leading_zeros(): void
+    {
+        // Review of #235: "0001" must not be rewritten as "1" — the client holds "0001".
+        $sent = $this->inv('2026-01-01', '0001', true);
+        $this->inv('2026-01-02', '2');
+
+        $preview = $this->service->preview(2026);
+        $this->assertSame([], $preview['conflicts']);
+        $this->assertSame(0, $preview['changes']);
+
+        $this->service->renumber(2026);
+        $this->assertSame('0001', $sent->fresh()->facture_number);
+    }
 }
