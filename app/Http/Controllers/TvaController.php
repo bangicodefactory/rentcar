@@ -96,6 +96,7 @@ class TvaController extends Controller
                 'facture_date'      => $t->facture_date ? dateFormat($t->facture_date) : null,
                 'montant_ttc'       => $t->montant_ttc,
                 'payment_method'    => $t->payment_method,
+                'is_sent'           => $t->sent_at !== null,
             ]),
             'filters' => $request->only(['from_date', 'to_date', 'driver_name', 'filter_day', 'filter_month', 'filter_year']),
             'all_ids' => $allIds,
@@ -281,6 +282,7 @@ class TvaController extends Controller
                 'montant_ttc'   => $tva->montant_ttc,
                 'place_label'      => $tva->place_label,
                 'place_amount_ttc' => $tva->place_amount_ttc,
+                'is_sent'          => $tva->sent_at !== null,
             ],
         ]);
     }
@@ -348,6 +350,7 @@ class TvaController extends Controller
                 'payment_method' => $tva->payment_method,
                 'place_label'      => $tva->place_label,
                 'place_amount_ttc' => $tva->place_amount_ttc,
+                'is_sent'          => $tva->sent_at !== null,
             ],
         ]);
     }

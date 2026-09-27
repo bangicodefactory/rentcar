@@ -1338,5 +1338,15 @@
     "The rentals have changed since this was matched — re-run the match.": "Les locations ont changé depuis cette correspondance — relancez la recherche.",
     "Pickup / Return Location": "Lieu de prise en charge / restitution",
     "Location Charge TTC": "Frais de lieu TTC",
-    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Ajouté au montant de la location. Baissez le prix unitaire pour que le total corresponde toujours au paiement."
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Ajouté au montant de la location. Baissez le prix unitaire pour que le total corresponde toujours au paiement.",
+    "Sent": "Envoyée",
+    "Mark as sent": "Marquer comme envoyée",
+    "Unmark sent": "Annuler « envoyée »",
+    ":count invoice(s) marked as sent.": ":count facture(s) marquée(s) comme envoyée(s).",
+    ":count invoice(s) no longer marked as sent.": ":count facture(s) ne sont plus marquée(s) comme envoyée(s).",
+    "This invoice has been sent to the client. Unmark it as sent before editing it.": "Cette facture a été envoyée au client. Annulez « envoyée » avant de la modifier.",
+    "This invoice has been sent to the client. Unmark it as sent before deleting it.": "Cette facture a été envoyée au client. Annulez « envoyée » avant de la supprimer.",
+    "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "Cette réservation a des factures déjà envoyées au client (:numbers). Annulez « envoyée » avant de supprimer la réservation.",
+    "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "Rien n’a été supprimé : :bookings ont des factures déjà envoyées au client (:numbers).",
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "La facture de ce paiement a déjà été envoyée au client (:numbers). Annulez « envoyée » avant de supprimer le paiement."
 }

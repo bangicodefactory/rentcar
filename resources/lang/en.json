@@ -839,5 +839,15 @@
     "The rentals have changed since this was matched — re-run the match.": "The rentals have changed since this was matched — re-run the match.",
     "Pickup / Return Location": "Pickup / Return Location",
     "Location Charge TTC": "Location Charge TTC",
-    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Added on top of the rental. Lower the unit price so the total still matches the payment."
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Added on top of the rental. Lower the unit price so the total still matches the payment.",
+    "Sent": "Sent",
+    "Mark as sent": "Mark as sent",
+    "Unmark sent": "Unmark sent",
+    ":count invoice(s) marked as sent.": ":count invoice(s) marked as sent.",
+    ":count invoice(s) no longer marked as sent.": ":count invoice(s) no longer marked as sent.",
+    "This invoice has been sent to the client. Unmark it as sent before editing it.": "This invoice has been sent to the client. Unmark it as sent before editing it.",
+    "This invoice has been sent to the client. Unmark it as sent before deleting it.": "This invoice has been sent to the client. Unmark it as sent before deleting it.",
+    "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.",
+    "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).",
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment."
 }
