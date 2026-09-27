@@ -45,6 +45,8 @@ class Tva extends Model
     'idpaiment',
         'place_label',
         'place_amount_ttc',
+        'sent_at',
+        'sent_by',
     ];
 
     protected $casts = [
@@ -58,7 +60,38 @@ class Tva extends Model
     'total_amount' => 'float',
     'tva_amount' => 'float',
         'place_amount_ttc' => 'float',
+        'sent_at' => 'datetime',
     ];
+
+    /**
+     * A sent invoice has been handed to a client: its number is locked. It
+     * cannot be edited, deleted (directly or via its booking / payment),
+     * re-issued by the monthly rebuild or moved by the renumber tool.
+     */
+    public function isSent(): bool
+    {
+        return $this->sent_at !== null;
+    }
+
+    public function scopeSent($query)
+    {
+        return $query->whereNotNull('sent_at');
+    }
+
+    public function scopeNotSent($query)
+    {
+        return $query->whereNull('sent_at');
+    }
+
+    /** Comma-separated numbers of the sent invoices in $query, for messages. */
+    public static function sentNumbersIn($query): string
+    {
+        return (clone $query)->whereNotNull('sent_at')
+            ->orderByRaw('CAST(facture_number AS UNSIGNED)')
+            ->pluck('facture_number')
+            ->map(fn ($n) => '#' . $n)
+            ->implode(', ');
+    }
 
     // Accessor for formatted facture date
     public function getFormattedFactureDateAttribute()

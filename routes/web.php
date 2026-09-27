@@ -452,6 +452,8 @@ Route::group([
     Route::resource('tva', TvaController::class);
     Route::get('/tva-report', [TvaController::class, 'report'])->name('tva.report');
     Route::post('/tva/bulk-download', [TvaController::class, 'bulkDownload'])->name('tva.bulk.download');
+    Route::post('/tva/mark-sent', [TvaController::class, 'markSent'])->name('tva.mark-sent');
+    Route::post('/tva/unmark-sent', [TvaController::class, 'unmarkSent'])->name('tva.unmark-sent');
     // genere tva par mois
     Route::post('/tva/generate', [TvaController::class, 'generateMonthlyTva'])->name('tva.generate');
 });

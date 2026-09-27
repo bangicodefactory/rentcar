@@ -674,6 +674,13 @@ class BookingController extends Controller
     public function destroy(Booking $booking)
     {
         if (\Auth::user()->can('delete booking')) {
+            // A sent invoice (handed to a client) must keep its number, so a
+            // booking that has one cannot be deleted.
+            $sent = Tva::sentNumbersIn(Tva::where('booking_id', $booking->id));
+            if ($sent !== '') {
+                return redirect()->back()->with('error', __('This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.', ['numbers' => $sent]));
+            }
+
             // Delete associated TVA record first
             Tva::where('booking_id', $booking->id)->delete();
 
@@ -707,6 +714,16 @@ class BookingController extends Controller
 
         if ($ownedIds->isEmpty()) {
             return redirect()->back()->with('error', __('No bookings selected.'));
+        }
+
+        // All or nothing: if any selected booking has a sent invoice, nothing
+        // is deleted — a sent invoice must keep its number.
+        $sent = Tva::sentNumbersIn(Tva::whereIn('booking_id', $ownedIds));
+        if ($sent !== '') {
+            $bookings = Booking::whereIn('id', Tva::whereIn('booking_id', $ownedIds)->whereNotNull('sent_at')->pluck('booking_id'))
+                ->orderBy('booking_id')->pluck('booking_id')
+                ->map(fn ($n) => '#BOK-' . str_pad((string) $n, 7, '0', STR_PAD_LEFT))->implode(', ');
+            return redirect()->back()->with('error', __('Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).', ['bookings' => $bookings, 'numbers' => $sent]));
         }
 
         Tva::whereIn('booking_id', $ownedIds)->delete();
@@ -1616,6 +1633,11 @@ class BookingController extends Controller
                 // resynced exactly as it was before this branch existed.
                 $this->syncPaymentStatus($bookinmg);
                 return redirect()->back()->with('success', __('Booking payment successfully deleted.'));
+            }
+
+            $sent = Tva::sentNumbersIn(Tva::where('idpaiment', $payment->id));
+            if ($sent !== '') {
+                return redirect()->back()->with('error', __('The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.', ['numbers' => $sent]));
             }
 
             // The status recompute is part of the same unit of work: committing

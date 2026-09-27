@@ -305,6 +305,9 @@ class TvaController extends Controller
         ]);
 
         $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
+        if ($tva->isSent()) {
+            return redirect()->back()->with('error', __('This invoice has been sent to the client. Unmark it as sent before editing it.'));
+        }
 
         $tva->facture_date = $validated['facture_date'];
         $tva->montant_ttc = $validated['montant_ttc'];
@@ -355,8 +358,47 @@ class TvaController extends Controller
         }
 
         $tva = $this->scopeToTenant(Tva::query())->findOrFail($id);
+        if ($tva->isSent()) {
+            return redirect()->back()->with('error', __('This invoice has been sent to the client. Unmark it as sent before deleting it.'));
+        }
         $tva->delete();
         return redirect()->back()->with('success', 'The TVA has been deleted.');
+    }
+
+    /**
+     * Mark invoices as sent (handed to the client): their number is locked.
+     * Accepts one id or a list (bulk selection in Factures). Tenant-scoped.
+     */
+    public function markSent(Request $request)
+    {
+        return $this->setSent($request, true);
+    }
+
+    /** Undo "sent" (a mistake, or a deliberate cancellation step). */
+    public function unmarkSent(Request $request)
+    {
+        return $this->setSent($request, false);
+    }
+
+    private function setSent(Request $request, bool $sent)
+    {
+        if (!\Auth::user()->can('manage tva')) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $validated = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $query = $this->scopeToTenant(Tva::whereIn('id', $validated['ids']));
+        $count = $sent
+            ? $query->whereNull('sent_at')->update(['sent_at' => now(), 'sent_by' => \Auth::id()])
+            : $query->whereNotNull('sent_at')->update(['sent_at' => null, 'sent_by' => null]);
+
+        return redirect()->back()->with('success', $sent
+            ? __(':count invoice(s) marked as sent.', ['count' => $count])
+            : __(':count invoice(s) no longer marked as sent.', ['count' => $count]));
     }
     protected function numberToFrenchWords($num)
     {
@@ -510,10 +552,15 @@ class TvaController extends Controller
         // 1. Delete existing TVA records in the selected month (facture_date within month)
         // Scoped to the caller's tenant (super admin unscoped): a month rebuild
         // must never soft-delete or re-issue another business's invoices.
+        // Sent invoices (handed to a client) are kept as they are: their number
+        // is locked, and their payments are not invoiced a second time below.
         $deleteQuery = $this->scopeToTenant(Tva::whereYear('facture_date', $monthStart->year)
-            ->whereMonth('facture_date', $monthStart->month));
+            ->whereMonth('facture_date', $monthStart->month))
+            ->whereNull('sent_at');
         $deletedCount = $deleteQuery->count();
         $deleteQuery->delete();
+        $sentPaymentIds = Tva::whereNotNull('sent_at')->whereNotNull('idpaiment')
+            ->pluck('idpaiment')->flip();
 
         // 2. Pull BookingPayments in that month to build TVAs (per payment)
         $paymentQuery = $this->scopeToTenant(BookingPayment::whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()]));
@@ -544,6 +591,9 @@ class TvaController extends Controller
         $dueByBooking = [];
 
         foreach ($payments as $payment) {
+            if (isset($sentPaymentIds[$payment->id])) {
+                continue;
+            }
             $booking = Booking::with('drivers')->find($payment->booking_id);
             if (!$booking) {
                 continue;
