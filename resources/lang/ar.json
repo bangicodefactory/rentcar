@@ -1337,5 +1337,13 @@
     "This invoice has been sent to the client. Unmark it as sent before deleting it.": "تم إرسال هذه الفاتورة إلى العميل. ألغِ تحديد الإرسال قبل حذفها.",
     "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "لهذا الحجز فواتير أُرسلت بالفعل إلى العميل (:numbers). ألغِ تحديد الإرسال قبل حذف الحجز.",
     "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "لم يتم حذف أي شيء: :bookings لها فواتير أُرسلت بالفعل إلى العميل (:numbers).",
-    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "تم إرسال فاتورة هذه الدفعة بالفعل إلى العميل (:numbers). ألغِ تحديد الإرسال قبل حذف الدفعة."
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "تم إرسال فاتورة هذه الدفعة بالفعل إلى العميل (:numbers). ألغِ تحديد الإرسال قبل حذف الدفعة.",
+    "Invoices marked as sent keep their number; the others fill the free numbers around them.": "تحتفظ الفواتير المحددة كمُرسلة بأرقامها؛ وتأخذ الفواتير الأخرى الأرقام الحرة من حولها.",
+    "Changes:": "التغييرات:",
+    "Renumbering is blocked:": "إعادة الترقيم محظورة:",
+    "Sent — fixed": "مُرسلة — ثابتة",
+    "Sent invoice :n (:d) has a non-numeric number.": "الفاتورة المُرسلة :n (:d) لها رقم غير رقمي.",
+    "Two sent invoices share number #:n.": "فاتورتان مُرسلتان تحملان الرقم نفسه #:n.",
+    "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "ستأتي الفاتورة المُرسلة #:n (:d) بعد فواتير مرقمة حتى :m: ستكسر إعادة الترقيم ترتيب التواريخ.",
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "لا يمكن ملء الأرقام من :from إلى :to قبل الفاتورة المُرسلة #:n (:d) دون كسر ترتيب التواريخ."
 }

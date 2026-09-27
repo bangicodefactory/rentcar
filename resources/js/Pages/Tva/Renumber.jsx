@@ -58,6 +58,9 @@ function TvaRenumber({ preview: initialPreview, selectedYear: initialYear, years
 
     const count = preview?.count ?? 0;
     const records = preview?.records ?? [];
+    // Sent invoices keep their number; `changes` is how many others move.
+    const changes = preview?.changes ?? count;
+    const conflicts = preview?.conflicts ?? [];
 
     return (
         <div className="p-6 space-y-6">
@@ -75,6 +78,9 @@ function TvaRenumber({ preview: initialPreview, selectedYear: initialYear, years
                         <p className="text-sm text-muted-foreground">
                             {t('Resequence invoice numbers for the selected year, ordered by invoice date then ID. Soft-deleted invoices are skipped.')}
                         </p>
+                        <p className="text-sm text-muted-foreground">
+                            {t('Invoices marked as sent keep their number; the others fill the free numbers around them.')}
+                        </p>
 
                         <div className="space-y-1">
                             <Label>{t('Year')}</Label>
@@ -91,11 +97,24 @@ function TvaRenumber({ preview: initialPreview, selectedYear: initialYear, years
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground">{t('Invoices:')}</span>
                             <Badge variant="default" className="text-base px-3 py-1">{count}</Badge>
+                            <span className="text-sm text-muted-foreground">{t('Changes:')}</span>
+                            <Badge variant="outline" className="text-base px-3 py-1">{changes}</Badge>
                         </div>
+
+                        {conflicts.length > 0 && (
+                            <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive space-y-1">
+                                <p className="font-semibold flex items-center gap-1">
+                                    <AlertTriangle className="h-4 w-4" /> {t('Renumbering is blocked:')}
+                                </p>
+                                <ul className="list-disc pl-5">
+                                    {conflicts.map((c, i) => <li key={i}>{c}</li>)}
+                                </ul>
+                            </div>
+                        )}
 
                         <Button
                             className="w-full"
-                            disabled={count === 0 || loading}
+                            disabled={changes === 0 || conflicts.length > 0 || loading}
                             onClick={openDialog}
                         >
                             <RefreshCw className="mr-2 h-4 w-4" /> {t('Apply Renumbering')}
@@ -152,6 +171,9 @@ function TvaRenumber({ preview: initialPreview, selectedYear: initialYear, years
                                                 <Badge variant="outline" className="font-mono text-sm font-bold text-green-700 border-green-400">
                                                     {rec.new_number}
                                                 </Badge>
+                                                {rec.sent && (
+                                                    <Badge variant="secondary" className="ml-2">{t('Sent — fixed')}</Badge>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -175,7 +197,7 @@ function TvaRenumber({ preview: initialPreview, selectedYear: initialYear, years
                     <div className="space-y-4">
                         <p className="text-sm">
                             {t('You are about to renumber')}{' '}
-                            <strong>{count}</strong> {t('invoice(s) for year')}{' '}
+                            <strong>{changes}</strong> {t('invoice(s) for year')}{' '}
                             <strong>{year}</strong>.
                         </p>
                         <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
