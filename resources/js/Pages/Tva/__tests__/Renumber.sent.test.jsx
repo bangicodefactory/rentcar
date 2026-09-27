@@ -31,6 +31,7 @@ describe('Tva/Renumber — sent invoices', () => {
         renderPage({ year: 2026, count: 2, changes: 1, conflicts: [], records });
 
         expect(screen.getAllByText('Sent — fixed')).toHaveLength(1);
+        expect(screen.getByText('Sent — fixed').className).toContain('bg-red-600');
         expect(screen.getByRole('button', { name: /Apply Renumbering/ }).disabled).toBe(false);
     });
 

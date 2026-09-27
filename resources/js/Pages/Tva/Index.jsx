@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SentBadge } from '@/components/SentBadge';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -304,7 +305,7 @@ function TvaIndex({ tvas, filters, all_ids = [] }) {
                                     <TableCell className="font-mono text-sm">
                                         {t.facture_number ?? <span className="text-muted-foreground">N/A</span>}
                                         {t.is_sent && (
-                                            <Badge variant="secondary" className="ml-2 font-sans">{tr('Sent')}</Badge>
+                                            <SentBadge className="ml-2 font-sans">{tr('Sent')}</SentBadge>
                                         )}
                                     </TableCell>
                                     <TableCell className="font-mono text-sm">
