@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SentBadge } from '@/components/SentBadge';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -172,7 +173,7 @@ function TvaRenumber({ preview: initialPreview, selectedYear: initialYear, years
                                                     {rec.new_number}
                                                 </Badge>
                                                 {rec.sent && (
-                                                    <Badge variant="secondary" className="ml-2">{t('Sent — fixed')}</Badge>
+                                                    <SentBadge className="ml-2">{t('Sent — fixed')}</SentBadge>
                                                 )}
                                             </TableCell>
                                         </TableRow>

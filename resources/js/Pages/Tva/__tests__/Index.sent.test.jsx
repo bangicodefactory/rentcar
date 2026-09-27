@@ -48,6 +48,8 @@ describe('Tva/Index — sent invoices', () => {
 
         const sent = rowOf('788');
         expect(within(sent).getByText('Sent')).toBeTruthy();
+        // Solid red so it stands out.
+        expect(within(sent).getByText('Sent').className).toContain('bg-red-600');
         expect(within(sent).queryByLabelText('Edit')).toBeNull();
         expect(within(sent).queryByLabelText('Delete')).toBeNull();
 

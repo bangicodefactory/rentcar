@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Send, Undo2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { SentBadge } from '@/components/SentBadge';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -47,7 +48,7 @@ function TvaShow({ tva }) {
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         {t('Invoice')} #{tva.facture_number}
-                        {tva.is_sent && <Badge variant="secondary">{t('Sent')}</Badge>}
+                        {tva.is_sent && <SentBadge>{t('Sent')}</SentBadge>}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
