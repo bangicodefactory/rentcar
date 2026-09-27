@@ -716,5 +716,13 @@
     "This invoice has been sent to the client. Unmark it as sent before deleting it.": "Deze factuur is naar de klant verzonden. Hef de markering verzonden op voordat u haar verwijdert.",
     "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "Deze reservering heeft facturen die al naar de klant zijn verzonden (:numbers). Hef de markering verzonden op voordat u de reservering verwijdert.",
     "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "Er is niets verwijderd: :bookings hebben facturen die al naar de klant zijn verzonden (:numbers).",
-    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "De factuur van deze betaling is al naar de klant verzonden (:numbers). Hef de markering verzonden op voordat u de betaling verwijdert."
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "De factuur van deze betaling is al naar de klant verzonden (:numbers). Hef de markering verzonden op voordat u de betaling verwijdert.",
+    "Invoices marked as sent keep their number; the others fill the free numbers around them.": "Facturen gemarkeerd als verzonden behouden hun nummer; de andere vullen de vrije nummers eromheen.",
+    "Changes:": "Wijzigingen:",
+    "Renumbering is blocked:": "Hernummering geblokkeerd:",
+    "Sent — fixed": "Verzonden — vast",
+    "Sent invoice :n (:d) has a non-numeric number.": "Verzonden factuur :n (:d) heeft een niet-numeriek nummer.",
+    "Two sent invoices share number #:n.": "Twee verzonden facturen hebben hetzelfde nummer #:n.",
+    "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "Verzonden factuur #:n (:d) zou na facturen komen die al tot :m genummerd zijn: hernummering zou de datumvolgorde breken.",
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Nummers :from tot :to kunnen niet worden gevuld vóór verzonden factuur #:n (:d) zonder de datumvolgorde te breken."
 }

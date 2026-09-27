@@ -1348,5 +1348,13 @@
     "This invoice has been sent to the client. Unmark it as sent before deleting it.": "Cette facture a été envoyée au client. Annulez « envoyée » avant de la supprimer.",
     "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "Cette réservation a des factures déjà envoyées au client (:numbers). Annulez « envoyée » avant de supprimer la réservation.",
     "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "Rien n’a été supprimé : :bookings ont des factures déjà envoyées au client (:numbers).",
-    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "La facture de ce paiement a déjà été envoyée au client (:numbers). Annulez « envoyée » avant de supprimer le paiement."
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "La facture de ce paiement a déjà été envoyée au client (:numbers). Annulez « envoyée » avant de supprimer le paiement.",
+    "Invoices marked as sent keep their number; the others fill the free numbers around them.": "Les factures marquées « envoyée » gardent leur numéro ; les autres prennent les numéros libres autour.",
+    "Changes:": "Modifications :",
+    "Renumbering is blocked:": "Renumérotation bloquée :",
+    "Sent — fixed": "Envoyée — fixe",
+    "Sent invoice :n (:d) has a non-numeric number.": "La facture envoyée :n (:d) a un numéro non numérique.",
+    "Two sent invoices share number #:n.": "Deux factures envoyées ont le même numéro #:n.",
+    "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "La facture envoyée #:n (:d) viendrait après des factures déjà numérotées jusqu'à :m : la renumérotation casserait l'ordre des dates.",
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Les numéros :from à :to ne peuvent pas être remplis avant la facture envoyée #:n (:d) sans casser l'ordre des dates."
 }

@@ -849,5 +849,13 @@
     "This invoice has been sent to the client. Unmark it as sent before deleting it.": "This invoice has been sent to the client. Unmark it as sent before deleting it.",
     "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.",
     "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).",
-    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment."
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.",
+    "Invoices marked as sent keep their number; the others fill the free numbers around them.": "Invoices marked as sent keep their number; the others fill the free numbers around them.",
+    "Changes:": "Changes:",
+    "Renumbering is blocked:": "Renumbering is blocked:",
+    "Sent — fixed": "Sent — fixed",
+    "Sent invoice :n (:d) has a non-numeric number.": "Sent invoice :n (:d) has a non-numeric number.",
+    "Two sent invoices share number #:n.": "Two sent invoices share number #:n.",
+    "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.",
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order."
 }
