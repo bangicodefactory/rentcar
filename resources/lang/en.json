@@ -857,5 +857,6 @@
     "Sent invoice :n (:d) has a non-numeric number.": "Sent invoice :n (:d) has a non-numeric number.",
     "Two sent invoices share number #:n.": "Two sent invoices share number #:n.",
     "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.",
-    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order."
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.",
+    "This month cannot be rebuilt: sent invoice(s) :numbers are not linked to a payment, so their payment would be invoiced twice.": "This month cannot be rebuilt: sent invoice(s) :numbers are not linked to a payment, so their payment would be invoiced twice."
 }

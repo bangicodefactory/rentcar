@@ -1345,5 +1345,6 @@
     "Sent invoice :n (:d) has a non-numeric number.": "الفاتورة المُرسلة :n (:d) لها رقم غير رقمي.",
     "Two sent invoices share number #:n.": "فاتورتان مُرسلتان تحملان الرقم نفسه #:n.",
     "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "ستأتي الفاتورة المُرسلة #:n (:d) بعد فواتير مرقمة حتى :m: ستكسر إعادة الترقيم ترتيب التواريخ.",
-    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "لا يمكن ملء الأرقام من :from إلى :to قبل الفاتورة المُرسلة #:n (:d) دون كسر ترتيب التواريخ."
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "لا يمكن ملء الأرقام من :from إلى :to قبل الفاتورة المُرسلة #:n (:d) دون كسر ترتيب التواريخ.",
+    "This month cannot be rebuilt: sent invoice(s) :numbers are not linked to a payment, so their payment would be invoiced twice.": "لا يمكن إعادة إنشاء هذا الشهر: الفاتورة (الفواتير) المُرسلة :numbers غير مرتبطة بأي دفعة، لذا سيتم فوترة دفعتها مرتين."
 }
