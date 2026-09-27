@@ -205,4 +205,30 @@ class InvoiceSentLockTest extends TestCase
                 ->orderByRaw('CAST(facture_number AS UNSIGNED)')->pluck('facture_number')->all()
         );
     }
+
+    public function test_monthly_rebuild_refuses_a_month_with_a_sent_invoice_not_linked_to_its_payment(): void
+    {
+        // Review of #234: invoices issued before idpaiment existed have no
+        // payment link, so the rebuild can't tell which payment a sent one
+        // covers and would invoice that payment a second time. It refuses.
+        $booking = Booking::factory()->create(['parent_id' => $this->owner->id]);
+        BookingPayment::factory()->create([
+            'booking_id' => $booking->id, 'parent_id' => $this->owner->id, 'date' => '2025-06-10', 'amount' => 1200,
+        ]);
+        $legacy = Tva::factory()->withInvoice()->create([
+            'parent_id' => $this->owner->id, 'booking_id' => $booking->id, 'idpaiment' => null,
+            'facture_number' => '40', 'facture_date' => '2025-06-10', 'montant_ttc' => 1200, 'sent_at' => now(),
+        ]);
+        [, , $unsent] = $this->invoicedBooking('41', '2025-06-12', false);
+
+        $this->actingAs($this->owner)
+            ->post(route('tva.generate'), ['month' => '2025-06'])
+            ->assertSessionHas('error');
+
+        // Nothing touched: no second invoice for the payment, the unsent one not rebuilt.
+        $this->assertSame(1, Tva::where('booking_id', $booking->id)->count());
+        $this->assertNotSoftDeleted($legacy);
+        $this->assertNotSoftDeleted($unsent);
+        $this->assertSame('41', $unsent->fresh()->facture_number);
+    }
 }

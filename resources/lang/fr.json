@@ -1356,5 +1356,6 @@
     "Sent invoice :n (:d) has a non-numeric number.": "La facture envoyée :n (:d) a un numéro non numérique.",
     "Two sent invoices share number #:n.": "Deux factures envoyées ont le même numéro #:n.",
     "Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.": "La facture envoyée #:n (:d) viendrait après des factures déjà numérotées jusqu'à :m : la renumérotation casserait l'ordre des dates.",
-    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Les numéros :from à :to ne peuvent pas être remplis avant la facture envoyée #:n (:d) sans casser l'ordre des dates."
+    "Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.": "Les numéros :from à :to ne peuvent pas être remplis avant la facture envoyée #:n (:d) sans casser l'ordre des dates.",
+    "This month cannot be rebuilt: sent invoice(s) :numbers are not linked to a payment, so their payment would be invoiced twice.": "Ce mois ne peut pas être régénéré : la ou les facture(s) envoyée(s) :numbers ne sont liées à aucun paiement, leur paiement serait facturé deux fois."
 }

@@ -551,6 +551,16 @@ class TvaController extends Controller
         // leave a month half-deleted / half-regenerated, and so the per-year
         // counter reads are serialised under lockForUpdate against a concurrent
         // generation. (Hard uniqueness still needs the DB unique index — IST-230.)
+        // A sent invoice with no payment link (issued before idpaiment existed)
+        // can't be matched to its payment, so rebuilding would invoice that
+        // payment a second time next to the invoice the client holds. Refuse.
+        $unlinkedSent = Tva::sentNumbersIn($this->scopeToTenant(Tva::whereYear('facture_date', $monthStart->year)
+            ->whereMonth('facture_date', $monthStart->month))
+            ->whereNull('idpaiment'));
+        if ($unlinkedSent !== '') {
+            return redirect()->back()->with('error', __('This month cannot be rebuilt: sent invoice(s) :numbers are not linked to a payment, so their payment would be invoiced twice.', ['numbers' => $unlinkedSent]));
+        }
+
         return \DB::transaction(function () use ($monthStart, $monthEnd) {
         // 1. Delete existing TVA records in the selected month (facture_date within month)
         // Scoped to the caller's tenant (super admin unscoped): a month rebuild
