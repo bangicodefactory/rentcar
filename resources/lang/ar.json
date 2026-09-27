@@ -1327,5 +1327,15 @@
     "The rentals have changed since this was matched — re-run the match.": "تغيّرت عمليات الكراء منذ هذه المطابقة — أعد تشغيل المطابقة.",
     "Pickup / Return Location": "مكان الاستلام / الإرجاع",
     "Location Charge TTC": "رسوم المكان شاملة الضريبة",
-    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "يُضاف إلى مبلغ الكراء. اخفض سعر الوحدة ليبقى الإجمالي مطابقًا للدفع."
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "يُضاف إلى مبلغ الكراء. اخفض سعر الوحدة ليبقى الإجمالي مطابقًا للدفع.",
+    "Sent": "مُرسلة",
+    "Mark as sent": "تحديد كمُرسلة",
+    "Unmark sent": "إلغاء تحديد الإرسال",
+    ":count invoice(s) marked as sent.": "تم تحديد :count فاتورة كمُرسلة.",
+    ":count invoice(s) no longer marked as sent.": "لم تعد :count فاتورة محددة كمُرسلة.",
+    "This invoice has been sent to the client. Unmark it as sent before editing it.": "تم إرسال هذه الفاتورة إلى العميل. ألغِ تحديد الإرسال قبل تعديلها.",
+    "This invoice has been sent to the client. Unmark it as sent before deleting it.": "تم إرسال هذه الفاتورة إلى العميل. ألغِ تحديد الإرسال قبل حذفها.",
+    "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "لهذا الحجز فواتير أُرسلت بالفعل إلى العميل (:numbers). ألغِ تحديد الإرسال قبل حذف الحجز.",
+    "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "لم يتم حذف أي شيء: :bookings لها فواتير أُرسلت بالفعل إلى العميل (:numbers).",
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "تم إرسال فاتورة هذه الدفعة بالفعل إلى العميل (:numbers). ألغِ تحديد الإرسال قبل حذف الدفعة."
 }

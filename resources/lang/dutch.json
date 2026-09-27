@@ -706,5 +706,15 @@
   "The rentals have changed since this was matched — re-run the match.": "De verhuringen zijn sinds deze koppeling gewijzigd — voer de koppeling opnieuw uit.",
     "Pickup / Return Location": "Ophaal- / retourlocatie",
     "Location Charge TTC": "Locatiekosten incl. btw",
-    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Wordt bij de huur opgeteld. Verlaag de eenheidsprijs zodat het totaal blijft overeenkomen met de betaling."
+    "Added on top of the rental. Lower the unit price so the total still matches the payment.": "Wordt bij de huur opgeteld. Verlaag de eenheidsprijs zodat het totaal blijft overeenkomen met de betaling.",
+    "Sent": "Verzonden",
+    "Mark as sent": "Markeren als verzonden",
+    "Unmark sent": "Markering verzonden opheffen",
+    ":count invoice(s) marked as sent.": ":count factuur/facturen gemarkeerd als verzonden.",
+    ":count invoice(s) no longer marked as sent.": ":count factuur/facturen niet langer gemarkeerd als verzonden.",
+    "This invoice has been sent to the client. Unmark it as sent before editing it.": "Deze factuur is naar de klant verzonden. Hef de markering verzonden op voordat u haar wijzigt.",
+    "This invoice has been sent to the client. Unmark it as sent before deleting it.": "Deze factuur is naar de klant verzonden. Hef de markering verzonden op voordat u haar verwijdert.",
+    "This booking has invoice(s) already sent to the client (:numbers). Unmark them as sent before deleting the booking.": "Deze reservering heeft facturen die al naar de klant zijn verzonden (:numbers). Hef de markering verzonden op voordat u de reservering verwijdert.",
+    "Nothing was deleted: :bookings have invoice(s) already sent to the client (:numbers).": "Er is niets verwijderd: :bookings hebben facturen die al naar de klant zijn verzonden (:numbers).",
+    "The invoice of this payment was already sent to the client (:numbers). Unmark it as sent before deleting the payment.": "De factuur van deze betaling is al naar de klant verzonden (:numbers). Hef de markering verzonden op voordat u de betaling verwijdert."
 }

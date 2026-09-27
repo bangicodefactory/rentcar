@@ -90,7 +90,13 @@ function TvaEdit({ tva }) {
                     <CardTitle className="text-base">{t('Invoice')} #{tva.facture_number}</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    {tva.is_sent && (
+                        <p className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                            {t('This invoice has been sent to the client. Unmark it as sent before editing it.')}
+                        </p>
+                    )}
                     <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <fieldset disabled={!!tva.is_sent} className="contents">
 
                         {/* Booking — read-only display */}
                         <div className="space-y-1">
@@ -208,11 +214,12 @@ function TvaEdit({ tva }) {
                             )}
                         </div>
 
+                        </fieldset>
                         <div className="md:col-span-2 flex justify-end gap-2 pt-2">
                             <Button type="button" variant="outline" onClick={() => router.get(route('tva.index'))}>
                                 {t('Cancel')}
                             </Button>
-                            <Button type="submit" disabled={isSubmitting}>
+                            <Button type="submit" disabled={isSubmitting || !!tva.is_sent}>
                                 {t('Update TVA')}
                             </Button>
                         </div>

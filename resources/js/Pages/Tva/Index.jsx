@@ -12,7 +12,7 @@ import {
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Eye, Pencil, Trash2, Download, RefreshCw, Receipt } from 'lucide-react';
+import { Eye, Pencil, Trash2, Download, RefreshCw, Receipt, Send, Undo2 } from 'lucide-react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useConfirm } from '@/components/ui/confirm-dialog';
@@ -42,6 +42,7 @@ const YEARS = Array.from({ length: currentYear - 2019 }, (_, i) => currentYear -
 
 function TvaIndex({ tvas, filters, all_ids = [] }) {
     const t = useTranslation();
+    const tr = t; // rows below shadow `t`
     const confirmDialog = useConfirm();
     const { auth } = usePage().props;
     const can = (p) => auth.permissions.includes(p);
@@ -95,6 +96,16 @@ function TvaIndex({ tvas, filters, all_ids = [] }) {
     // previous hand-built <form> POST read a static <meta> CSRF token that goes
     // stale in the SPA (the <head> isn't re-rendered on Inertia navigations),
     // causing a 419 Page Expired (BAN-256).
+    // "Sent" = handed to the client: the server locks the number (no edit,
+    // delete, rebuild or renumber). Applies to the current selection.
+    function setSent(sent) {
+        if (!selected.length) return;
+        router.post(route(sent ? 'tva.mark-sent' : 'tva.unmark-sent'), { ids: selected }, {
+            preserveScroll: true,
+            onSuccess: () => setSelected([]),
+        });
+    }
+
     async function bulkDownload() {
         if (!selected.length || downloading) return;
         setDownloading(true);
@@ -234,10 +245,20 @@ function TvaIndex({ tvas, filters, all_ids = [] }) {
                     <CardTitle className="flex items-center justify-between">
                         <span>{t('Invoices')} ({tvas.total})</span>
                         {selected.length > 0 && (
-                            <Button size="sm" variant="outline" onClick={bulkDownload} disabled={downloading}>
-                                <Download className="mr-2 h-4 w-4" />
-                                {downloading ? t('Preparing…') : `${t('Download Selected')} (${selected.length})`}
-                            </Button>
+                            <span className="flex flex-wrap gap-2">
+                                <Button size="sm" variant="outline" onClick={() => setSent(true)}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {`${t('Mark as sent')} (${selected.length})`}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => setSent(false)}>
+                                    <Undo2 className="mr-2 h-4 w-4" />
+                                    {t('Unmark sent')}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={bulkDownload} disabled={downloading}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    {downloading ? t('Preparing…') : `${t('Download Selected')} (${selected.length})`}
+                                </Button>
+                            </span>
                         )}
                     </CardTitle>
                 </CardHeader>
@@ -282,6 +303,9 @@ function TvaIndex({ tvas, filters, all_ids = [] }) {
                                     </TableCell>
                                     <TableCell className="font-mono text-sm">
                                         {t.facture_number ?? <span className="text-muted-foreground">N/A</span>}
+                                        {t.is_sent && (
+                                            <Badge variant="secondary" className="ml-2 font-sans">{tr('Sent')}</Badge>
+                                        )}
                                     </TableCell>
                                     <TableCell className="font-mono text-sm">
                                         {t.booking_id_display ?? <span className="text-muted-foreground">N/A</span>}
@@ -300,14 +324,14 @@ function TvaIndex({ tvas, filters, all_ids = [] }) {
                                                     </Link>
                                                 </Button>
                                             )}
-                                            {can('edit booking') && (
+                                            {can('edit booking') && !t.is_sent && (
                                                 <Button variant="ghost" size="icon" asChild>
                                                     <Link href={route('tva.edit', t.id)} aria-label="Edit">
                                                         <Pencil className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
                                             )}
-                                            {can('delete booking') && (
+                                            {can('delete booking') && !t.is_sent && (
                                                 <Button variant="ghost" size="icon"
                                                     className="text-destructive hover:text-destructive"
                                                     onClick={() => remove(t.id)} aria-label="Delete">

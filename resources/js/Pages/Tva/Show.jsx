@@ -1,7 +1,8 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye, Pencil } from 'lucide-react';
+import { Eye, Pencil, Send, Undo2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -24,16 +25,30 @@ function TvaShow({ tva }) {
                 <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                     <Eye className="h-6 w-6" /> {t('TVA Details')}
                 </h1>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={route('tva.edit', tva.id)}>
-                        <Pencil className="mr-2 h-4 w-4" /> {t('Edit')}
-                    </Link>
-                </Button>
+                <div className="flex gap-2">
+                    {/* Sent = handed to the client: number locked (no edit / delete). */}
+                    <Button variant="outline" size="sm"
+                        onClick={() => router.post(route(tva.is_sent ? 'tva.unmark-sent' : 'tva.mark-sent'), { ids: [tva.id] }, { preserveScroll: true })}>
+                        {tva.is_sent
+                            ? <><Undo2 className="mr-2 h-4 w-4" /> {t('Unmark sent')}</>
+                            : <><Send className="mr-2 h-4 w-4" /> {t('Mark as sent')}</>}
+                    </Button>
+                    {!tva.is_sent && (
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={route('tva.edit', tva.id)}>
+                                <Pencil className="mr-2 h-4 w-4" /> {t('Edit')}
+                            </Link>
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">{t('Invoice')} #{tva.facture_number}</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        {t('Invoice')} #{tva.facture_number}
+                        {tva.is_sent && <Badge variant="secondary">{t('Sent')}</Badge>}
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-6">
