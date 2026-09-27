@@ -118,14 +118,14 @@ class TvaRenumberService
                     $sentNumbers[$s] = true;
 
                     if ($s === $c) {
-                        $assigned[$row->id] = (string) $s;
+                        $assigned[$row->id] = $raw;   // exact stored text, never reformatted
                         $c++;
                         $si++;
                         continue;
                     }
                     if ($s < $c) {
                         $conflicts[] = __('Sent invoice #:n (:d) would come after invoices already numbered up to :m: renumbering would break date order.', ['n' => $s, 'd' => $date, 'm' => $c - 1]);
-                        $assigned[$row->id] = (string) $s;
+                        $assigned[$row->id] = $raw;   // exact stored text, never reformatted
                         $si++;
                         continue;
                     }
@@ -137,7 +137,7 @@ class TvaRenumberService
                         continue;
                     }
                     $conflicts[] = __('Numbers :from to :to cannot be filled before sent invoice #:n (:d) without breaking date order.', ['from' => $c, 'to' => $s - 1, 'n' => $s, 'd' => $date]);
-                    $assigned[$row->id] = (string) $s;
+                    $assigned[$row->id] = $raw;   // exact stored text, never reformatted
                     $c = $s + 1;
                     $si++;
                     continue;
