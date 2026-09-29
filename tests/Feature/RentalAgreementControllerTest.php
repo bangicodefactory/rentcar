@@ -316,17 +316,26 @@ class RentalAgreementControllerTest extends TestCase
             );
     }
 
-    public function test_show_fires_at_most_2_driver_lookup_queries(): void
+    public function test_show_loads_both_drivers_in_one_user_query_and_one_profile_query(): void
     {
+        // BAN-240 batched the two drivers' lookups. Count exactly those queries
+        // so a revert to per-driver lookups (2 + 2) fails: user queries whose
+        // bindings name one of the agreement's drivers, and drivers-table queries.
         $driver2 = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
-        Driver::factory()->create(['user_id' => $driver2->id, 'parent_id' => $this->owner->id, 'driver_id' => 99]);
+        Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id]);
+        Driver::factory()->create(['user_id' => $driver2->id, 'parent_id' => $this->owner->id]);
 
         $agreement = $this->makeAgreement(['driver2' => $driver2->id]);
+        $driverIds = [$this->driver->id, $driver2->id];
 
-        $driverQueries = 0;
-        DB::listen(function ($query) use (&$driverQueries) {
-            if (preg_match('/\busers\b|\bdrivers\b/i', $query->sql)) {
-                $driverQueries++;
+        $userLookups = 0;
+        $profileLookups = 0;
+        DB::listen(function ($query) use (&$userLookups, &$profileLookups, $driverIds) {
+            if (preg_match('/\bfrom\s+[`"]?drivers[`"]?/i', $query->sql)) {
+                $profileLookups++;
+            } elseif (preg_match('/\bfrom\s+[`"]?users[`"]?/i', $query->sql)
+                && array_intersect($driverIds, array_map('intval', $query->bindings))) {
+                $userLookups++;
             }
         });
 
@@ -334,12 +343,27 @@ class RentalAgreementControllerTest extends TestCase
             ->get(route('rental-agreement.show', Crypt::encrypt($agreement->id)))
             ->assertOk();
 
-        // ≤ 4 allows for up to 2 Spatie permission-check queries that also touch
-        // the users table within the listener window, while still catching any
-        // regression that re-introduces per-driver lazy loads (which would be ≥ 6).
-        $this->assertLessThanOrEqual(4, $driverQueries,
-            "show() should fire at most 4 queries for users+drivers (fired {$driverQueries})"
-        );
+        $this->assertSame(1, $userLookups, "show() should load both drivers' users in 1 query (fired {$userLookups})");
+        $this->assertSame(1, $profileLookups, "show() should load both driver profiles in 1 query (fired {$profileLookups})");
+    }
+
+    public function test_show_uses_the_first_driver_profile_when_a_driver_has_two(): void
+    {
+        // drivers.user_id has no unique index. Before BAN-240 the page used
+        // Driver::where(user_id)->first() (lowest id); keyBy() kept the last row
+        // instead. Duplicates only come from bad data, but the page must keep
+        // showing the same profile as before.
+        $first = Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'license_number' => 'LIC-FIRST']);
+        Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'license_number' => 'LIC-SECOND']);
+
+        $agreement = $this->makeAgreement();
+
+        $this->actingAs($this->owner)
+            ->get(route('rental-agreement.show', Crypt::encrypt($agreement->id)))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('agreement.driver1.license_number', $first->license_number)
+            );
     }
 
     // ── RentalAgreementController::update ─────────────────────────────────────
