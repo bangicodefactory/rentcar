@@ -322,8 +322,9 @@ class RentalAgreementControllerTest extends TestCase
         // so a revert to per-driver lookups (2 + 2) fails: user queries whose
         // bindings name one of the agreement's drivers, and drivers-table queries.
         $driver2 = User::factory()->driver()->create(['parent_id' => $this->owner->id]);
-        Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id]);
-        Driver::factory()->create(['user_id' => $driver2->id, 'parent_id' => $this->owner->id]);
+        // drivers.driver_id is an integer column; the factory's 'DR-####' string is rejected.
+        Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'driver_id' => 98]);
+        Driver::factory()->create(['user_id' => $driver2->id, 'parent_id' => $this->owner->id, 'driver_id' => 99]);
 
         $agreement = $this->makeAgreement(['driver2' => $driver2->id]);
         $driverIds = [$this->driver->id, $driver2->id];
@@ -353,8 +354,8 @@ class RentalAgreementControllerTest extends TestCase
         // Driver::where(user_id)->first() (lowest id); keyBy() kept the last row
         // instead. Duplicates only come from bad data, but the page must keep
         // showing the same profile as before.
-        $first = Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'license_number' => 'LIC-FIRST']);
-        Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'license_number' => 'LIC-SECOND']);
+        $first = Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'driver_id' => 101, 'license_number' => 'LIC-FIRST']);
+        Driver::factory()->create(['user_id' => $this->driver->id, 'parent_id' => $this->owner->id, 'driver_id' => 102, 'license_number' => 'LIC-SECOND']);
 
         $agreement = $this->makeAgreement();
 
