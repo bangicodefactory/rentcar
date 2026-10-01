@@ -124,13 +124,23 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
     // in-flight stock-rate lookup, whose reply is dropped (the blur that follows
     // re-prices with the typed value). Any other in-flight recalculation (e.g. a
     // date change) is left to land, since Enter can submit without a blur.
+    // Leaving the field re-prices only after an edit: tabbing past an untouched
+    // price would otherwise rewrite a saved amount that days × price doesn't
+    // explain (e.g. a negotiated total) with the plain product.
     const dailyPriceField = register('daily_price');
+    const priceEdited = useRef(false);
     function onDailyPriceTyped(e) {
+        priceEdited.current = true;
         if (vehicleRatePending.current) {
             ++rateRequestSeq.current;
             vehicleRatePending.current = false;
         }
         return dailyPriceField.onChange(e);
+    }
+    function onDailyPriceLeft() {
+        if (!priceEdited.current) return;
+        priceEdited.current = false;
+        recalculate(!vehicleRatePending.current);
     }
 
     // A per-day price is already in the field (auto-filled or typed/negotiated)
@@ -294,7 +304,7 @@ function BookingCreate({ vehicles: initialVehicles, drivers, statuses, places, a
                                     min="0"
                                     {...dailyPriceField}
                                     onChange={onDailyPriceTyped}
-                                    onBlur={() => recalculate(!vehicleRatePending.current)}
+                                    onBlur={onDailyPriceLeft}
                                 />
                             </div>
 
