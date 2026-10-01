@@ -269,7 +269,10 @@ class RentalAgreementController extends Controller
             // Batch-load both drivers' user records and Driver profiles in 2 queries
             $driverIds    = array_values(array_filter([$rentalAgreement->driver, $rentalAgreement->driver2]));
             $users        = User::whereIn('id', $driverIds)->get()->keyBy('id');
-            $driverProfiles = Driver::whereIn('user_id', $driverIds)->get()->keyBy('user_id');
+            // keyBy() keeps the LAST row per key; sort newest-first so the kept
+            // profile is the lowest id — what Driver::where(user_id)->first()
+            // returned before this was batched (drivers.user_id isn't unique).
+            $driverProfiles = Driver::whereIn('user_id', $driverIds)->get()->sortByDesc('id')->keyBy('user_id');
 
             $user_1        = $users->get($rentalAgreement->driver);
             $user_2        = $rentalAgreement->driver2 ? $users->get($rentalAgreement->driver2) : null;
