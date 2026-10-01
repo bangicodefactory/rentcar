@@ -156,8 +156,10 @@ describe('Booking/Create — price field during a car switch', () => {
 
         fireEvent.focus(price());
         fireEvent.blur(price());
-        await waitFor(() => expect(rateCalls().length).toBeGreaterThan(callsBefore));
-        expect(rateCalls().at(-1)[1].params.daychange).toBe(0);
+        // Untouched, so leaving it sends nothing; the car switch's own reply
+        // still fills the new car's rate.
+        await new Promise((r) => setTimeout(r, 20));
+        expect(rateCalls()).toHaveLength(callsBefore);
 
         held.release();
         await waitFor(() => expect(price().value).toBe('300'));

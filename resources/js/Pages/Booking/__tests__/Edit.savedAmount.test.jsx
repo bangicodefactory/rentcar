@@ -200,3 +200,34 @@ describe('Booking/Edit — imported booking edge cases (fourth review)', () => {
         expect(price().value).toBe('0.00');
     });
 });
+
+describe('Booking/Edit — leaving the price field', () => {
+    it('tabbing through the price without changing it keeps a saved amount the breakdown does not explain', async () => {
+        const { container } = renderEdit({ ...importedBooking, daily_price_final: '150.00', amount: 9999 });
+        await waitFor(() => expect(rateCalls().length).toBe(1));
+
+        fireEvent.focus(price());
+        fireEvent.blur(price());
+        await new Promise((r) => setTimeout(r, 20));
+
+        expect(rateCalls()).toHaveLength(1);
+        expect(amountOf(container)).toBe('9999');
+    });
+
+    it('a typed price still re-prices when the field is left', async () => {
+        const { container } = renderEdit({ ...importedBooking, daily_price_final: '150.00', amount: 9999 });
+        await waitFor(() => expect(rateCalls().length).toBe(1));
+
+        fireEvent.change(price(), { target: { value: '175' } });
+        fireEvent.blur(price());
+
+        await waitFor(() => expect(amountOf(container)).toBe('2800'));
+        expect(rateCalls().at(-1)[1].params.daychange).toBe(1);
+
+        // A second pass through the field without another edit leaves it alone.
+        const callsAfter = rateCalls().length;
+        fireEvent.blur(price());
+        await new Promise((r) => setTimeout(r, 20));
+        expect(rateCalls()).toHaveLength(callsAfter);
+    });
+});
