@@ -18,8 +18,6 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'first_name',
-        'last_name',
         'email',
         'password',
         'type',
@@ -45,13 +43,32 @@ class User extends Authenticatable
 
 
     /**
+     * first_name/last_name are deliberately NOT fillable: only DriverController
+     * writes them, explicitly. UserController's super-admin branch does
+     * fill($request->all()), which must not reach them.
+     */
+    protected static function booted(): void
+    {
+        // Every writer other than DriverController (staff/profile form, booking
+        // import, super-admin fill) changes `name` alone. Drop the stored parts
+        // then, so no reader of the columns ever sees a stale pair.
+        static::saving(function (User $user) {
+            if ($user->isDirty('name') && !$user->isDirty(['first_name', 'last_name'])) {
+                $user->first_name = null;
+                $user->last_name = null;
+            }
+        });
+    }
+
+    /**
      * [first, last] for the driver edit/show forms.
      *
      * Prefers the stored first_name/last_name while they still agree with
-     * `name` (DriverController@store/update write all three together). Rows
-     * older than those columns, booking-import users, and names edited through
-     * another form have NULL or stale parts, so fall back to splitting `name`
-     * on its first run of whitespace: first word = first name, rest = last name.
+     * `name` (DriverController@store/update write all three together; the
+     * saving hook above clears them otherwise). Rows without parts fall back to
+     * splitting `name` on its first run of whitespace: first word = first
+     * name, rest = last name. Unicode-aware so Excel-import names with tabs or
+     * NBSPs split the same way; malformed UTF-8 degrades to a byte split.
      *
      * @return array{0: ?string, 1: ?string}
      */
@@ -62,9 +79,13 @@ class User extends Authenticatable
             return [$this->first_name, $this->last_name];
         }
 
-        $parts = preg_split('/\s+/u', trim((string) $this->name), 2);
+        $trimmed = preg_replace('/^\s+|\s+$/u', '', (string) $this->name);
+        $parts = $trimmed === null ? false : preg_split('/\s+/u', $trimmed, 2, PREG_SPLIT_NO_EMPTY);
+        if ($parts === false) {
+            $parts = explode(' ', trim((string) $this->name), 2);
+        }
 
-        return [$parts[0] !== '' ? $parts[0] : null, $parts[1] ?? null];
+        return [($parts[0] ?? '') !== '' ? $parts[0] : null, $parts[1] ?? null];
     }
 
     public function totalUser()

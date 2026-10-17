@@ -308,7 +308,7 @@ class DriverController extends Controller
         if (!$user) {
             return redirect()->route('driver.index')->with('error', __('Permission Denied.'));
         }
-        [$user->first_name, $user->last_name] = $user->nameParts();
+        [$firstName, $lastName] = $user->nameParts();
         $driver = $user->drivers;
 
         $driverPayload = null;
@@ -327,7 +327,7 @@ class DriverController extends Controller
 
         return Inertia::render('Driver/Show', [
             'driver' => $driverPayload,
-            'user' => $user->toArray(),
+            'user' => array_merge($user->toArray(), ['first_name' => $firstName, 'last_name' => $lastName]),
             'is_blacklisted'   => (bool) $blacklist,
             'blacklist_reason' => $blacklist?->reason,
             'blacklisted_at'   => $blacklist ? dateFormat($blacklist->created_at) : null,
@@ -407,13 +407,13 @@ class DriverController extends Controller
         if (!$user) {
             return redirect()->route('driver.index')->with('error', __('Permission Denied.'));
         }
-        [$user->first_name, $user->last_name] = $user->nameParts();
+        [$firstName, $lastName] = $user->nameParts();
         $driver = $user->drivers;
         $gender = User::$gender;
 
         return Inertia::render('Driver/Edit', [
             'driver' => !empty($driver) ? $driver->toArray() : null,
-            'user' => $user->toArray(),
+            'user' => array_merge($user->toArray(), ['first_name' => $firstName, 'last_name' => $lastName]),
             'gender' => $gender,
         ]);
     }
