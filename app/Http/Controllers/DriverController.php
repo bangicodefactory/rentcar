@@ -306,7 +306,9 @@ class DriverController extends Controller
         if (!$user) {
             return redirect()->route('driver.index')->with('error', __('Permission Denied.'));
         }
-        $name = explode(' ', $user->name);
+        // Stored as "first_name last_name" (see store/update); split on the first
+        // space only so a multi-word last name ("EL YOUSSFI") stays whole.
+        $name = explode(' ', $user->name, 2);
         $user->first_name = isset($name[0]) ? $name[0] : null;
         $user->last_name = isset($name[1]) ? $name[1] : null;
         $driver = $user->drivers;
@@ -407,7 +409,9 @@ class DriverController extends Controller
         if (!$user) {
             return redirect()->route('driver.index')->with('error', __('Permission Denied.'));
         }
-        $name = explode(' ', $user->name);
+        // Stored as "first_name last_name" (see store/update); split on the first
+        // space only so a multi-word last name ("EL YOUSSFI") stays whole.
+        $name = explode(' ', $user->name, 2);
         $user->first_name = isset($name[0]) ? $name[0] : null;
         $user->last_name = isset($name[1]) ? $name[1] : null;
         $driver = $user->drivers;
