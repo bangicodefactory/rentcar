@@ -276,6 +276,140 @@ class DriverControllerTest extends TestCase
             );
     }
 
+    // ── stored first_name / last_name columns (2026-10 migration) ─────────────
+
+    public function test_store_persists_first_and_last_name_columns(): void
+    {
+        $this->actingAs($this->owner)
+            ->post(route('driver.store'), $this->validPayload(['first_name' => 'Mohamed Amine', 'last_name' => 'EL YOUSSFI']))
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'name'       => 'Mohamed Amine EL YOUSSFI',
+            'first_name' => 'Mohamed Amine',
+            'last_name'  => 'EL YOUSSFI',
+        ]);
+    }
+
+    public function test_update_persists_first_and_last_name_columns(): void
+    {
+        $driverUser = User::factory()->driver()->create(['name' => 'Old Name', 'parent_id' => $this->owner->id]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->put(route('driver.update', $driverUser->id), [
+                'first_name' => 'Mohamed Amine',
+                'last_name'  => 'EL YOUSSFI',
+                'email'      => 'amine@example.com',
+            ])
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id'         => $driverUser->id,
+            'name'       => 'Mohamed Amine EL YOUSSFI',
+            'first_name' => 'Mohamed Amine',
+            'last_name'  => 'EL YOUSSFI',
+        ]);
+    }
+
+    // A multi-word FIRST name can only come back right from the stored columns;
+    // the whitespace split would give "Mohamed" / "Amine EL YOUSSFI".
+    public function test_edit_and_show_prefer_the_stored_name_columns(): void
+    {
+        $driverUser = User::factory()->driver()->create([
+            'parent_id'  => $this->owner->id,
+            'name'       => 'Mohamed Amine EL YOUSSFI',
+            'first_name' => 'Mohamed Amine',
+            'last_name'  => 'EL YOUSSFI',
+        ]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Male', 'parent_id' => $this->owner->id]);
+
+        foreach (['driver.edit' => 'Driver/Edit', 'driver.show' => 'Driver/Show'] as $route => $component) {
+            $this->actingAs($this->owner)
+                ->get(route($route, $driverUser->id))
+                ->assertOk()
+                ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                    ->component($component)
+                    ->where('user.first_name', 'Mohamed Amine')
+                    ->where('user.last_name', 'EL YOUSSFI')
+                );
+        }
+    }
+
+    // The staff/profile forms and the booking import write `name` without the
+    // parts; stale parts must not win over the current name.
+    public function test_edit_falls_back_to_the_split_when_stored_parts_are_stale(): void
+    {
+        $driverUser = User::factory()->driver()->create([
+            'parent_id'  => $this->owner->id,
+            'name'       => 'Carla Rossi',
+            'first_name' => 'Mohamed Amine',
+            'last_name'  => 'EL YOUSSFI',
+        ]);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Female', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->get(route('driver.edit', $driverUser->id))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('user.first_name', 'Carla')
+                ->where('user.last_name', 'Rossi')
+            );
+    }
+
+    // Imported names arrive verbatim from Excel: double spaces, tabs and NBSPs.
+    public function test_edit_splits_an_imported_name_on_any_whitespace_run(): void
+    {
+        foreach (["SALMA  EL YOUSSFI", "SALMA\tEL YOUSSFI", "SALMA\u{00A0}EL YOUSSFI", " SALMA EL YOUSSFI "] as $raw) {
+            $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id, 'name' => $raw]);
+            Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Female', 'parent_id' => $this->owner->id]);
+
+            $this->actingAs($this->owner)
+                ->get(route('driver.edit', $driverUser->id))
+                ->assertOk()
+                ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                    ->where('user.first_name', 'SALMA')
+                    ->where('user.last_name', 'EL YOUSSFI')
+                );
+        }
+    }
+
+    public function test_edit_then_update_round_trip_keeps_a_multiword_name_unchanged(): void
+    {
+        $this->actingAs($this->owner)
+            ->post(route('driver.store'), $this->validPayload([
+                'first_name' => 'Mohamed Amine',
+                'last_name'  => 'EL YOUSSFI',
+                'email'      => 'roundtrip@example.com',
+            ]))
+            ->assertSessionHas('success');
+        $driverUser = User::where('email', 'roundtrip@example.com')->firstOrFail();
+
+        $props = $this->actingAs($this->owner)
+            ->get(route('driver.edit', $driverUser->id))
+            ->assertOk()
+            ->inertiaProps();
+
+        $this->actingAs($this->owner)
+            ->put(route('driver.update', $driverUser->id), [
+                'first_name' => $props['user']['first_name'],
+                'last_name'  => $props['user']['last_name'],
+                'email'      => 'roundtrip@example.com',
+                'gender'     => 'Male',
+            ])
+            ->assertRedirect(route('driver.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id'         => $driverUser->id,
+            'name'       => 'Mohamed Amine EL YOUSSFI',
+            'first_name' => 'Mohamed Amine',
+            'last_name'  => 'EL YOUSSFI',
+        ]);
+    }
+
     // ── DriverController::create ──────────────────────────────────────────────
 
     public function test_create_requires_auth(): void
