@@ -243,6 +243,39 @@ class DriverControllerTest extends TestCase
             );
     }
 
+    // A driver's name is stored as "first_name last_name"; a multi-word last
+    // name ("salma EL YOUSSFI") must come back whole on the edit/show forms,
+    // not truncated to its first word ("EL").
+    public function test_edit_keeps_multiword_last_name_intact(): void
+    {
+        $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id, 'name' => 'salma EL YOUSSFI']);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Female', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->get(route('driver.edit', $driverUser->id))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Driver/Edit')
+                ->where('user.first_name', 'salma')
+                ->where('user.last_name', 'EL YOUSSFI')
+            );
+    }
+
+    public function test_show_keeps_multiword_last_name_intact(): void
+    {
+        $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id, 'name' => 'salma EL YOUSSFI']);
+        Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Female', 'parent_id' => $this->owner->id]);
+
+        $this->actingAs($this->owner)
+            ->get(route('driver.show', $driverUser->id))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Driver/Show')
+                ->where('user.first_name', 'salma')
+                ->where('user.last_name', 'EL YOUSSFI')
+            );
+    }
+
     // ── DriverController::create ──────────────────────────────────────────────
 
     public function test_create_requires_auth(): void
