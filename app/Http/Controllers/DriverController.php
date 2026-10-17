@@ -174,6 +174,8 @@ class DriverController extends Controller
             }
             $userRole = Role::where('name', 'driver')->where('parent_id', parentId())->first();
             $user = new User();
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
             $user->name = $request->first_name . ' ' . $request->last_name;
             $user->email = !empty($request->email) ? $request->email : null;
             $user->phone_number = !empty($request->phone_number) ? $request->phone_number : null;
@@ -306,11 +308,7 @@ class DriverController extends Controller
         if (!$user) {
             return redirect()->route('driver.index')->with('error', __('Permission Denied.'));
         }
-        // Stored as "first_name last_name" (see store/update); split on the first
-        // space only so a multi-word last name ("EL YOUSSFI") stays whole.
-        $name = explode(' ', $user->name, 2);
-        $user->first_name = isset($name[0]) ? $name[0] : null;
-        $user->last_name = isset($name[1]) ? $name[1] : null;
+        [$firstName, $lastName] = $user->nameParts();
         $driver = $user->drivers;
 
         $driverPayload = null;
@@ -329,7 +327,7 @@ class DriverController extends Controller
 
         return Inertia::render('Driver/Show', [
             'driver' => $driverPayload,
-            'user' => $user->toArray(),
+            'user' => array_merge($user->toArray(), ['first_name' => $firstName, 'last_name' => $lastName]),
             'is_blacklisted'   => (bool) $blacklist,
             'blacklist_reason' => $blacklist?->reason,
             'blacklisted_at'   => $blacklist ? dateFormat($blacklist->created_at) : null,
@@ -409,17 +407,13 @@ class DriverController extends Controller
         if (!$user) {
             return redirect()->route('driver.index')->with('error', __('Permission Denied.'));
         }
-        // Stored as "first_name last_name" (see store/update); split on the first
-        // space only so a multi-word last name ("EL YOUSSFI") stays whole.
-        $name = explode(' ', $user->name, 2);
-        $user->first_name = isset($name[0]) ? $name[0] : null;
-        $user->last_name = isset($name[1]) ? $name[1] : null;
+        [$firstName, $lastName] = $user->nameParts();
         $driver = $user->drivers;
         $gender = User::$gender;
 
         return Inertia::render('Driver/Edit', [
             'driver' => !empty($driver) ? $driver->toArray() : null,
-            'user' => $user->toArray(),
+            'user' => array_merge($user->toArray(), ['first_name' => $firstName, 'last_name' => $lastName]),
             'gender' => $gender,
         ]);
     }
@@ -448,6 +442,8 @@ class DriverController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
             $user->name = $request->first_name . ' ' . $request->last_name;
             $user->email = $request->email;
             $user->phone_number = !empty($request->phone_number) ? $request->phone_number : null;
