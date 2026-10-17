@@ -362,7 +362,7 @@ class DriverControllerTest extends TestCase
     // Imported names arrive verbatim from Excel: double spaces, tabs and NBSPs.
     public function test_edit_splits_an_imported_name_on_any_whitespace_run(): void
     {
-        foreach (["SALMA  EL YOUSSFI", "SALMA\tEL YOUSSFI", "SALMA\u{00A0}EL YOUSSFI", " SALMA EL YOUSSFI "] as $raw) {
+        foreach (["SALMA  EL YOUSSFI", "SALMA\tEL YOUSSFI", "SALMA\u{00A0}EL YOUSSFI", " SALMA EL YOUSSFI ", "\u{00A0}SALMA EL YOUSSFI\u{00A0}"] as $raw) {
             $driverUser = User::factory()->driver()->create(['parent_id' => $this->owner->id, 'name' => $raw]);
             Driver::create(['driver_id' => $driverUser->id, 'user_id' => $driverUser->id, 'gender' => 'Female', 'parent_id' => $this->owner->id]);
 
